@@ -102,10 +102,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 1595020433191848}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 210105714, guid: 21c7301987155c0499132f8dc0b202f5, type: 3}
+  m_Script: {fileID: 11500000, guid: 60ad29e889ce69344aa5e7d1f6b10544, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   NetworkedPrefabName: Cube
+  SceneDelayedSpawn: 0
+  DontDestroyWithOwner: 0
 --- !u!54 &5756714184836298406
 Rigidbody:
   m_ObjectHideFlags: 0

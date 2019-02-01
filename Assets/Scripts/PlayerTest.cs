@@ -1,11 +1,11 @@
-﻿using MLAPI.Attributes;
-using MLAPI.MonoBehaviours.Core;
+﻿using MLAPI;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class PlayerTest : NetworkedBehaviour
 {
-    [SyncedVar]
+    // THis doesn't exist anymore I think?
+    //[SyncedVar]
     public string MySyncedName;
     public Text TextField;
     public GameObject cubePrefab;

@@ -153,38 +153,33 @@ MonoBehaviour:
   m_GameObject: {fileID: 1248140278}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: -1513883267, guid: 21c7301987155c0499132f8dc0b202f5, type: 3}
+  m_Script: {fileID: 11500000, guid: b398144871b9b0c48a619ea0120b0a26, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   DontDestroy: 1
   RunInBackground: 1
+  LogLevel: 1
   NetworkConfig:
     ProtocolVersion: 0
-    ServerTransports:
-    - Name: UDP Socket
-      Port: 7777
-      Websockets: 0
-    Channels:
-    - Name: ColorChannel
-      Type: 3
-      Encrypted: 0
-    MessageTypes:
-    - Name: OnChangeColor
-      Passthrough: 0
+    Transport: 0
+    RelayAddress: 127.0.0.1
+    RelayPort: 8888
+    RelayEnabled: 1
+    Channels: []
     RegisteredScenes:
     - Main
     NetworkedPrefabs:
     - prefab: {fileID: 1329915689972608, guid: e76e7324100b55b4884126b83418ebab, type: 3}
       playerPrefab: 1
-    - prefab: {fileID: 1631893145635948, guid: 02e37f97df7ed8d459e06fd7c4e9e5df, type: 3}
-      playerPrefab: 0
     - prefab: {fileID: 1595020433191848, guid: 03a297f61fe3ef344989473054d7a493, type: 3}
       playerPrefab: 0
     - prefab: {fileID: 8670392759175092509, guid: 6731371154a7f144e92f5caefa6bac8b,
         type: 3}
       playerPrefab: 0
+    - prefab: {fileID: 1631893145635948, guid: 02e37f97df7ed8d459e06fd7c4e9e5df, type: 3}
+      playerPrefab: 0
     PlayerPrefabName: ThirdPersonController
-    MessageBufferSize: 65535
+    MessageBufferSize: 1024
     ReceiveTickrate: 64
     MaxReceiveEventsPerTickRate: 500
     SendTickrate: 64
@@ -197,14 +192,15 @@ MonoBehaviour:
     ConnectionData: 
     SecondsHistory: 5
     HandleObjectSpawning: 1
-    EnableEncryption: 1
-    SignKeyExchange: 1
-    RSAPrivateKey: <RSAKeyValue><Modulus>vBEvOQki/EftWOgwh4G8/nFRvcDJLylc8P7Dhz5m/hpkkNtAMzizNKYUrGbs7sYWlEuMYBOWrzkIDGOMoOsYc9uCi+8EcmNoHDlIhK5yNfZUexYBF551VbvZ625LSBR7kmBxkyo4IPuA09fYCHeUFm3prt4h6aTD0Hjc7ZsJHUU=</Modulus><Exponent>EQ==</Exponent><P>ydgcrq5qLJOdDQibD3m9+o3/dkKoFeCC110dnMgdpEteCruyBdL0zjGKKvjjgy3XTSSp43EN591NiXaBp0JtDw==</P><Q>7obHrUnUCsSHUsIJ7+JOrupcGrQ0XaYcQ+Uwb2v7d2YUzwZ46U4gI9snfD2J0tc3DGEh3v3G0Q8q7bxEe3H4aw==</Q><DP>L34k3c6vkgSdbHp+1nb/hj+HZx6+I0PijQbZyolwYuSOmR0a1DGjA1bzVWe9D86NAxevgM9OkOjG8yrxVIgZqQ==</DP><DQ>OB+2gyBuIKa2bdNNodrlVlVC2RtXnZB/HwjAGjeGdnJfP8VJoE6eJo3rLEq3BG7fxq1xYaUfuLhGVg4uOyngGQ==</DQ><InverseQ>o97PimYu58qH5eFmySRCIsyhBr/tK2GM17Zd9QQPJZRSorrhIJn1m6gwQ/G5aJLIM/3Yl04CoyqmQGsPXMzW2w==</InverseQ><D>CxAR1i22w4vCquB7U0Pd8Nl9R2Wxez6rHTwpnoszPB+rkAzlqKj7e5FMgpykhoQfciKPyWqQZKkAeTMIRbN56JinvpAt5POId/28HDd5xjGymHE81k3RzoHqzQXFIOF1TSYKUWzjPPF/TU4nn7auD4i6lOODATsMqtLr5DRBN/0=</D></RSAKeyValue>
-    RSAPublicKey: <RSAKeyValue><Modulus>vBEvOQki/EftWOgwh4G8/nFRvcDJLylc8P7Dhz5m/hpkkNtAMzizNKYUrGbs7sYWlEuMYBOWrzkIDGOMoOsYc9uCi+8EcmNoHDlIhK5yNfZUexYBF551VbvZ625LSBR7kmBxkyo4IPuA09fYCHeUFm3prt4h6aTD0Hjc7ZsJHUU=</Modulus><Exponent>EQ==</Exponent></RSAKeyValue>
-    AllowPassthroughMessages: 1
     EnableSceneSwitching: 1
     EnableTimeResync: 0
-  RegenerateRSAKeys: 0
+    ForceSamePrefabs: 1
+    RpcHashSize: 0
+    PrefabHashSize: 0
+    LoadSceneTimeOut: 120
+    EnableEncryption: 0
+    SignKeyExchange: 0
+    ServerBase64PfxCertificate: 
 --- !u!114 &1248140281
 MonoBehaviour:
   m_ObjectHideFlags: 0

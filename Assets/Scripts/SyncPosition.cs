@@ -1,4 +1,4 @@
-﻿using MLAPI.MonoBehaviours.Core;
+﻿using MLAPI;
 using System.IO;
 using UnityEngine;
 
@@ -7,18 +7,6 @@ public class SyncPosition : NetworkedBehaviour
     private float lastSentTime;
     public float PosUpdatesPerSecond = 20;
 
-
-    private void Awake()
-    {
-        if(isServer)
-        {
-           // RegisterMessageHandler("PositionUpdate", OnRecievePositionUpdate);
-        }
-        if(isClient)
-        {
-           // RegisterMessageHandler("SetClientPosition", OnSetClientPosition);
-        }
-    }
 
     private void Update()
     {
@@ -34,7 +22,7 @@ public class SyncPosition : NetworkedBehaviour
                     writer.Write(transform.position.y);
                     writer.Write(transform.position.z);
                 }
-                SendToServer("PositionUpdate", "PositionUpdates", stream.ToArray());
+                InvokeServerRpc(OnRecievePositionUpdate, stream);
             }
             lastSentTime = Time.time;
         }
@@ -42,50 +30,46 @@ public class SyncPosition : NetworkedBehaviour
     }
 
     //This gets called on all clients except the one the position update is about.
-    void OnSetClientPosition(uint clientId, byte[] data)
+    [ClientRPC]
+    void OnSetClientPosition(uint clientId, Stream stream)
     {
-        using (MemoryStream stream = new MemoryStream(data))
+        using (BinaryReader reader = new BinaryReader(stream))
         {
-            using (BinaryReader reader = new BinaryReader(stream))
-            {
-                uint targetNetId = reader.ReadUInt32();
-                if (targetNetId != networkId)
-                    return;
-                float x = reader.ReadSingle();
-                float y = reader.ReadSingle();
-                float z = reader.ReadSingle();
-                GetNetworkedObject(targetNetId).transform.position = new Vector3(x, y, z);
-            }
+            uint targetNetId = reader.ReadUInt32();
+            if (targetNetId != networkId)
+                return;
+            float x = reader.ReadSingle();
+            float y = reader.ReadSingle();
+            float z = reader.ReadSingle();
+            GetNetworkedObject(targetNetId).transform.position = new Vector3(x, y, z);
         }
     }
 
     //This gets called on the server when a client sends it's position.
-    void OnRecievePositionUpdate(uint clientId, byte[] data)
+    [ServerRPC]
+    void OnRecievePositionUpdate(uint clientId, Stream stream)
     {
         //This makes it behave like a HLAPI Command. It's only invoked on the same object that called it.
-        if (clientId != ownerClientId)
+        if (clientId != OwnerClientId)
             return;
-        using (MemoryStream readStream = new MemoryStream(data))
+        using (BinaryReader reader = new BinaryReader(stream))
         {
-            using (BinaryReader reader = new BinaryReader(readStream))
+            float x = reader.ReadSingle();
+            float y = reader.ReadSingle();
+            float z = reader.ReadSingle();
+            transform.position = new Vector3(x, y, z);
+        }
+        using (MemoryStream writeStream = new MemoryStream())
+        {
+            using (BinaryWriter writer = new BinaryWriter(writeStream))
             {
-                float x = reader.ReadSingle();
-                float y = reader.ReadSingle();
-                float z = reader.ReadSingle();
-                transform.position = new Vector3(x, y, z);
+                writer.Write(networkId);
+                writer.Write(transform.position.x);
+                writer.Write(transform.position.y);
+                writer.Write(transform.position.z);
             }
-            using (MemoryStream writeStream = new MemoryStream())
-            {
-                using (BinaryWriter writer = new BinaryWriter(writeStream))
-                {
-                    writer.Write(networkId);
-                    writer.Write(transform.position.x);
-                    writer.Write(transform.position.y);
-                    writer.Write(transform.position.z);
-                }
-                //Sends the position to all clients except the one who requested it. Similar to a Rpc with a if(isLocalPlayer) return;
-                SendToNonLocalClients("SetClientPosition", "PositionUpdates", writeStream.ToArray());
-            }
+            //Sends the position to all clients except the one who requested it. Similar to a Rpc with a if(isLocalPlayer) return;
+            InvokeClientRpcOnEveryoneExcept(OnSetClientPosition, clientId, writeStream);
         }
     }
 }

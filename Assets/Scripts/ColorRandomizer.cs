@@ -1,25 +1,21 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using MLAPI.MonoBehaviours.Core;
-using MLAPI.NetworkingManagerComponents.Binary;
+using System.IO;
+using MLAPI;
+using MLAPI.Serialization;
 using UnityEngine;
 
 public class ColorRandomizer : NetworkedBehaviour
 {
     public MeshRenderer meshRenderer;
 
-    public override void NetworkStart()
+    [ClientRPC]
+    private void OnChangeColor(uint clientId, Stream stream)
     {
-        if (isClient)
-            RegisterMessageHandler("OnChangeColor", OnChangeColor);
-    }
-
-    private void OnChangeColor(uint clientId, byte[] data)
-    {
-        BitReader reader = new BitReader(data);
-        float r = reader.ReadFloat();
-        float g = reader.ReadFloat();
-        float b = reader.ReadFloat();
+        BitReader reader = new BitReader(stream);
+        float r = reader.ReadSingle();
+        float g = reader.ReadSingle();
+        float b = reader.ReadSingle();
         meshRenderer.material.color = new Color(r, g, b);
     }
 
@@ -31,12 +27,13 @@ public class ColorRandomizer : NetworkedBehaviour
             {
                 Color color = Random.ColorHSV();
                 meshRenderer.material.color = color;
-                using (BitWriter writer = new BitWriter())
+                using (MemoryStream stream = new MemoryStream())
                 {
-                    writer.WriteFloat(color.r);
-                    writer.WriteFloat(color.g);
-                    writer.WriteFloat(color.b);
-                    SendToClientsTarget("OnChangeColor", "ColorChannel", writer.Finalize());
+                    BitWriter writer = new BitWriter(stream);
+                    writer.WriteSingle(color.r);
+                    writer.WriteSingle(color.g);
+                    writer.WriteSingle(color.b);
+                    InvokeClientRpcOnEveryone(OnChangeColor, stream);
                 }
             }
         }

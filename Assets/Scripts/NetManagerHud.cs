@@ -5,7 +5,6 @@ using UnityEngine;
 
 using MLAPI;
 using MLAPI.Data;
-using MLAPI.MonoBehaviours.Core;
 
 
 public class NetManagerHud : MonoBehaviour
@@ -98,7 +97,7 @@ public class NetManagerHud : MonoBehaviour
 
 	void ShowClientGui( NetworkingManager network, ref int yOffset )
 	{
-		ShowLine( "Am I connected? " + (network.IsClientConnected ? "Yes" : "No"), ref yOffset );
-		ShowLine( "My Client.id: " + network.MyClientId, ref yOffset );
+		ShowLine( "Am I connected? " + (network.IsConnectedClient ? "Yes" : "No"), ref yOffset );
+		ShowLine( "My Client.id: " + network.LocalClientId, ref yOffset );
 	}
 }
