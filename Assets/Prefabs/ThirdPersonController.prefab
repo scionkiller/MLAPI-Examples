@@ -1064,7 +1064,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1329915689972608}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1c61fb58d94448742945ff8c45984e1a, type: 3}
+  m_Script: {fileID: 11500000, guid: fbf255ab0016c0c46bddfad71d4bd6ac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   EnableProximity: 0
@@ -1086,7 +1086,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1329915689972608}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 60ad29e889ce69344aa5e7d1f6b10544, type: 3}
+  m_Script: {fileID: 11500000, guid: 734a56c7c4651624d9764cc45a5bb0ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   NetworkedPrefabName: ThirdPersonController
