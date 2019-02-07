@@ -1,4 +1,5 @@
-﻿using MLAPI;
+﻿#pragma warning disable 618
+using MLAPI;
 using UnityEngine;
 
 namespace UnityEditor
@@ -51,3 +52,4 @@ namespace UnityEditor
         }
     }
 }
+#pragma warning restore 618

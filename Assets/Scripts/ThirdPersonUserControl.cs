@@ -36,7 +36,7 @@ public class ThirdPersonUserControl : NetworkedBehaviour
 
 	private void Update()
 	{
-		if( !isLocalPlayer ) { return; }
+		if( !IsLocalPlayer ) { return; }
 
 		if (!m_Jump)
 		{
@@ -48,7 +48,7 @@ public class ThirdPersonUserControl : NetworkedBehaviour
 	// Fixed update is called in sync with physics
 	private void FixedUpdate()
 	{
-		if (!isLocalPlayer)
+		if (!IsLocalPlayer)
 			return;
 
 		// read inputs

@@ -1,4 +1,4 @@
-﻿#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+﻿#pragma warning disable 618
 using System;
 using System.Collections.Generic;
 using UnityEngine.Networking;
@@ -176,4 +176,4 @@ namespace MLAPI.Transports.UNET
         }
     }
 }
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
+#pragma warning restore 618

@@ -29,21 +29,21 @@ public class NetManagerHud : MonoBehaviour
 
     void OnGUI()
     {
-		NetworkingManager network = NetworkingManager.singleton;
+		NetworkingManager network = NetworkingManager.Singleton;
 		int yOffset = MARGIN;
 
-		if( network.isHost )
+		if( network.IsHost )
 		{
 			ShowTitle( "Host", ref yOffset );
 			ShowClientGui( network, ref yOffset );
 			ShowServerGui( network, ref yOffset );
 		}
-		else if( network.isServer )
+		else if( network.IsServer )
 		{
 			ShowTitle( "Server", ref yOffset );
 			ShowServerGui( network, ref yOffset );
 		}
-		else if( network.isClient )
+		else if( network.IsClient )
 		{
 			ShowTitle( "Client", ref yOffset );
 			ShowClientGui( network, ref yOffset );

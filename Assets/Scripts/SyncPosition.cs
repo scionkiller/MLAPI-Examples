@@ -10,8 +10,11 @@ public class SyncPosition : NetworkedBehaviour
 
     private void Update()
     {
-        if (!isLocalPlayer)
-            return;
+        if( !IsLocalPlayer )
+		{
+    		return;
+		}
+		
         if(Time.time - lastSentTime > (1f / PosUpdatesPerSecond))
         {
             using(MemoryStream stream = new MemoryStream())
@@ -36,7 +39,7 @@ public class SyncPosition : NetworkedBehaviour
         using (BinaryReader reader = new BinaryReader(stream))
         {
             uint targetNetId = reader.ReadUInt32();
-            if (targetNetId != networkId)
+            if (targetNetId != NetworkId)
                 return;
             float x = reader.ReadSingle();
             float y = reader.ReadSingle();
@@ -63,7 +66,7 @@ public class SyncPosition : NetworkedBehaviour
         {
             using (BinaryWriter writer = new BinaryWriter(writeStream))
             {
-                writer.Write(networkId);
+                writer.Write(NetworkId);
                 writer.Write(transform.position.x);
                 writer.Write(transform.position.y);
                 writer.Write(transform.position.z);

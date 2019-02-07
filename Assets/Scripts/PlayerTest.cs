@@ -14,14 +14,14 @@ public class PlayerTest : NetworkedBehaviour
 
     public override void NetworkStart()
     {
-        if (isServer && isLocalPlayer)
+        if (IsServer && IsLocalPlayer)
             MySyncedName = "SyncVarTest: " + Random.Range(50, 10000);
     }
 
     private void OnGUI()
     {
         int y = 25;
-        if (isServer && isLocalPlayer)
+        if( IsServer && IsLocalPlayer )
         {
             y += 25;
             if (GUI.Button(new Rect(200, y, 200, 20), "Change Text with SyncVar"))

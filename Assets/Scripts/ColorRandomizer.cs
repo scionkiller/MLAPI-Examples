@@ -21,7 +21,7 @@ public class ColorRandomizer : NetworkedBehaviour
 
     private void OnGUI()
     {
-        if (isServer)
+        if (IsServer)
         {
             if (GUI.Button(new Rect(200, 25, 200, 20), "Set random plane color"))
             {
