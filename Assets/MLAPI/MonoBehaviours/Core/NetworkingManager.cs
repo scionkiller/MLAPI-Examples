@@ -230,10 +230,12 @@ namespace MLAPI
             {
                 for (int i = 0; i < NetworkConfig.NetworkedPrefabs.Count; i++)
                 {
-                    if (NetworkConfig.NetworkedPrefabs[i] != null && string.IsNullOrEmpty(NetworkConfig.NetworkedPrefabs[i].name))
-                    {
-                        if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("The NetworkedPrefab " + NetworkConfig.NetworkedPrefabs[i].prefab.name + " does not have a NetworkedPrefabName.");
-                    }
+					// TODO: cozeroff
+					// disabled because it is throwing false positives during a build. Not sure how to fix this. OnValidate is not the correct place for these tests.
+                    // if (NetworkConfig.NetworkedPrefabs[i] != null && string.IsNullOrEmpty(NetworkConfig.NetworkedPrefabs[i].name))
+                    // {
+                    //     if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("The NetworkedPrefab " + NetworkConfig.NetworkedPrefabs[i].prefab.name + " does not have a NetworkedPrefabName.");
+                    // }
                 }
                 int playerPrefabCount = NetworkConfig.NetworkedPrefabs.Count(x => x.playerPrefab == true);
                 if (playerPrefabCount == 0)

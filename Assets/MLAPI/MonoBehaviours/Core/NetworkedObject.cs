@@ -17,19 +17,20 @@ namespace MLAPI
 	{
 		internal static readonly List<NetworkedBehaviour> NetworkedBehaviours = new List<NetworkedBehaviour>();
 
-		private void OnValidate()
-		{
-#if UNITY_EDITOR
-			if( string.IsNullOrEmpty(NetworkedPrefabName) )
-			{
-				if( LogHelper.CurrentLogLevel <= LogLevel.Normal )
-				{
-					LogHelper.LogWarning("The NetworkedObject " + gameObject.name + " does not have a NetworkedPrefabName. It has been set to the gameObject name");
-				}
-				NetworkedPrefabName = gameObject.name;
-			}
-#endif
-		}
+		// TODO: cozeroff
+		// disabled because this doesn't work correctly during a build, and throws false positives
+		// perhaps replace with a manually triggered menu item that checks all network prefabs?
+		// private void OnValidate()
+		// {
+		// 	if( string.IsNullOrEmpty(NetworkedPrefabName) )
+		// 	{
+		// 		if( LogHelper.CurrentLogLevel <= LogLevel.Normal )
+		// 		{
+		// 			LogHelper.LogWarning("The NetworkedObject " + gameObject.name + " does not have a NetworkedPrefabName. It has been set to the gameObject name");
+		// 		}
+		// 		NetworkedPrefabName = gameObject.name;
+		// 	}
+		// }
 
 		/// <summary>
 		/// Gets the unique ID of this object that is synced across the network
