@@ -23,10 +23,10 @@ namespace MLAPI.Internal
             byte[] serverDiffieHellmanPublicPart = null;
             using (PooledBitReader reader = PooledBitReader.Get(stream))
             {
-                if (netManager.NetworkConfig.EnableEncryption)
+                if (netManager.config.EnableEncryption)
                 {
                     // Read the certificate
-                    if (netManager.NetworkConfig.SignKeyExchange)
+                    if (netManager.config.SignKeyExchange)
                     {
                         // Allocation justification: This runs on client and only once, at initial connection
                         certificate = new X509Certificate2(reader.ReadByteArray());
@@ -40,7 +40,7 @@ namespace MLAPI.Internal
                         }
                         else
                         {
-                            netManager.NetworkConfig.ServerX509Certificate = certificate;
+                            netManager.config.ServerX509Certificate = certificate;
                         }
                     }
 
@@ -49,7 +49,7 @@ namespace MLAPI.Internal
                     serverDiffieHellmanPublicPart = reader.ReadByteArray();
                     
                     // Verify the key exchange
-                    if (netManager.NetworkConfig.SignKeyExchange)
+                    if (netManager.config.SignKeyExchange)
                     {
                         byte[] serverDiffieHellmanPublicPartSignature = reader.ReadByteArray();
 
@@ -75,14 +75,14 @@ namespace MLAPI.Internal
             {
                 using (PooledBitWriter writer = PooledBitWriter.Get(outStream))
                 {
-                    if (netManager.NetworkConfig.EnableEncryption)
+                    if (netManager.config.EnableEncryption)
                     {
                         // Create a ECDH key
                         EllipticDiffieHellman diffieHellman = new EllipticDiffieHellman(EllipticDiffieHellman.DEFAULT_CURVE, EllipticDiffieHellman.DEFAULT_GENERATOR, EllipticDiffieHellman.DEFAULT_ORDER);
                         netManager.clientAesKey = diffieHellman.GetSharedSecret(serverDiffieHellmanPublicPart);
                         byte[] diffieHellmanPublicKey = diffieHellman.GetPublicKey();
                         writer.WriteByteArray(diffieHellmanPublicKey);
-                        if (netManager.NetworkConfig.SignKeyExchange)
+                        if (netManager.config.SignKeyExchange)
                         {
                             RSACryptoServiceProvider rsa = certificate.PublicKey.Key as RSACryptoServiceProvider;
 
@@ -101,7 +101,7 @@ namespace MLAPI.Internal
                     }
                 }
                 // Send HailResponse
-                InternalMessageHandler.Send(NetworkingManager.Singleton.ServerClientId, MLAPIConstants.MLAPI_CERTIFICATE_HAIL_RESPONSE, "MLAPI_INTERNAL", outStream, SecuritySendFlags.None, true);
+                InternalMessageHandler.Send(NetworkingManager.GetSingleton().ServerClientId, MLAPIConstants.MLAPI_CERTIFICATE_HAIL_RESPONSE, "MLAPI_INTERNAL", outStream, SecuritySendFlags.None, true);
             }
         }
 
@@ -109,18 +109,18 @@ namespace MLAPI.Internal
         internal static void HandleHailResponse(uint clientId, Stream stream, int channelId)
         {
             if (!netManager.PendingClients.ContainsKey(clientId) || netManager.PendingClients[clientId].ConnectionState != PendingClient.State.PendingHail) return;
-            if (!netManager.NetworkConfig.EnableEncryption) return;
+            if (!netManager.config.EnableEncryption) return;
 
             using (PooledBitReader reader = PooledBitReader.Get(stream))
             {
-                if (NetworkingManager.Singleton.PendingClients[clientId].KeyExchange != null)
+                if (NetworkingManager.GetSingleton().PendingClients[clientId].KeyExchange != null)
                 {
                     byte[] diffieHellmanPublic = reader.ReadByteArray();
                     netManager.PendingClients[clientId].AesKey = netManager.PendingClients[clientId].KeyExchange.GetSharedSecret(diffieHellmanPublic);
-                    if (netManager.NetworkConfig.SignKeyExchange)
+                    if (netManager.config.SignKeyExchange)
                     {
                         byte[] diffieHellmanPublicSignature = reader.ReadByteArray();
-                        X509Certificate2 certificate = netManager.NetworkConfig.ServerX509Certificate;
+                        X509Certificate2 certificate = netManager.config.ServerX509Certificate;
                         RSACryptoServiceProvider rsa = certificate.PrivateKey as RSACryptoServiceProvider;
 
                         if (rsa != null)
@@ -164,7 +164,7 @@ namespace MLAPI.Internal
         internal static void HandleGreetings(uint clientId, Stream stream, int channelId)
         {
             // Server greeted us, we can now initiate our request to connect.
-            NetworkingManager.Singleton.SendConnectionRequest();
+            NetworkingManager.GetSingleton().SendConnectionRequest();
         }
 #endif
 
@@ -173,14 +173,14 @@ namespace MLAPI.Internal
             using (PooledBitReader reader = PooledBitReader.Get(stream))
             {
                 ulong configHash = reader.ReadUInt64Packed();
-                if (!netManager.NetworkConfig.CompareConfig(configHash))
+                if (!netManager.config.CompareConfig(configHash))
                 {
                     if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("NetworkConfiguration mismatch. The configuration between the server and client does not match");
                     netManager.DisconnectClient(clientId);
                     return;
                 }
 
-                if (netManager.NetworkConfig.ConnectionApproval)
+                if (netManager.config.ConnectionApproval)
                 {
                     byte[] connectionBuffer = reader.ReadByteArray();
                     netManager.ConnectionApprovalCallback(connectionBuffer, clientId, netManager.HandleApproval);
@@ -197,17 +197,18 @@ namespace MLAPI.Internal
             using (PooledBitReader reader = PooledBitReader.Get(stream))
             {
                 netManager.LocalClientId = reader.ReadUInt32Packed();
-                uint sceneIndex = 0;
+               
+			    /*uint sceneIndex = 0;
                 Guid sceneSwitchProgressGuid = new Guid();
-                if (netManager.NetworkConfig.EnableSceneSwitching) 
+                if( netManager.config.EnableSceneSwitching )
                 {
                     sceneIndex = reader.ReadUInt32Packed();
                     sceneSwitchProgressGuid = new Guid(reader.ReadByteArray());
-                }
+                }*/
 
                 float netTime = reader.ReadSinglePacked();
                 int remoteStamp = reader.ReadInt32Packed();
-                int msDelay = NetworkingManager.Singleton.NetworkConfig.NetworkTransport.GetRemoteDelayTimeMS(clientId, remoteStamp, out byte error);
+                int msDelay = NetworkingManager.GetSingleton().config.NetworkTransport.GetRemoteDelayTimeMS(clientId, remoteStamp, out byte error);
                 netManager.NetworkTime = netTime + (msDelay / 1000f);
 
                 netManager.ConnectedClients.Add(netManager.LocalClientId, new NetworkedClient() { ClientId = netManager.LocalClientId });
@@ -218,7 +219,7 @@ namespace MLAPI.Internal
                     netManager.ConnectedClients.Add(_clientId, new NetworkedClient() { ClientId = _clientId });
                     netManager.ConnectedClientsList.Add(netManager.ConnectedClients[_clientId]);
                 }
-                if (netManager.NetworkConfig.HandleObjectSpawning)
+                if (netManager.config.HandleObjectSpawning)
                 {
                     SpawnManager.DestroySceneObjects();
                     int objectCount = reader.ReadInt32Packed();
@@ -243,14 +244,14 @@ namespace MLAPI.Internal
                         float zRot = reader.ReadSinglePacked();
 
                         NetworkedObject netObject = SpawnManager.CreateSpawnedObject(SpawnManager.GetNetworkedPrefabIndexOfHash(prefabHash), networkId, ownerId, isPlayerObject,
-                            sceneSpawnedInIndex, sceneDelayedSpawn, destroyWithScene, new Vector3(xPos, yPos, zPos), Quaternion.Euler(xRot, yRot, zRot), isActive, stream, false, 0, true);
+                            /*sceneSpawnedInIndex,*/ sceneDelayedSpawn, destroyWithScene, new Vector3(xPos, yPos, zPos), Quaternion.Euler(xRot, yRot, zRot), isActive, stream, false, 0, true);
                     }
                 }
 
-                if (netManager.NetworkConfig.EnableSceneSwitching)
+                /*if (netManager.config.EnableSceneSwitching)
                 {
                     NetworkSceneManager.OnSceneSwitch(sceneIndex, sceneSwitchProgressGuid);
-                }
+				}*/
 
                 netManager.IsConnectedClient = true;
                 if (netManager.OnClientConnectedCallback != null)
@@ -262,7 +263,7 @@ namespace MLAPI.Internal
         {
             using (PooledBitReader reader = PooledBitReader.Get(stream))
             {
-                if (netManager.NetworkConfig.HandleObjectSpawning)
+                if (netManager.config.HandleObjectSpawning)
                 {
                     bool isPlayerObject = reader.ReadBool();
                     uint networkId = reader.ReadUInt32Packed();
@@ -291,7 +292,7 @@ namespace MLAPI.Internal
                     }
 
                     NetworkedObject netObject = SpawnManager.CreateSpawnedObject(SpawnManager.GetNetworkedPrefabIndexOfHash(prefabHash), networkId, ownerId, isPlayerObject,
-                        sceneSpawnedInIndex, sceneDelayedSpawn, destroyWithScene, new Vector3(xPos, yPos, zPos), Quaternion.Euler(xRot, yRot, zRot), true, stream, hasPayload, payLoadLength, true);
+                        /*sceneSpawnedInIndex,*/ sceneDelayedSpawn, destroyWithScene, new Vector3(xPos, yPos, zPos), Quaternion.Euler(xRot, yRot, zRot), true, stream, hasPayload, payLoadLength, true);
 
                 }
                 else
@@ -320,7 +321,7 @@ namespace MLAPI.Internal
             }
         }
 
-        internal static void HandleSwitchScene(uint clientId, Stream stream, int channelId)
+        /*internal static void HandleSwitchScene(uint clientId, Stream stream, int channelId)
         {
             using (PooledBitReader reader = PooledBitReader.Get(stream))
             {
@@ -336,7 +337,7 @@ namespace MLAPI.Internal
             {
                 NetworkSceneManager.OnClientSwitchSceneCompleted(clientId, new Guid(reader.ReadByteArray()));
             }
-        }
+        }*/
 
         internal static void HandleSpawnPoolObject(uint clientId, Stream stream, int channelId)
         {
@@ -391,7 +392,7 @@ namespace MLAPI.Internal
         {
             using (PooledBitReader reader = PooledBitReader.Get(stream))
             {
-                if (netManager.NetworkConfig.HandleObjectSpawning)
+                if (netManager.config.HandleObjectSpawning)
                 {
                     ushort objectCount = reader.ReadUInt16Packed();
                     for (int i = 0; i < objectCount; i++)
@@ -419,7 +420,7 @@ namespace MLAPI.Internal
                             netManager.ConnectedClientsList.Add(netManager.ConnectedClients[ownerId]);
                         }
                         NetworkedObject netObject = SpawnManager.CreateSpawnedObject(SpawnManager.GetNetworkedPrefabIndexOfHash(prefabHash), networkId, ownerId, isPlayerObject,
-                            sceneSpawnedInIndex, sceneDelayedSpawn, destroyWithScene, new Vector3(xPos, yPos, zPos), Quaternion.Euler(xRot, yRot, zRot), true, stream, false, 0, true);
+                            /*sceneSpawnedInIndex,*/ sceneDelayedSpawn, destroyWithScene, new Vector3(xPos, yPos, zPos), Quaternion.Euler(xRot, yRot, zRot), true, stream, false, 0, true);
                     }
                 }
             }
@@ -432,7 +433,7 @@ namespace MLAPI.Internal
                 float netTime = reader.ReadSinglePacked();
                 int timestamp = reader.ReadInt32Packed();
 
-                int msDelay = NetworkingManager.Singleton.NetworkConfig.NetworkTransport.GetRemoteDelayTimeMS(clientId, timestamp, out byte error);
+                int msDelay = NetworkingManager.GetSingleton().config.NetworkTransport.GetRemoteDelayTimeMS(clientId, timestamp, out byte error);
                 netManager.NetworkTime = netTime + (msDelay / 1000f);
             }
         }
@@ -454,10 +455,10 @@ namespace MLAPI.Internal
                     }
                     NetworkedBehaviour.HandleNetworkedVarDeltas(instance.networkedVarFields, stream, clientId, instance);
                 }
-                else if (SpawnManager.PendingSpawnObjects.ContainsKey(netId))
+                /*else if (SpawnManager.PendingSpawnObjects.ContainsKey(netId))
                 {
                     NetworkedBehaviour.HandleNetworkedVarDeltas(SpawnManager.PendingSpawnObjects[netId].GetDummyNetworkedVarListAtOrderIndex(orderIndex), stream, clientId, null);
-                }
+                }*/
                 else
                 {
                     if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("NetworkedVar message recieved for a non existant object with id: " + netId);
@@ -483,10 +484,10 @@ namespace MLAPI.Internal
                     }
                     NetworkedBehaviour.HandleNetworkedVarUpdate(instance.networkedVarFields, stream, clientId, instance);
                 }
-                else if (SpawnManager.PendingSpawnObjects.ContainsKey(netId))
+                /*else if (SpawnManager.PendingSpawnObjects.ContainsKey(netId))
                 {
                     NetworkedBehaviour.HandleNetworkedVarUpdate(SpawnManager.PendingSpawnObjects[netId].GetDummyNetworkedVarListAtOrderIndex(orderIndex), stream, clientId, null);
-                }
+                }*/
                 else
                 {
                     if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("NetworkedVar message recieved for a non existant object with id: " + netId);
@@ -639,7 +640,7 @@ namespace MLAPI.Internal
         
         internal static void HandleCustomMessage(uint clientId, Stream stream, int channelId)
         {
-            NetworkingManager.Singleton.InvokeOnIncomingCustomMessage(clientId, stream);
+            NetworkingManager.GetSingleton().InvokeOnIncomingCustomMessage(clientId, stream);
         }
     }
 }

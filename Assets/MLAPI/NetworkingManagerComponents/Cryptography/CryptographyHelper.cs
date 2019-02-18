@@ -42,15 +42,15 @@ namespace MLAPI.Cryptography
         /// <returns>The aes key in binary</returns>
         public static byte[] GetClientKey(uint clientId)
         {
-            if (NetworkingManager.Singleton.IsServer)
+            if (NetworkingManager.GetSingleton().IsServer)
             {
-                if (NetworkingManager.Singleton.ConnectedClients.ContainsKey(clientId))
+                if (NetworkingManager.GetSingleton().ConnectedClients.ContainsKey(clientId))
                 {
-                    return NetworkingManager.Singleton.ConnectedClients[clientId].AesKey;
+                    return NetworkingManager.GetSingleton().ConnectedClients[clientId].AesKey;
                 }
-                else if (NetworkingManager.Singleton.PendingClients.ContainsKey(clientId))
+                else if (NetworkingManager.GetSingleton().PendingClients.ContainsKey(clientId))
                 {
-                    return NetworkingManager.Singleton.PendingClients[clientId].AesKey;
+                    return NetworkingManager.GetSingleton().PendingClients[clientId].AesKey;
                 }
                 else
                 {
@@ -69,13 +69,13 @@ namespace MLAPI.Cryptography
         /// <returns>The servers aes key</returns>
         public static byte[] GetServerKey()
         {
-            if (NetworkingManager.Singleton.IsServer)
+            if (NetworkingManager.GetSingleton().IsServer)
             {
                 return null;
             }
             else
             {
-                return NetworkingManager.Singleton.clientAesKey;
+                return NetworkingManager.GetSingleton().clientAesKey;
             }
         }
 

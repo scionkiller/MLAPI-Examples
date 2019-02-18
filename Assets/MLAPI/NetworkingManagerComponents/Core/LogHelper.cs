@@ -2,7 +2,6 @@
 
 namespace MLAPI.Logging
 {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
     public enum LogLevel
     {
         Developer,
@@ -17,10 +16,10 @@ namespace MLAPI.Logging
         {
             get
             {
-                if (NetworkingManager.Singleton == null)
+                if (NetworkingManager.GetSingleton() == null)
                     return LogLevel.Normal;
                 else
-                    return NetworkingManager.Singleton.LogLevel;
+                    return NetworkingManager.GetSingleton().LogLevel;
             }
         }
 
@@ -28,5 +27,4 @@ namespace MLAPI.Logging
         public static void LogWarning(string message) => Debug.LogWarning("[MLAPI] " + message);
         public static void LogError(string message) => Debug.LogError("[MLAPI] " + message);
     }
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
 }

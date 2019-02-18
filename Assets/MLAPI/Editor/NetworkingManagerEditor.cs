@@ -7,8 +7,8 @@ using MLAPI;
 [CanEditMultipleObjects]
 public class NetworkingManagerEditor : Editor
 {
-    private SerializedProperty DontDestroyOnLoadProperty;
-    private SerializedProperty RunInBackgroundProperty;
+    //private SerializedProperty DontDestroyOnLoadProperty;
+    //private SerializedProperty RunInBackgroundProperty;
     private SerializedProperty LogLevelProperty;
     private SerializedProperty NetworkConfigProperty;
 
@@ -27,27 +27,27 @@ public class NetworkingManagerEditor : Editor
 
         initialized = true;
         networkingManager = (NetworkingManager)target;
-        DontDestroyOnLoadProperty = serializedObject.FindProperty("DontDestroy");
-        RunInBackgroundProperty = serializedObject.FindProperty("RunInBackground");
+        //DontDestroyOnLoadProperty = serializedObject.FindProperty("DontDestroy");
+        //RunInBackgroundProperty = serializedObject.FindProperty("RunInBackground");
         LogLevelProperty = serializedObject.FindProperty("LogLevel");
-        NetworkConfigProperty = serializedObject.FindProperty("NetworkConfig");
+        NetworkConfigProperty = serializedObject.FindProperty("config");
     }
 
     private void CheckNullProperties()
     {
-        if (DontDestroyOnLoadProperty == null)
+        /*if( DontDestroyOnLoadProperty == null )
             DontDestroyOnLoadProperty = serializedObject.FindProperty("DontDestroy");
-        if (RunInBackgroundProperty == null)
-            RunInBackgroundProperty = serializedObject.FindProperty("RunInBackground");
-        if (LogLevelProperty == null)
+        if( RunInBackgroundProperty == null )
+            RunInBackgroundProperty = serializedObject.FindProperty("RunInBackground");*/
+        if( LogLevelProperty == null )
             LogLevelProperty = serializedObject.FindProperty("LogLevel");
-        if (NetworkConfigProperty == null)
-            NetworkConfigProperty = serializedObject.FindProperty("NetworkConfig");
+        if( NetworkConfigProperty == null )
+            NetworkConfigProperty = serializedObject.FindProperty("config");
     }
 
     private void OnEnable()
     {
-        networkPrefabsList = new ReorderableList(serializedObject, serializedObject.FindProperty("NetworkConfig").FindPropertyRelative("NetworkedPrefabs"), true, true, true, true);
+        networkPrefabsList = new ReorderableList(serializedObject, serializedObject.FindProperty("config").FindPropertyRelative("NetworkedPrefabs"), true, true, true, true);
         networkPrefabsList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
         {
             SerializedProperty element = networkPrefabsList.serializedProperty.GetArrayElementAtIndex(index);
@@ -69,7 +69,7 @@ public class NetworkingManagerEditor : Editor
             EditorGUI.LabelField(rect, "NetworkedPrefabs");
         };
 
-        channelsList = new ReorderableList(serializedObject, serializedObject.FindProperty("NetworkConfig").FindPropertyRelative("Channels"), true, true, true, true);
+        channelsList = new ReorderableList(serializedObject, serializedObject.FindProperty("config").FindPropertyRelative("Channels"), true, true, true, true);
         channelsList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
         {
             SerializedProperty element = channelsList.serializedProperty.GetArrayElementAtIndex(index);
@@ -95,7 +95,7 @@ public class NetworkingManagerEditor : Editor
         };
 
 
-        registeredScenesList = new ReorderableList(serializedObject, serializedObject.FindProperty("NetworkConfig").FindPropertyRelative("RegisteredScenes"), true, true, true, true);
+        registeredScenesList = new ReorderableList(serializedObject, serializedObject.FindProperty("config").FindPropertyRelative("RegisteredScenes"), true, true, true, true);
         registeredScenesList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
         {
             SerializedProperty element = registeredScenesList.serializedProperty.GetArrayElementAtIndex(index);
@@ -120,11 +120,11 @@ public class NetworkingManagerEditor : Editor
         if (!networkingManager.IsServer && !networkingManager.IsClient)
         {
             serializedObject.Update();
-            EditorGUILayout.PropertyField(DontDestroyOnLoadProperty);
-            EditorGUILayout.PropertyField(RunInBackgroundProperty);
+            //EditorGUILayout.PropertyField(DontDestroyOnLoadProperty);
+            //EditorGUILayout.PropertyField(RunInBackgroundProperty);
             EditorGUILayout.PropertyField(LogLevelProperty);
 
-            if (networkingManager.NetworkConfig.HandleObjectSpawning)
+            if (networkingManager.config.HandleObjectSpawning)
             {
                 EditorGUILayout.Space();
                 networkPrefabsList.DoLayoutList();
@@ -132,11 +132,11 @@ public class NetworkingManagerEditor : Editor
             EditorGUILayout.Space();
             channelsList.DoLayoutList();
             EditorGUILayout.Space();
-            if (networkingManager.NetworkConfig.EnableSceneSwitching)
+            /*if( networkingManager.config.EnableSceneSwitching)
             {
                 registeredScenesList.DoLayoutList();
                 EditorGUILayout.Space();
-            }
+            }*/
 
             serializedObject.ApplyModifiedProperties();
             base.OnInspectorGUI();
@@ -151,7 +151,7 @@ public class NetworkingManagerEditor : Editor
             else if (networkingManager.IsClient)
                 instanceType = "Client";
 
-            EditorGUILayout.HelpBox("You cannot edit the NetworkConfig when a " + instanceType + " is running", UnityEditor.MessageType.Info);
+            EditorGUILayout.HelpBox("You cannot edit the config when a " + instanceType + " is running", UnityEditor.MessageType.Info);
             if (GUILayout.Toggle(false, "Stop " + instanceType, EditorStyles.miniButtonMid))
             {
                 if (networkingManager.IsHost)

@@ -402,7 +402,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.0000019073486, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &222868283958737708
@@ -931,6 +931,7 @@ GameObject:
   - component: {fileID: 114246527999092684}
   - component: {fileID: 114766929903620868}
   - component: {fileID: 114639041936224248}
+  - component: {fileID: 2562463143298465223}
   m_Layer: 0
   m_Name: ThirdPersonController
   m_TagString: Untagged
@@ -1035,7 +1036,7 @@ MonoBehaviour:
   m_GravityMultiplier: 2
   m_RunCycleLegOffset: 0.2
   m_MoveSpeedMultiplier: 1
-  m_AnimSpeedMultiplier: 1
+  m_AnimSpeedMultiplier: 10
   m_GroundCheckDistance: 0.3
 --- !u!114 &114246527999092684
 MonoBehaviour:
@@ -1092,6 +1093,18 @@ MonoBehaviour:
   NetworkedPrefabName: ThirdPersonController
   SceneDelayedSpawn: 0
   DontDestroyWithOwner: 0
+--- !u!114 &2562463143298465223
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1329915689972608}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 210461fd4e2044b449d1ee7c72656ea8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1333852988377664
 GameObject:
   m_ObjectHideFlags: 0

@@ -24,7 +24,7 @@ namespace MLAPI.Components
         /// <param name="size">The amount of objects in the pool</param>
         public static void CreatePool(string poolName, int spawnablePrefabIndex, uint size = 16)
         {
-            if(!NetworkingManager.Singleton.IsServer)
+            if(!NetworkingManager.GetSingleton().IsServer)
             {
                 if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("Pools can only be created on the server");
                 return;
@@ -41,7 +41,7 @@ namespace MLAPI.Components
         /// <param name="poolName">The name of the pool</param>
         public static void DestroyPool(string poolName)
         {
-            if (!NetworkingManager.Singleton.IsServer)
+            if (!NetworkingManager.GetSingleton().IsServer)
             {
                 if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("Pools can only be destroyed on the server");
                 return;
@@ -62,7 +62,7 @@ namespace MLAPI.Components
         /// <returns></returns>
         public static NetworkedObject SpawnPoolObject(string poolName, Vector3 position, Quaternion rotation)
         {
-            if (!NetworkingManager.Singleton.IsServer)
+            if (!NetworkingManager.GetSingleton().IsServer)
             {
                 if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("Object spawning can only occur on server");
                 return null;
@@ -94,7 +94,7 @@ namespace MLAPI.Components
         /// <param name="netObject">The NetworkedObject instance to destroy</param>
         public static void DestroyPoolObject(NetworkedObject netObject)
         {
-            if (!NetworkingManager.Singleton.IsServer)
+            if (!NetworkingManager.GetSingleton().IsServer)
             {
                 if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("Objects can only be destroyed on the server");
                 return;

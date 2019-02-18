@@ -72,7 +72,7 @@
     </member>
     <member name="T:UnityEngine.AI.NavMesh">
       <summary>
-        <para>Singleton class to access the baked NavMesh.</para>
+        <para>GetSingleton() class to access the baked NavMesh.</para>
       </summary>
     </member>
     <member name="P:UnityEngine.AI.NavMesh.avoidancePredictionTime">

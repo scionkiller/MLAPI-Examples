@@ -49,7 +49,7 @@ namespace MLAPI.Internal
 #if !DISABLE_CRYPTOGRAPHY
                     if (isEncrypted || isAuthenticated)
                     {
-                        if (!NetworkingManager.Singleton.NetworkConfig.EnableEncryption)
+                        if (!NetworkingManager.GetSingleton().config.EnableEncryption)
                         {
                             if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Got a encrypted and/or authenticated message but key exchange (\"encryption\") was not enabled");
                             messageType = MLAPIConstants.INVALID;
@@ -76,7 +76,7 @@ namespace MLAPI.Internal
                             inputStream.Position = hmacStartPos;
                             inputStream.Write(HMAC_PLACEHOLDER, 0, HMAC_PLACEHOLDER.Length);
 
-                            byte[] key = NetworkingManager.Singleton.IsServer ? CryptographyHelper.GetClientKey(clientId) : CryptographyHelper.GetServerKey();
+                            byte[] key = NetworkingManager.GetSingleton().IsServer ? CryptographyHelper.GetClientKey(clientId) : CryptographyHelper.GetServerKey();
 
                             if (key == null)
                             {
@@ -117,7 +117,7 @@ namespace MLAPI.Internal
                                 rijndael.IV = IV_BUFFER;
                                 rijndael.Padding = PaddingMode.PKCS7;
 
-                                byte[] key = NetworkingManager.Singleton.IsServer ? CryptographyHelper.GetClientKey(clientId) : CryptographyHelper.GetServerKey();
+                                byte[] key = NetworkingManager.GetSingleton().IsServer ? CryptographyHelper.GetClientKey(clientId) : CryptographyHelper.GetServerKey();
 
                                 if (key == null)
                                 {
@@ -188,8 +188,8 @@ namespace MLAPI.Internal
         {
             try
             {
-                bool encrypted = ((flags & SecuritySendFlags.Encrypted) == SecuritySendFlags.Encrypted) && NetworkingManager.Singleton.NetworkConfig.EnableEncryption;
-                bool authenticated = (flags & SecuritySendFlags.Authenticated) == SecuritySendFlags.Authenticated && NetworkingManager.Singleton.NetworkConfig.EnableEncryption;
+                bool encrypted = ((flags & SecuritySendFlags.Encrypted) == SecuritySendFlags.Encrypted) && NetworkingManager.GetSingleton().config.EnableEncryption;
+                bool authenticated = (flags & SecuritySendFlags.Authenticated) == SecuritySendFlags.Authenticated && NetworkingManager.GetSingleton().config.EnableEncryption;
 
                 PooledBitStream outStream = PooledBitStream.Get();
 
@@ -213,7 +213,7 @@ namespace MLAPI.Internal
                                 rijndael.GenerateIV();
                                 rijndael.Padding = PaddingMode.PKCS7;
 
-                                byte[] key = NetworkingManager.Singleton.IsServer ? CryptographyHelper.GetClientKey(clientId) : CryptographyHelper.GetServerKey();
+                                byte[] key = NetworkingManager.GetSingleton().IsServer ? CryptographyHelper.GetClientKey(clientId) : CryptographyHelper.GetServerKey();
 
                                 if (key == null)
                                 {
@@ -240,7 +240,7 @@ namespace MLAPI.Internal
 
                         if (authenticated)
                         {
-                            byte[] key = NetworkingManager.Singleton.IsServer ? CryptographyHelper.GetClientKey(clientId) : CryptographyHelper.GetServerKey();
+                            byte[] key = NetworkingManager.GetSingleton().IsServer ? CryptographyHelper.GetClientKey(clientId) : CryptographyHelper.GetServerKey();
 
                             if (key == null)
                             {
