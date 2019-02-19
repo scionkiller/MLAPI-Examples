@@ -106,6 +106,7 @@ namespace MLAPI
         /// The callback to invoke when a client disconnects
         /// </summary>
         public Action<uint> OnClientDisconnectCallback = null;
+		
         /// <summary>
         /// Delegate type called when connection has been approved
         /// </summary>
@@ -399,24 +400,22 @@ namespace MLAPI
             }
         }*/
 
-        /// <summary>
-        /// Starts a server
-        /// </summary>
-        public void StartServer()
+		// Returns true on success
+        public bool StartServer( out string errorString )
         {
             if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("StartServer()");
             if (IsServer || IsClient)
             {
-                if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("Cannot start server while an instance is already running");
-                return;
+            	errorString = "Cannot start server while an instance is already running";
+                return false;
             }
 
-            if (config.ConnectionApproval)
+            if(  config.ConnectionApproval
+			  && ConnectionApprovalCallback == null
+			  )
             {
-                if (ConnectionApprovalCallback == null)
-                {
-                    if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("No ConnectionApproval callback defined. Connection approval will timeout");
-                }
+            	errorString = "No ConnectionApproval callback defined. Connection approval will timeout";
+				return false;
             }
 
             object settings = Init(true);
@@ -427,10 +426,45 @@ namespace MLAPI
             IsListening = true;
 
             //SpawnSceneObjects();
+
+			errorString = null;
+			return true;
         }
 
-		// If successful, returns true and sets error to null.
-		// Otherwise returns false and sets a diagnostic error message.
+		public void StopServer()
+        {
+            if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("StopServer()");
+            HashSet<uint> disconnectedIds = new HashSet<uint>();
+            //Don't know if I have to disconnect the clients. I'm assuming the NetworkTransport does all the cleaning on shtudown. But this way the clients get a disconnect message from server (so long it does't get lost)
+            foreach (KeyValuePair<uint, NetworkedClient> pair in ConnectedClients)
+            {
+                if(!disconnectedIds.Contains(pair.Key))
+                {
+                    disconnectedIds.Add(pair.Key);
+					if (pair.Key == config.NetworkTransport.ServerClientId)
+                        continue;
+
+                    config.NetworkTransport.DisconnectClient(pair.Key);
+                }
+            }
+            
+            foreach (KeyValuePair<uint, PendingClient> pair in PendingClients)
+            {
+                if(!disconnectedIds.Contains(pair.Key))
+                {
+                    disconnectedIds.Add(pair.Key);
+                    if (pair.Key == config.NetworkTransport.ServerClientId)
+                        continue;
+
+                    config.NetworkTransport.DisconnectClient(pair.Key);
+                }
+            }
+            
+            IsServer = false;
+            Shutdown();
+        }
+
+		// Returns true on success
         public bool StartClient( out string errorString )
         {
             if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("StartClient()");
@@ -464,57 +498,6 @@ namespace MLAPI
 			}
         }
 
-        /// <summary>
-        /// Stops the running server
-        /// </summary>
-        public void StopServer()
-        {
-            if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("StopServer()");
-            HashSet<uint> disconnectedIds = new HashSet<uint>();
-            //Don't know if I have to disconnect the clients. I'm assuming the NetworkTransport does all the cleaning on shtudown. But this way the clients get a disconnect message from server (so long it does't get lost)
-            foreach (KeyValuePair<uint, NetworkedClient> pair in ConnectedClients)
-            {
-                if(!disconnectedIds.Contains(pair.Key))
-                {
-                    disconnectedIds.Add(pair.Key);
-					if (pair.Key == config.NetworkTransport.ServerClientId)
-                        continue;
-
-                    config.NetworkTransport.DisconnectClient(pair.Key);
-                }
-            }
-            
-            foreach (KeyValuePair<uint, PendingClient> pair in PendingClients)
-            {
-                if(!disconnectedIds.Contains(pair.Key))
-                {
-                    disconnectedIds.Add(pair.Key);
-                    if (pair.Key == config.NetworkTransport.ServerClientId)
-                        continue;
-
-                    config.NetworkTransport.DisconnectClient(pair.Key);
-                }
-            }
-            
-            IsServer = false;
-            Shutdown();
-        }
-
-        /// <summary>
-        /// Stops the running host
-        /// </summary>
-        public void StopHost()
-        {
-            if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("StopHost()");
-            IsServer = false;
-            IsClient = false;
-            StopServer();
-            //We don't stop client since we dont actually have a transport connection to our own host. We just handle host messages directly in the MLAPI
-        }
-
-        /// <summary>
-        /// Stops the running client
-        /// </summary>
         public void StopClient()
         {
             if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("StopClient()");
@@ -524,9 +507,6 @@ namespace MLAPI
             Shutdown();
         }
 
-        /// <summary>
-        /// Starts a Host
-        /// </summary>
         public void StartHost(Vector3? pos = null, Quaternion? rot = null, int prefabId = -1)
         {
             if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("StartHost()");
@@ -564,6 +544,15 @@ namespace MLAPI
             }
 
             //SpawnSceneObjects();
+        }
+
+        public void StopHost()
+        {
+            if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("StopHost()");
+            IsServer = false;
+            IsClient = false;
+            StopServer();
+            //We don't stop client since we dont actually have a transport connection to our own host. We just handle host messages directly in the MLAPI
         }
 
         private void OnEnable()

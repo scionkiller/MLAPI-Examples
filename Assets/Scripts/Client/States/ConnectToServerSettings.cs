@@ -1,7 +1,10 @@
+using System.IO;
+
 using UnityEngine;
 
 using TMPro;
 using MLAPI;
+using MLAPI.Serialization;
 
 
 public class ConnectToServerSettings : ClientStateSettings
@@ -48,30 +51,33 @@ public class ConnectToServer : ClientState
 		_connectionSucceeded = false;
 		StartConnectionAttempt();
 
-		_exitTime = Time.time + MINIMUM_DISPLAY_TIME;
+		_network.OnIncomingCustomMessage += OnCustomMessage;
 	}
 
 	public void OnExit()
 	{
 		_settings.Hide();
+
+		_network.OnIncomingCustomMessage -= OnCustomMessage;
 	}
 	
 	public void OnUpdate()
 	{
-		if(  Time.time > _nextConnectionAttemptTime
-		  && _connectionAttempts < CONNECTION_RETRIES
-		  )
+		if( _connectionSucceeded )
 		{
-			StartConnectionAttempt();
+			if( Time.time > _exitTime )
+			{
+				_transitionState = ClientStateId.LoadClientRoom;
+			}
 		}
-
-		// TODO: listen for handshake here
-
-		if(  _connectionSucceeded
-		  && Time.time > _exitTime
-		  )
+		else
 		{
-			_transitionState = ClientStateId.LoadClientRoom;
+			if(  Time.time > _nextConnectionAttemptTime
+			  && _connectionAttempts < CONNECTION_RETRIES
+			  )
+			{
+				StartConnectionAttempt();
+			}
 		}
 	}
 
@@ -101,5 +107,24 @@ public class ConnectToServer : ClientState
 			_settings.display.text += "Connection attempt failed with error:\n";
 			_settings.display.text += error + "\n\n";
 		}
+	}
+
+	void OnCustomMessage( uint clientId, Stream stream )
+	{
+		BitReader reader = new BitReader(stream);
+		MessageType message = (MessageType)reader.ReadByte();
+
+		if( message != MessageType.ConfirmClientConnection )
+		{
+			Debug.LogError( "FATAL ERROR: unexpected network message type: " + message );
+			return;
+		}
+
+		string room = reader.ReadString(true).ToString();
+		_world.SetClientRoom( room );
+		_settings.display.text += "Server accepted connection. Room scene is: '" + room + "'\n";
+
+		_connectionSucceeded = true;
+		_exitTime = Time.time + MINIMUM_DISPLAY_TIME;
 	}
 }

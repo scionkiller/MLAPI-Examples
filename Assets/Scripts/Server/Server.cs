@@ -13,6 +13,7 @@ public enum ServerStateId
 	  NO_TRANSITION = StateMachine<ServerState>.NO_TRANSITION_ID
 	  
 	, LoadServerRoom
+	, LaunchServer
 	, Hosting
 
 	, COUNT
@@ -29,6 +30,9 @@ public class Server : MonoBehaviour
 
 	[SerializeField]
 	LoadServerRoomSettings _loadServerRoomSettings = null;
+
+	[SerializeField]
+	LaunchServerSettings _launchServerSettings = null;
 
 	[SerializeField]
 	HostingSettings _hostingSettings = null;
@@ -50,6 +54,10 @@ public class Server : MonoBehaviour
 
 			s = new LoadServerRoom();
 			s.Initialize( _world, _loadServerRoomSettings );
+			_fsm.AddState(s);
+
+			s = new LaunchServer();
+			s.Initialize( _world, _launchServerSettings );
 			_fsm.AddState(s);
 
 			s = new Hosting();

@@ -17,11 +17,18 @@ public class ClientWorld
 {
 	ClientWorldSettings _settings;
 
+	string _clientRoom;
+
 
 	public ClientWorld( ClientWorldSettings clientSettings )
 	{
 		_settings = clientSettings;
+
+		_clientRoom = null;
 	}
 
 	public NetworkingManager GetNetwork() { return _settings.network; }
+
+	public string GetClientRoom() { return _clientRoom; }
+	public void SetClientRoom( string room ) { _clientRoom = room; }
 }

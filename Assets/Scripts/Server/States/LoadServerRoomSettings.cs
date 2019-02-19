@@ -40,7 +40,7 @@ public class LoadServerRoom : ServerState
 
 		_load = SceneManager.LoadSceneAsync( _world.GetRoomName(), LoadSceneMode.Additive );
 
-		_exitTime = Time.time + MINIMUM_DISPLAY_TIME;
+		_exitTime = 0f;
 	}
 
 	public void OnExit()
@@ -55,12 +55,15 @@ public class LoadServerRoom : ServerState
 		{
 			return;
 		}
-
-		_settings.display.text = "Room load completed.";
+		else if( _exitTime == 0f )
+		{
+			_settings.display.text = "Room load completed.";
+			_exitTime = Time.time + MINIMUM_DISPLAY_TIME;
+		}
 
 		if( Time.time > _exitTime )
 		{
-			_transitionState = ServerStateId.Hosting;
+			_transitionState = ServerStateId.LaunchServer;
 		}
 	}
 

@@ -36,11 +36,17 @@ public class LoadClientRoom : ClientState
 	{
 		_settings.Show();
 
+		string room = _world.GetClientRoom();
+		if( _world.GetClientRoom() == null )
+		{
+			Debug.LogError( "FATAL ERROR: Client room not set before reaching LoadClientRoom state" );
+		}
+
 		_settings.display.text = "Loading room data, please wait...";
 
-		_load = SceneManager.LoadSceneAsync( "Arena", LoadSceneMode.Additive );
+		_load = SceneManager.LoadSceneAsync( room, LoadSceneMode.Additive );
 
-		_exitTime = Time.time + MINIMUM_DISPLAY_TIME;
+		_exitTime = 0f;
 	}
 
 	public void OnExit()
@@ -55,12 +61,15 @@ public class LoadClientRoom : ClientState
 		{
 			return;
 		}
-
-		_settings.display.text = "Room load completed.";
+		else if( _exitTime == 0f )
+		{
+			_settings.display.text = "Room load completed.";
+			_exitTime = Time.time + MINIMUM_DISPLAY_TIME;
+		}
 
 		if( Time.time > _exitTime )
 		{
-			// TODO: next state
+			_transitionState = ClientStateId.Playing;
 		}
 	}
 
