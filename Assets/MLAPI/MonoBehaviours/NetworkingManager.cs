@@ -1039,7 +1039,7 @@ namespace MLAPI
                 ConnectedClientsList.Add(client);
 
                 NetworkedObject netObject = null;
-                if(config.HandleObjectSpawning)
+                if(config.HandleObjectSpawning && prefabId != 0)
                 {
                     prefabId = prefabId == -1 ? SpawnManager.GetNetworkedPrefabIndexOfName(config.PlayerPrefabName) : prefabId;
                     netObject = SpawnManager.CreateSpawnedObject(prefabId, 0, clientId, true, /*NetworkSceneManager.CurrentActiveSceneIndex,*/

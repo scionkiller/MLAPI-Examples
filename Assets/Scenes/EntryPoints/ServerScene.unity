@@ -162,6 +162,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   display: {fileID: 1408404332}
+  avatarPrefab: {fileID: 465947767953787966, guid: 0ef5562168d0aa446a21217c3d704eec,
+    type: 3}
 --- !u!1 &620006545
 GameObject:
   m_ObjectHideFlags: 0
@@ -1258,7 +1260,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1704982390}
   - component: {fileID: 1704982391}
-  - component: {fileID: 1704982392}
   m_Layer: 0
   m_Name: Server
   m_TagString: Untagged
@@ -1294,65 +1295,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62e1951e3da11e64f84740d5d37ecaac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _worldSettings:
-    network: {fileID: 1704982392}
+  _serverWorldSettings:
     roomScene: Arena
   _loadServerRoomSettings: {fileID: 2001262799}
   _launchServerSettings: {fileID: 915643126}
   _hostingSettings: {fileID: 132238612}
---- !u!114 &1704982392
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1704982389}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 94cb302faeaa13449a6ebdac914afc63, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  LogLevel: 1
-  config:
-    ProtocolVersion: 0
-    Transport: 0
-    RelayAddress: 127.0.0.1
-    RelayPort: 8888
-    RelayEnabled: 1
-    Channels: []
-    RegisteredScenes: []
-    NetworkedPrefabs:
-    - prefab: {fileID: 1595020433191848, guid: 03a297f61fe3ef344989473054d7a493, type: 3}
-      playerPrefab: 0
-    - prefab: {fileID: 8670392759175092509, guid: 6731371154a7f144e92f5caefa6bac8b,
-        type: 3}
-      playerPrefab: 0
-    - prefab: {fileID: 1631893145635948, guid: 02e37f97df7ed8d459e06fd7c4e9e5df, type: 3}
-      playerPrefab: 0
-    - prefab: {fileID: 1329915689972608, guid: e76e7324100b55b4884126b83418ebab, type: 3}
-      playerPrefab: 1
-    PlayerPrefabName: ThirdPersonController
-    MessageBufferSize: 1024
-    ReceiveTickrate: 64
-    MaxReceiveEventsPerTickRate: 500
-    SendTickrate: 64
-    EventTickrate: 64
-    MaxConnections: 100
-    ConnectPort: 7777
-    ConnectAddress: 127.0.0.1
-    ClientConnectionBufferTimeout: 10
-    ConnectionApproval: 0
-    ConnectionData: 
-    SecondsHistory: 5
-    HandleObjectSpawning: 1
-    EnableTimeResync: 0
-    ForceSamePrefabs: 1
-    RpcHashSize: 0
-    PrefabHashSize: 0
-    LoadSceneTimeOut: 120
-    EnableEncryption: 0
-    SignKeyExchange: 0
-    ServerBase64PfxCertificate: 
 --- !u!1 &1850034339
 GameObject:
   m_ObjectHideFlags: 0

@@ -18,7 +18,9 @@ public class LoadClientRoom : ClientState
 	LoadClientRoomSettings _settings;
 	ClientStateId _transitionState;
 
-	float _exitTime;
+    NetworkingManager _network;
+
+    float _exitTime;
 	AsyncOperation _load;
 
 
@@ -69,7 +71,7 @@ public class LoadClientRoom : ClientState
 
 		if( Time.time > _exitTime )
 		{
-			_transitionState = ClientStateId.Playing;
+			_transitionState = ClientStateId.SpawnAvatar;
 		}
 	}
 
@@ -78,5 +80,6 @@ public class LoadClientRoom : ClientState
 	public int GetTransitionID() { return (int)_transitionState; }
 	public int GetID() { return (int)ClientStateId.LoadClientRoom; }
 
-	#endregion // ClientState interface
+    #endregion // ClientState interface
+
 }

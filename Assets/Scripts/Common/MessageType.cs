@@ -2,5 +2,6 @@
 enum MessageType : byte
 {
 	  Invalid = 0
-	, ConfirmClientConnection
+	, ConfirmClientConnection // From Server to Client
+    , SpawnAvatarRequest // From Client to Server
 }

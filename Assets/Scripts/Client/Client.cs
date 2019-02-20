@@ -14,9 +14,9 @@ public enum ClientStateId
 	  
 	, ConnectToServer
 	, LoadClientRoom
-	//, JoinRoomCalibrate
-	//, SpawnPlayer
-	, Playing
+    //, JoinRoomCalibrate
+    , SpawnAvatar
+    , Playing
 
 	, COUNT
 }
@@ -28,7 +28,7 @@ public enum ClientStateId
 public class Client : MonoBehaviour
 {
 	[SerializeField]
-	ClientWorldSettings _worldSettings = null;
+	ClientWorldSettings _clientWorldSettings = null;
 
 	[SerializeField]
 	ConnectToServerSettings _connectToServerSettings = null;
@@ -36,50 +36,73 @@ public class Client : MonoBehaviour
 	[SerializeField]
 	LoadClientRoomSettings _loadRoomSceneSettings = null;
 
-	[SerializeField]
+    [SerializeField]
+    SpawnAvatarSettings _spawnAvatarSettings = null;
+
+    [SerializeField]
 	PlayingSettings _playingSettings = null;
 
 
 	ClientWorld _world;
 	StateMachine<ClientState> _fsm;
+    AsyncOperation _load;
 
 
     void Start()
     {
-		// create the world, which is all data that needs to be shared between states
-		_world = new ClientWorld( _worldSettings );
-
-		// setup the FSM, creating each state and passing along its associated settings
-        _fsm = new StateMachine<ClientState>( (int)ClientStateId.COUNT );
-		{
-			ClientState s;
-
-			s = new ConnectToServer();
-			s.Initialize( _world, _connectToServerSettings );
-			_fsm.AddState(s);
-
-			s = new LoadClientRoom();
-			s.Initialize( _world, _loadRoomSceneSettings );
-			_fsm.AddState(s);
-
-			// TODO: other prep states here
-
-			s = new Playing();
-			s.Initialize( _world, _playingSettings );
-			_fsm.AddState(s);
-		}
-
-		// start the FSM
-		_fsm.TransitionTo( (int)ClientStateId.ConnectToServer );
+        _load = Utility.LoadCommonScene();
     }
 
     void Update()
     {
-		_fsm.OnUpdate();
+        if (_fsm != null)
+        {
+            _fsm.OnUpdate();
+        }
+        else
+        {
+            if( _load.isDone )
+            {
+                WorldSettings worldSettings = Utility.GetWorldSettingsFromCommonScene();
+
+                // create the world, which is all data that needs to be shared between states
+                _world = new ClientWorld(worldSettings, _clientWorldSettings);
+
+                // setup the FSM, creating each state and passing along its associated settings
+                _fsm = new StateMachine<ClientState>((int)ClientStateId.COUNT);
+                {
+                    ClientState s;
+
+                    s = new ConnectToServer();
+                    s.Initialize(_world, _connectToServerSettings);
+                    _fsm.AddState(s);
+
+                    s = new LoadClientRoom();
+                    s.Initialize(_world, _loadRoomSceneSettings);
+                    _fsm.AddState(s);
+
+                    // TODO: other prep states here
+
+                    s = new SpawnAvatar();
+                    s.Initialize(_world, _spawnAvatarSettings);
+                    _fsm.AddState(s);
+
+                    s = new Playing();
+                    s.Initialize(_world, _playingSettings);
+                    _fsm.AddState(s);
+                }
+
+                // start the FSM
+                _fsm.TransitionTo((int)ClientStateId.ConnectToServer);
+            }
+        }
     }
 
 	void FixedUpdate()
 	{
-		_fsm.OnFixedUpdate();
+        if (_fsm != null)
+        {
+            _fsm.OnFixedUpdate();
+        }
 	}
 }

@@ -187,7 +187,7 @@ namespace MLAPI.Internal
                 }
                 else
                 {
-                    netManager.HandleApproval(clientId, -1, true, null, null);
+                    netManager.HandleApproval(clientId, 0, true, null, null);
                 }
             }
         }

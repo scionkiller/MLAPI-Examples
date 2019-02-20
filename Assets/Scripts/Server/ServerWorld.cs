@@ -1,12 +1,9 @@
-﻿using UnityEngine;
-
-using MLAPI;
+﻿using MLAPI;
 
 
 [System.Serializable]
 public class ServerWorldSettings
 {
-	public NetworkingManager network;
 	// TODO: eventually this would be read in from the command line or similar
 	public string roomScene;
 }
@@ -15,14 +12,16 @@ public class ServerWorldSettings
 // eg. authentication token for the user 
 public class ServerWorld
 {
+    WorldSettings _worldSettings;
 	ServerWorldSettings _settings;
 
 
-	public ServerWorld( ServerWorldSettings settings )
+	public ServerWorld( WorldSettings worldSettings, ServerWorldSettings serverWorldSettings )
 	{
-		_settings = settings;
+        _worldSettings = worldSettings;
+		_settings = serverWorldSettings;
 	}
 
-	public NetworkingManager GetNetwork() { return _settings.network; }
+	public NetworkingManager GetNetwork() { return _worldSettings.network; }
 	public string GetRoomName() { return _settings.roomScene; }
 }

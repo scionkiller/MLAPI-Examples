@@ -9,6 +9,7 @@ using MLAPI.Serialization;
 public class HostingSettings : ServerStateSettings
 {
 	public TMP_Text display;
+    public NetworkedObject avatarPrefab;
 }
 
 public class Hosting : ServerState
@@ -75,5 +76,13 @@ public class Hosting : ServerState
 
 		// TODO: remove
 		Debug.Log( "Sent room name: '" + _world.GetRoomName() + "' to client: " + clientId );
+
 	}
+
+    void OnSpawnPlayer( uint clientId )
+    {
+        Debug.Log("Spawning player");
+        NetworkedObject avatar = NetworkedObject.Instantiate(_settings.avatarPrefab, Vector3.zero, Quaternion.identity);
+        avatar.SpawnAsPlayerObject(clientId);
+    }
 }

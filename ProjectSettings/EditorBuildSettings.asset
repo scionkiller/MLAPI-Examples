@@ -9,6 +9,9 @@ EditorBuildSettings:
     path: Assets/Scenes/EntryPoints/TemporaryShellScene.unity
     guid: 35011536059b1a146b7d1e010b2cde80
   - enabled: 1
+    path: Assets/Scenes/EntryPoints/Common.unity
+    guid: 657e51222c16b0f4aaab61f1d413d24f
+  - enabled: 1
     path: Assets/Scenes/EntryPoints/ServerScene.unity
     guid: 67cf6a6a6ca51ed40b40f4b7204087ca
   - enabled: 1
