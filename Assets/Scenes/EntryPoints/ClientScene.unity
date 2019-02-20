@@ -947,6 +947,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _worldSettings:
     network: {fileID: 1597295878}
+    avatarPrefab: {fileID: 5312964890511813251, guid: 3a6a0da35d32db04bb4d3dcc8a474320,
+      type: 3}
   _connectToServerSettings: {fileID: 185399704}
   _loadRoomSceneSettings: {fileID: 1451955313}
   _playingSettings: {fileID: 208812103}
