@@ -56,12 +56,6 @@ namespace MLAPI.Configuration
         [HideInInspector]
         public List<NetworkedPrefab> NetworkedPrefabs = new List<NetworkedPrefab>();
         /// <summary>
-        /// The default player prefab
-        /// </summary>
-        [SerializeField]
-        [HideInInspector]
-        internal string PlayerPrefabName;
-        /// <summary>
         /// The size of the receive message buffer. This is the max message size including any MLAPI overheads.
         /// </summary>
         public int MessageBufferSize = 1024;
@@ -221,7 +215,6 @@ namespace MLAPI.Configuration
                     writer.WriteUInt16Packed((ushort)config.NetworkedPrefabs.Count);
                     for (int i = 0; i < config.NetworkedPrefabs.Count; i++)
                     {
-                        writer.WriteBool(config.NetworkedPrefabs[i].playerPrefab);
                         writer.WriteString(config.NetworkedPrefabs[i].name);
                     }
 
@@ -301,7 +294,6 @@ namespace MLAPI.Configuration
                         }
                         NetworkedPrefab networkedPrefab = new NetworkedPrefab()
                         {
-                            playerPrefab = playerPrefab,
                             prefab = dummyPrefab
                         };
                         config.NetworkedPrefabs.Add(networkedPrefab);
