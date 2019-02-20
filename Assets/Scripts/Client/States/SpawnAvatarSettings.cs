@@ -12,9 +12,13 @@ public class SpawnAvatarSettings : ClientStateSettings
 
 public class SpawnAvatar : ClientState
 {
+    static readonly float MINIMUM_DISPLAY_TIME = 2f;
+
     ClientWorld _world;
     SpawnAvatarSettings _settings;
     ClientStateId _transitionState;
+
+    float _exitTime;
 
 
     #region ClientState interface (including FsmState interface)
@@ -40,6 +44,8 @@ public class SpawnAvatar : ClientState
             NetworkingManager networking = _world.GetNetwork();
             networking.SendCustomMessage(networking.ServerClientId, stream);
         }
+
+        _exitTime = Time.time + MINIMUM_DISPLAY_TIME;
     }
 
     public void OnExit()
@@ -49,7 +55,10 @@ public class SpawnAvatar : ClientState
 
     public void OnUpdate()
     {
-        // TODO
+        if (Time.time > _exitTime)
+        {
+            _transitionState = ClientStateId.Playing;
+        }
     }
 
     public void OnFixedUpdate() { }
