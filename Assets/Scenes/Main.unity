@@ -213,28 +213,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 94cb302faeaa13449a6ebdac914afc63, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DontDestroy: 1
-  RunInBackground: 1
   LogLevel: 1
-  NetworkConfig:
+  config:
     ProtocolVersion: 0
     Transport: 0
     RelayAddress: 127.0.0.1
     RelayPort: 8888
     RelayEnabled: 1
     Channels: []
-    RegisteredScenes:
-    - Main
-    NetworkedPrefabs:
-    - prefab: {fileID: 1329915689972608, guid: e76e7324100b55b4884126b83418ebab, type: 3}
-      playerPrefab: 1
-    - prefab: {fileID: 1595020433191848, guid: 03a297f61fe3ef344989473054d7a493, type: 3}
-      playerPrefab: 0
-    - prefab: {fileID: 8670392759175092509, guid: 6731371154a7f144e92f5caefa6bac8b,
-        type: 3}
-      playerPrefab: 0
-    - prefab: {fileID: 1631893145635948, guid: 02e37f97df7ed8d459e06fd7c4e9e5df, type: 3}
-      playerPrefab: 0
+    RegisteredScenes: []
+    NetworkedPrefabs: []
     PlayerPrefabName: ThirdPersonController
     MessageBufferSize: 1024
     ReceiveTickrate: 64
@@ -249,7 +237,6 @@ MonoBehaviour:
     ConnectionData: 
     SecondsHistory: 5
     HandleObjectSpawning: 1
-    EnableSceneSwitching: 1
     EnableTimeResync: 0
     ForceSamePrefabs: 1
     RpcHashSize: 0

@@ -6,7 +6,6 @@ using TMPro;
 using MLAPI;
 using MLAPI.Serialization;
 
-
 public class ConnectToServerSettings : ClientStateSettings
 {
 	public TMP_Text display;
@@ -15,7 +14,7 @@ public class ConnectToServerSettings : ClientStateSettings
 public class ConnectToServer : ClientState
 {
 	static readonly float MINIMUM_DISPLAY_TIME = 2f;
-	static readonly int CONNECTION_RETRIES = 3;
+	static readonly int CONNECTION_RETRIES = 1;
 	static readonly float CONNECTION_WAIT_TIME = 3f;
 
 	ClientWorld _world;
@@ -47,12 +46,12 @@ public class ConnectToServer : ClientState
 		_settings.Show();
 		_settings.display.text = "";
 
-		_connectionAttempts = 0;
-		_connectionSucceeded = false;
-		StartConnectionAttempt();
+        _network.OnIncomingCustomMessage += OnCustomMessage;
 
-		_network.OnIncomingCustomMessage += OnCustomMessage;
-	}
+        _connectionAttempts = 0;
+        _connectionSucceeded = false;
+        StartConnectionAttempt();
+    }
 
 	public void OnExit()
 	{

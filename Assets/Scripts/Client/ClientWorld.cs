@@ -1,7 +1,3 @@
-using UnityEngine;
-
-using TMPro;
-
 using MLAPI;
 
 
@@ -18,19 +14,21 @@ public class ClientWorldSettings
 // eg. authentication token for the user 
 public class ClientWorld
 {
-	ClientWorldSettings _settings;
+    WorldSettings _worldSettings;
+    ClientWorldSettings _settings;
 
 	string _clientRoom;
 	AvatarController _avatar;
 
-	public ClientWorld( ClientWorldSettings clientSettings )
+	public ClientWorld( WorldSettings worldSettings, ClientWorldSettings clientWorldSettings )
 	{
-		_settings = clientSettings;
+        _worldSettings = worldSettings;
+		_settings = clientWorldSettings;
 
 		_clientRoom = null;
 	}
 
-	public NetworkingManager GetNetwork() { return _settings.network; }
+	public NetworkingManager GetNetwork() { return _worldSettings.network; }
 
 	public string GetClientRoom() { return _clientRoom; }
 	public void SetClientRoom( string room ) { _clientRoom = room; }

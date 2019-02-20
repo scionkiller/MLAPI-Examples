@@ -26,7 +26,7 @@ public enum ServerStateId
 public class Server : MonoBehaviour
 {
 	[SerializeField]
-	ServerWorldSettings _worldSettings = null;
+	ServerWorldSettings _serverWorldSettings = null;
 
 	[SerializeField]
 	LoadServerRoomSettings _loadServerRoomSettings = null;
@@ -40,42 +40,58 @@ public class Server : MonoBehaviour
 
 	ServerWorld _world;
 	StateMachine<ServerState> _fsm;
+    AsyncOperation _load;
 
 
     void Start()
     {
-		// create the world, which is all data that needs to be shared between states
-		_world = new ServerWorld( _worldSettings );
-
-		// setup the FSM, creating each state and passing along its associated settings
-        _fsm = new StateMachine<ServerState>( (int)ServerStateId.COUNT );
-		{
-			ServerState s;
-
-			s = new LoadServerRoom();
-			s.Initialize( _world, _loadServerRoomSettings );
-			_fsm.AddState(s);
-
-			s = new LaunchServer();
-			s.Initialize( _world, _launchServerSettings );
-			_fsm.AddState(s);
-
-			s = new Hosting();
-			s.Initialize( _world, _hostingSettings );
-			_fsm.AddState(s);
-		}
-
-		// start the FSM
-		_fsm.TransitionTo( (int)ServerStateId.LoadServerRoom );
+        _load = Utility.LoadCommonScene();   
     }
 
     void Update()
     {
-		_fsm.OnUpdate();
+        if (_fsm != null)
+        {
+            _fsm.OnUpdate();
+        }
+        else
+        {
+            if( _load.isDone )
+            {
+                WorldSettings worldSettings = Utility.GetWorldSettingsFromCommonScene();
+
+                // create the world, which is all data that needs to be shared between states
+                _world = new ServerWorld(worldSettings, _serverWorldSettings);
+
+                // setup the FSM, creating each state and passing along its associated settings
+                _fsm = new StateMachine<ServerState>((int)ServerStateId.COUNT);
+                {
+                    ServerState s;
+
+                    s = new LoadServerRoom();
+                    s.Initialize(_world, _loadServerRoomSettings);
+                    _fsm.AddState(s);
+
+                    s = new LaunchServer();
+                    s.Initialize(_world, _launchServerSettings);
+                    _fsm.AddState(s);
+
+                    s = new Hosting();
+                    s.Initialize(_world, _hostingSettings);
+                    _fsm.AddState(s);
+                }
+
+                // start the FSM
+                _fsm.TransitionTo((int)ServerStateId.LoadServerRoom);
+            }
+        }
     }
 
 	void FixedUpdate()
 	{
-		_fsm.OnFixedUpdate();
+        if (_fsm != null)
+        {
+            _fsm.OnFixedUpdate();
+        }
 	}
 }

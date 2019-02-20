@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 using TMPro;
@@ -38,7 +40,7 @@ public class LoadServerRoom : ServerState
 
 		_settings.display.text = "Loading room data, please wait...";
 
-		_load = SceneManager.LoadSceneAsync( _world.GetRoomName(), LoadSceneMode.Additive );
+        _load = SceneManager.LoadSceneAsync( _world.GetRoomName(), LoadSceneMode.Additive );
 
 		_exitTime = 0f;
 	}
