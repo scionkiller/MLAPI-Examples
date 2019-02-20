@@ -49,9 +49,5 @@ namespace MLAPI.Data
         /// The gameobject of the prefab
         /// </summary>
         public GameObject prefab;
-        /// <summary>
-        /// Wheter or not this is a playerPrefab
-        /// </summary>
-        public bool playerPrefab;
     }
 }
