@@ -4,7 +4,7 @@ using UnityEngine.SceneManagement;
 using TMPro;
 using MLAPI;
 using MLAPI.Serialization;
-
+using System.IO;
 
 public class HostingSettings : ServerStateSettings
 {
@@ -40,14 +40,16 @@ public class Hosting : ServerState
 		_settings.display.text = "Ready";
 
 		_network.OnClientConnectedCallback = OnClientConnected;
-	}
+        _network.OnIncomingCustomMessage += OnCustomMessage;
+    }
 
 	public void OnExit()
 	{
 		_settings.Hide();
 
 		_network.OnClientConnectedCallback = null;
-	}
+        _network.OnIncomingCustomMessage -= OnCustomMessage;
+    }
 	
 	public void OnUpdate()
 	{
@@ -79,10 +81,19 @@ public class Hosting : ServerState
 
 	}
 
-    void OnSpawnPlayer( uint clientId )
+    void OnCustomMessage(uint clientId, Stream stream)
     {
-        Debug.Log("Spawning player");
+        BitReader reader = new BitReader(stream);
+        MessageType message = (MessageType)reader.ReadByte();
+
+        if (message != MessageType.SpawnAvatarRequest)
+        {
+            Debug.LogError("FATAL ERROR: unexpected network message type: " + message);
+            return;
+        }
+
         NetworkedObject avatar = NetworkedObject.Instantiate(_settings.avatarPrefab, Vector3.zero, Quaternion.identity);
         avatar.SpawnAsPlayerObject(clientId);
     }
+
 }
