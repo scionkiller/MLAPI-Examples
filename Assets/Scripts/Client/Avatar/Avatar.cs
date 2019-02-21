@@ -112,7 +112,7 @@ public class AvatarController
 		RaycastHit h;
 		if( Physics.Raycast( r, out h, HEIGHT + DELTA ) )
 		{
-			Debug.Log( String.Format( "ground ray hit: {0} at distance: {1}", h.collider.name, h.distance ) );
+			//Debug.Log( String.Format( "ground ray hit: {0} at distance: {1}", h.collider.name, h.distance ) );
 			
 			float d = h.distance;
 			float mag = Mathf.Abs(HEIGHT - d);
@@ -133,7 +133,7 @@ public class AvatarController
 				verticalTargetSpeed = MAX_SPEED * (mag / DELTA);	
 			}
 			
-			Debug.Log( String.Format( "sign: {0} target speed: {1}", verticalSign, verticalTargetSpeed ) );
+			//Debug.Log( String.Format( "sign: {0} target speed: {1}", verticalSign, verticalTargetSpeed ) );
 		}	
 		// could disable key input here if no collision (ie, no "airtouch" if falling)
 		// we ignore this because in this game we will probably never be falling
@@ -193,7 +193,7 @@ public class AvatarController
 		if( Physics.Raycast( r, out hit, _avatar.interactDistance, Layer.TOOL_MASK ) )
 		{
 			_lookAtTool = hit.collider.gameObject.GetComponentInParent<ToolSettings>();
-			Debug.Log( String.Format( "Look ray hit, collider is: {0} atom is: {1}", hit.collider.name, ((_lookAtTool != null) ? _lookAtTool.name : "null") ) );
+			Debug.Log( String.Format( "Look ray hit, collider is: {0} tool is: {1}", hit.collider.name, ((_lookAtTool != null) ? _lookAtTool.name : "null") ) );
 		}
 	}
 }
