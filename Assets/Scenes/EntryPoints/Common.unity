@@ -164,7 +164,7 @@ MonoBehaviour:
     EventTickrate: 64
     MaxConnections: 100
     ConnectPort: 7777
-    ConnectAddress: 127.0.0.1
+    ConnectAddress: 10.10.1.106
     ClientConnectionBufferTimeout: 10
     ConnectionApproval: 0
     ConnectionData: 
