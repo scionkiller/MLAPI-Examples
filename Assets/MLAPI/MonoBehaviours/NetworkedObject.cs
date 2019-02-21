@@ -106,13 +106,6 @@ namespace MLAPI
 		/// Gets if the object has yet been spawned across the network
 		/// </summary>
 		public bool IsSpawned { get; internal set; }
-		internal bool? destroyWithScene = null;
-
-		/// <summary>
-		/// When enabled this gameobject will not be spawned on the client until the scene it was originally spawned inside at the server is fully loaded on the client.
-		/// </summary>
-		[Tooltip("When enabled this gameobject will not be spawned on the client until the scene it was originally spawned inside at the server is fully loaded on the client.")]
-		public bool SceneDelayedSpawn = false;
 
 		//internal uint sceneSpawnedInIndex = 0;
 
@@ -132,10 +125,9 @@ namespace MLAPI
 		/// Spawns this GameObject across the network. Can only be called from the Server
 		/// </summary>
 		/// <param name="spawnPayload">The writer containing the spawn payload</param>
-		/// <param name="destroyWithScene">Should the object be destroyd when the scene is changed</param>
-		public void Spawn(Stream spawnPayload = null, bool destroyWithScene = false)
+		public void Spawn( Stream spawnPayload = null )
 		{
-			SpawnManager.SpawnObject(this, null, spawnPayload, destroyWithScene);
+			SpawnManager.SpawnObject( this, null, spawnPayload );
 		}
 
 		/// <summary>
@@ -151,10 +143,9 @@ namespace MLAPI
 		/// </summary>
 		/// <param name="clientId">The clientId to own the object</param>
 		/// <param name="spawnPayload">The writer containing the spawn payload</param>
-		/// <param name="destroyWithScene">Should the object be destroyd when the scene is changed</param>
-		public void SpawnWithOwnership(uint clientId, Stream spawnPayload = null, bool destroyWithScene = false)
+		public void SpawnWithOwnership( uint clientId, Stream spawnPayload = null )
 		{
-			SpawnManager.SpawnObject(this, clientId, spawnPayload, destroyWithScene);
+			SpawnManager.SpawnObject( this, clientId, spawnPayload );
 		}
 
 		/// <summary>

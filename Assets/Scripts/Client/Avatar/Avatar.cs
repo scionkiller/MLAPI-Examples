@@ -10,8 +10,9 @@ public class Avatar : MonoBehaviour
 	// TODO: these two dumb names are because of deprecated fields that still exist on Component
 	public Camera avatarCamera;
 	public Rigidbody avatarRigidBody;
-	public float yawSpeed;
-	public float pitchSpeed;	
+
+	public float yawSpeed = 60f;
+	public float pitchSpeed = 60f;
 
 	[Range(0f, 90f)]
 	public float maxDownwardPitch = 35f;
@@ -49,19 +50,12 @@ public class AvatarController
 	ToolSettings _lookAtTool;
 
 
-	static public AvatarController SpawnAvatar( Avatar prefab, Vector3 position )
-	{
-		Avatar a = GameObject.Instantiate( prefab, position, Quaternion.identity );
-		AvatarController c = new AvatarController( a );
-		return c;
-	}
-
 	public AvatarController( Avatar avatar )
 	{
 		_avatar = avatar;
 
-		_avatar.GetComponent<Camera>().tag = "MainCamera";
-		_avatar.GetComponent<Camera>().gameObject.GetComponent<AudioListener>().enabled = true;
+		_avatar.avatarCamera.tag = "MainCamera";
+		_avatar.avatarCamera.gameObject.GetComponent<AudioListener>().enabled = true;
 
 		OnTeleport();
 	}

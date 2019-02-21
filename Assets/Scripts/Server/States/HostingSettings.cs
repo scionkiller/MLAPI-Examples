@@ -92,7 +92,12 @@ public class Hosting : ServerState
             return;
         }
 
-        NetworkedObject avatar = NetworkedObject.Instantiate(_settings.avatarPrefab, Vector3.zero, Quaternion.identity);
+		// TODO: generating a random position on a 10 m circle as a proxy for using an actual spawn point
+		float randomTau = Random.Range( 0, 2f * Mathf.PI );
+		float x = 10f * Mathf.Cos( randomTau );
+		float z = 10f * Mathf.Cos( randomTau );
+
+        NetworkedObject avatar = NetworkedObject.Instantiate(_settings.avatarPrefab, new Vector3( x, 0f, z), Quaternion.identity);
         avatar.SpawnAsPlayerObject(clientId);
     }
 

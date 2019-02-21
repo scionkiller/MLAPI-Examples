@@ -104,10 +104,7 @@ namespace MLAPI.Configuration
         /// The amount of seconds to keep a lag compensation position history
         /// </summary>
         public int SecondsHistory = 5;
-        /// <summary>
-        /// Wheter or not to make the library handle object spawning
-        /// </summary>
-        public bool HandleObjectSpawning = true;
+
         /*
 		/// <summary>
         /// Whether or not to enable scene switching
@@ -229,7 +226,6 @@ namespace MLAPI.Configuration
                     writer.WriteInt32Packed(config.ClientConnectionBufferTimeout);
                     writer.WriteBool(config.ConnectionApproval);
                     writer.WriteInt32Packed(config.SecondsHistory);
-                    writer.WriteBool(config.HandleObjectSpawning);
                     writer.WriteBool(config.EnableEncryption);
                     writer.WriteBool(config.SignKeyExchange);
                 	//writer.WriteBool(config.EnableSceneSwitching);
@@ -310,7 +306,6 @@ namespace MLAPI.Configuration
                     config.ClientConnectionBufferTimeout = reader.ReadInt32Packed();
                     config.ConnectionApproval = reader.ReadBool();
                     config.SecondsHistory = reader.ReadInt32Packed();
-                    config.HandleObjectSpawning = reader.ReadBool();
                     config.EnableEncryption = reader.ReadBool();
                     config.SignKeyExchange = reader.ReadBool();
                     //config.EnableSceneSwitching = reader.ReadBool();
@@ -356,7 +351,7 @@ namespace MLAPI.Configuration
                         }
                     }*/
 
-                    if (HandleObjectSpawning && ForceSamePrefabs)
+                    if( ForceSamePrefabs )
                     {
                         List<NetworkedPrefab> sortedPrefabList = NetworkedPrefabs.OrderBy(x => x.hash).ToList();
                         for (int i = 0; i < sortedPrefabList.Count; i++)
@@ -366,7 +361,6 @@ namespace MLAPI.Configuration
                     }
 
                     writer.WriteBool(ForceSamePrefabs);
-                    writer.WriteBool(HandleObjectSpawning);
                     writer.WriteBool(EnableEncryption);
                     //writer.WriteBool(EnableSceneSwitching);
                     writer.WriteBool(SignKeyExchange);
