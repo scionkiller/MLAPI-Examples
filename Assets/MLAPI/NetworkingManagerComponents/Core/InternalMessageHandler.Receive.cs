@@ -173,12 +173,13 @@ namespace MLAPI.Internal
             using (PooledBitReader reader = PooledBitReader.Get(stream))
             {
                 ulong configHash = reader.ReadUInt64Packed();
-                if (!netManager.config.CompareConfig(configHash))
-                {
-                    if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("NetworkConfiguration mismatch. The configuration between the server and client does not match");
-                    netManager.DisconnectClient(clientId);
-                    return;
-                }
+				// TODO: find out why this config comparison fails when built on different machines, and restore this safety check
+                // if(  !netManager.config.CompareConfig(configHash) )
+                // {
+                //     if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("NetworkConfiguration mismatch. The configuration between the server and client does not match");
+                //     netManager.DisconnectClient(clientId);
+                //     return;
+                // }
 
                 if (netManager.config.ConnectionApproval)
                 {
@@ -571,16 +572,17 @@ namespace MLAPI.Internal
 
 			if( isPlayerObject )
 			{
-				netManager.ConnectedClients.Add(ownerId, new NetworkedClient() { ClientId = ownerId });
-				netManager.ConnectedClientsList.Add(netManager.ConnectedClients[ownerId]);
+				network.ConnectedClients.Add(ownerId, new NetworkedClient() { ClientId = ownerId });
+				network.ConnectedClientsList.Add(network.ConnectedClients[ownerId]);
 
-				netManager.ConnectedClients[ownerId].PlayerObject = netObject;
+				network.ConnectedClients[ownerId].PlayerObject = netObject;
 
-				if( netManager.OnAvatarSpawn != null ) { netManager.OnAvatarSpawn.Invoke( netObject.gameObject ); }
-			}
-			else
-			{
-				if( netManager.OnObjectSpawn != null) { netManager.OnObjectSpawn.Invoke( netObject.gameObject ); }
+				if( network.OnAvatarSpawn != null
+				  && ownerId == network.LocalClientId
+				  )
+				{
+					network.OnAvatarSpawn.Invoke( netObject.gameObject );
+				}
 			}
 		}
     }

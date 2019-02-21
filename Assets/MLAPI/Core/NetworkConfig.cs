@@ -115,11 +115,6 @@ namespace MLAPI.Configuration
         /// </summary>
         public bool EnableTimeResync = false;
         /// <summary>
-        /// Wheter or not the MLAPI should check for differences in the prefabs at connection. 
-        /// If you dynamically add prefabs at runtime, turn this OFF
-        /// </summary>
-        public bool ForceSamePrefabs = true;
-        /// <summary>
         /// Decides how many bytes to use for Rpc messaging. Leave this to 2 bytes unless you are facing hash collisions
         /// </summary>
         public HashSize RpcHashSize = HashSize.VarIntTwoBytes;
@@ -343,26 +338,13 @@ namespace MLAPI.Configuration
                         writer.WriteByte((byte)Channels[i].Type);
                     }
 
-                    /*if( EnableSceneSwitching )
-                    {
-                        for (int i = 0; i < RegisteredScenes.Count; i++)
-                        {
-                            writer.WriteString(RegisteredScenes[i]);
-                        }
-                    }*/
+					List<NetworkedPrefab> sortedPrefabList = NetworkedPrefabs.OrderBy(x => x.hash).ToList();
+					for (int i = 0; i < sortedPrefabList.Count; i++)
+					{
+						writer.WriteUInt64Packed(sortedPrefabList[i].hash);
+					}
 
-                    if( ForceSamePrefabs )
-                    {
-                        List<NetworkedPrefab> sortedPrefabList = NetworkedPrefabs.OrderBy(x => x.hash).ToList();
-                        for (int i = 0; i < sortedPrefabList.Count; i++)
-                        {
-                            writer.WriteUInt64Packed(sortedPrefabList[i].hash);
-                        }
-                    }
-
-                    writer.WriteBool(ForceSamePrefabs);
                     writer.WriteBool(EnableEncryption);
-                    //writer.WriteBool(EnableSceneSwitching);
                     writer.WriteBool(SignKeyExchange);
                     writer.WriteBits((byte)RpcHashSize, 3);
                     writer.WriteBits((byte)PrefabHashSize, 3);
