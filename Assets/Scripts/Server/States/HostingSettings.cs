@@ -81,12 +81,13 @@ public class Hosting : ServerState
 
 	}
 
-    void OnCustomMessage(uint clientId, Stream stream)
+    void OnCustomMessage(uint receiverId, Stream stream)
     {
         BitReader reader = new BitReader(stream);
         MessageType message = (MessageType)reader.ReadByte();
+		uint clientId = reader.ReadUInt32();
 
-        if (message != MessageType.SpawnAvatarRequest)
+        if( message != MessageType.SpawnAvatarRequest )
         {
             Debug.LogError("FATAL ERROR: unexpected network message type: " + message);
             return;
@@ -98,6 +99,7 @@ public class Hosting : ServerState
 		float z = 10f * Mathf.Cos( randomTau );
 
         NetworkedObject avatar = NetworkedObject.Instantiate(_settings.avatarPrefab, new Vector3( x, 0f, z), Quaternion.identity);
+		avatar.OwnerClientId = clientId;
         avatar.SpawnAsPlayerObject(clientId);
     }
 

@@ -192,14 +192,14 @@ namespace MLAPI
 
 		internal void InvokeBehaviourNetworkSpawn(Stream stream)
 		{
+			NetworkingManager network = NetworkingManager.GetSingleton();
+
 			for (int i = 0; i < childNetworkedBehaviours.Count; i++)
 			{
 				//We check if we are it's networkedObject owner incase a networkedObject exists as a child of our networkedObject.
-				if(!childNetworkedBehaviours[i].networkedStartInvoked)
+				if( !childNetworkedBehaviours[i].IsInitialized() )
 				{
-					childNetworkedBehaviours[i].InternalNetworkStart();
-					childNetworkedBehaviours[i].NetworkStart(stream);
-					childNetworkedBehaviours[i].networkedStartInvoked = true;
+					childNetworkedBehaviours[i].Initialize( network );
 				}
 			}
 		}
@@ -215,7 +215,7 @@ namespace MLAPI
 					NetworkedBehaviour[] behaviours = GetComponentsInChildren<NetworkedBehaviour>();
 					for (int i = 0; i < behaviours.Length; i++)
 					{
-						if (behaviours[i].NetworkedObject == this)
+						if (behaviours[i]._networkedObject == this)
 							_childNetworkedBehaviours.Add(behaviours[i]);
 					}
 				}
@@ -237,8 +237,7 @@ namespace MLAPI
 			{
 				for (int i = 0; i < childNetworkedBehaviours.Count; i++)
 				{
-					childNetworkedBehaviours[i].NetworkedVarInit();
-					NetworkedBehaviour.WriteNetworkedVarData(childNetworkedBehaviours[i].networkedVarFields, writer, stream, clientId);
+					childNetworkedBehaviours[i].WriteNetworkedVarData( writer, stream, clientId );
 				}
 			}
 		}
@@ -249,8 +248,7 @@ namespace MLAPI
 			{
 				for (int i = 0; i < childNetworkedBehaviours.Count; i++)
 				{
-					childNetworkedBehaviours[i].NetworkedVarInit();
-					NetworkedBehaviour.SetNetworkedVarData(childNetworkedBehaviours[i].networkedVarFields, reader, stream);
+					childNetworkedBehaviours[i].SetNetworkedVarData( reader, stream );
 				}
 			}
 		}

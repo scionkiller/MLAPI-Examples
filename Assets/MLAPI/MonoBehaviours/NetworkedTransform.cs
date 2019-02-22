@@ -79,10 +79,12 @@ namespace MLAPI.Prototyping
         /// Enables range based send rate
         /// </summary>
         public bool EnableRange;
+
         /// <summary>
         /// Checks for missed sends without provocation. Provocation being a client inside it's normal SendRate
         /// </summary>
         public bool EnableNonProvokedResendChecks;
+
         /// <summary>
         /// The curve to use to calculate the send rate
         /// </summary>
@@ -94,7 +96,7 @@ namespace MLAPI.Prototyping
         /// </summary>
         /// <param name="oldPos">The previous position</param>
         /// <param name="newPos">The new requested position</param>
-        /// <returns>Returns wheter or not the move is valid</returns>
+        /// <returns>Returns whether or not the move is valid</returns>
         public delegate bool MoveValidationDelegate(Vector3 oldPos, Vector3 newPos);
         /// <summary>
         /// If set, moves will only be accepted if the custom delegate returns true
@@ -120,10 +122,7 @@ namespace MLAPI.Prototyping
             return 1f / DistanceSendrate.Evaluate(Vector3.Distance(pos1, pos2));
         }
         
-        /// <summary>
-        /// Registers message handlers
-        /// </summary>
-        public override void NetworkStart()
+        public override void OnInitialize()
         {
             lastSentRot = transform.rotation;
             lastSentPos = transform.position;
@@ -139,9 +138,9 @@ namespace MLAPI.Prototyping
         {
             if (IsOwner)
             {
-                if (NetworkingManager.GetSingleton().NetworkTime - lastSendTime >= (1f / FixedSendsPerSecond) && (Vector3.Distance(transform.position, lastSentPos) > MinMeters || Quaternion.Angle(transform.rotation, lastSentRot) > MinDegrees))
+                if (_network.NetworkTime - lastSendTime >= (1f / FixedSendsPerSecond) && (Vector3.Distance(transform.position, lastSentPos) > MinMeters || Quaternion.Angle(transform.rotation, lastSentRot) > MinDegrees))
                 {
-                    lastSendTime = NetworkingManager.GetSingleton().NetworkTime;
+                    lastSendTime = _network.NetworkTime;
                     lastSentPos = transform.position;
                     lastSentRot = transform.rotation;
                     using (PooledBitStream stream = PooledBitStream.Get())
@@ -176,7 +175,7 @@ namespace MLAPI.Prototyping
                         lerpT = 1f;
                     }
 
-                    float sendDelay = (IsServer || !EnableRange || !AssumeSyncedSends) ? (1f / FixedSendsPerSecond) : GetTimeForLerp(transform.position, NetworkingManager.GetSingleton().ConnectedClients[NetworkingManager.GetSingleton().LocalClientId].PlayerObject.transform.position);
+                    float sendDelay = (IsServer || !EnableRange || !AssumeSyncedSends) ? (1f / FixedSendsPerSecond) : GetTimeForLerp(transform.position, _network.ConnectedClients[_network.LocalClientId].PlayerObject.transform.position);
                     lerpT += Time.time / sendDelay;
 
                     if (ExtrapolatePosition && Time.time - lastRecieveTime < sendDelay * MaxSendsToExtrapolate)
@@ -262,30 +261,30 @@ namespace MLAPI.Prototyping
 
                         if (EnableRange)
                         {
-                            for (int i = 0; i < NetworkingManager.GetSingleton().ConnectedClientsList.Count; i++)
+                            for (int i = 0; i < _network.ConnectedClientsList.Count; i++)
                             {
-                                if (!clientSendInfo.ContainsKey(NetworkingManager.GetSingleton().ConnectedClientsList[i].ClientId))
+                                if (!clientSendInfo.ContainsKey(_network.ConnectedClientsList[i].ClientId))
                                 {
-                                    clientSendInfo.Add(NetworkingManager.GetSingleton().ConnectedClientsList[i].ClientId, new ClientSendInfo()
+                                    clientSendInfo.Add(_network.ConnectedClientsList[i].ClientId, new ClientSendInfo()
                                     {
-                                        clientId = NetworkingManager.GetSingleton().ConnectedClientsList[i].ClientId,
+                                        clientId = _network.ConnectedClientsList[i].ClientId,
                                         lastMissedPosition = null,
                                         lastMissedRotation = null,
                                         lastSent = 0
                                     });
                                 }
 
-                                ClientSendInfo info = clientSendInfo[NetworkingManager.GetSingleton().ConnectedClientsList[i].ClientId];
-                                Vector3 receiverPosition = NetworkingManager.GetSingleton().ConnectedClientsList[i].PlayerObject.transform.position;
-                                Vector3 senderPosition = NetworkingManager.GetSingleton().ConnectedClients[OwnerClientId].PlayerObject.transform.position;
+                                ClientSendInfo info = clientSendInfo[_network.ConnectedClientsList[i].ClientId];
+                                Vector3 receiverPosition = _network.ConnectedClientsList[i].PlayerObject.transform.position;
+                                Vector3 senderPosition = _network.ConnectedClients[OwnerClientId].PlayerObject.transform.position;
 
-                                if (NetworkingManager.GetSingleton().NetworkTime - info.lastSent >= GetTimeForLerp(receiverPosition, senderPosition))
+                                if (_network.NetworkTime - info.lastSent >= GetTimeForLerp(receiverPosition, senderPosition))
                                 {
-                                    info.lastSent = NetworkingManager.GetSingleton().NetworkTime;
+                                    info.lastSent = _network.NetworkTime;
                                     info.lastMissedPosition = null;
                                     info.lastMissedRotation = null;
 
-                                    InvokeClientRpcOnClient(ApplyTransform, NetworkingManager.GetSingleton().ConnectedClientsList[i].ClientId, writeStream);
+                                    InvokeClientRpcOnClient(ApplyTransform, _network.ConnectedClientsList[i].ClientId, writeStream);
                                 }
                                 else
                                 {
@@ -305,28 +304,28 @@ namespace MLAPI.Prototyping
 
         private void CheckForMissedSends()
         {
-            for (int i = 0; i < NetworkingManager.GetSingleton().ConnectedClientsList.Count; i++)
+            for (int i = 0; i < _network.ConnectedClientsList.Count; i++)
             {
-                if (!clientSendInfo.ContainsKey(NetworkingManager.GetSingleton().ConnectedClientsList[i].ClientId))
+                if (!clientSendInfo.ContainsKey(_network.ConnectedClientsList[i].ClientId))
                 {
-                    clientSendInfo.Add(NetworkingManager.GetSingleton().ConnectedClientsList[i].ClientId, new ClientSendInfo()
+                    clientSendInfo.Add(_network.ConnectedClientsList[i].ClientId, new ClientSendInfo()
                     {
-                        clientId = NetworkingManager.GetSingleton().ConnectedClientsList[i].ClientId,
+                        clientId = _network.ConnectedClientsList[i].ClientId,
                         lastMissedPosition = null,
                         lastMissedRotation = null,
                         lastSent = 0
                     });
                 }
-                ClientSendInfo info = clientSendInfo[NetworkingManager.GetSingleton().ConnectedClientsList[i].ClientId];
-                Vector3 receiverPosition = NetworkingManager.GetSingleton().ConnectedClientsList[i].PlayerObject.transform.position;
-                Vector3 senderPosition = NetworkingManager.GetSingleton().ConnectedClients[OwnerClientId].PlayerObject.transform.position;
+                ClientSendInfo info = clientSendInfo[_network.ConnectedClientsList[i].ClientId];
+                Vector3 receiverPosition = _network.ConnectedClientsList[i].PlayerObject.transform.position;
+                Vector3 senderPosition = _network.ConnectedClients[OwnerClientId].PlayerObject.transform.position;
                                 
-                if (NetworkingManager.GetSingleton().NetworkTime - info.lastSent >= GetTimeForLerp(receiverPosition, senderPosition))
+                if (_network.NetworkTime - info.lastSent >= GetTimeForLerp(receiverPosition, senderPosition))
                 {
-                    Vector3 pos = NetworkingManager.GetSingleton().ConnectedClients[OwnerClientId].PlayerObject.transform.position;
-                    Vector3 rot = NetworkingManager.GetSingleton().ConnectedClients[OwnerClientId].PlayerObject.transform.rotation.eulerAngles;
+                    Vector3 pos = _network.ConnectedClients[OwnerClientId].PlayerObject.transform.position;
+                    Vector3 rot = _network.ConnectedClients[OwnerClientId].PlayerObject.transform.rotation.eulerAngles;
                     
-                    info.lastSent = NetworkingManager.GetSingleton().NetworkTime;
+                    info.lastSent = _network.NetworkTime;
                     info.lastMissedPosition = null;
                     info.lastMissedRotation = null;
                     
@@ -342,7 +341,7 @@ namespace MLAPI.Prototyping
                             writer.WriteSinglePacked(rot.y);
                             writer.WriteSinglePacked(rot.z);
 
-                            InvokeClientRpcOnClient(ApplyTransform, NetworkingManager.GetSingleton().ConnectedClientsList[i].ClientId, stream);
+                            InvokeClientRpcOnClient(ApplyTransform, _network.ConnectedClientsList[i].ClientId, stream);
                         }
                     }
                 }

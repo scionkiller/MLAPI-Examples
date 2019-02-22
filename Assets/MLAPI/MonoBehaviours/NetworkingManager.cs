@@ -27,9 +27,13 @@ using BitStream = MLAPI.Serialization.BitStream;
 
 namespace MLAPI
 {
-    /// <summary>
-    /// The main component of the library
-    /// </summary>
+	public class ClientSet : ArraySet<uint, NetworkedClient>
+	{
+		public ClientSet( int capacity ) : base(capacity)
+		{}
+	}
+
+
     [AddComponentMenu("MLAPI/NetworkingManager", -100)]
     public class NetworkingManager : MonoBehaviour
     {
@@ -42,9 +46,6 @@ namespace MLAPI
         /// </summary>
         public float NetworkTime { get; internal set; }
 
-        /// <summary>
-        /// The log level to use
-        /// </summary>
         [HideInInspector]
         public LogLevel LogLevel = LogLevel.Normal;
         
@@ -52,6 +53,7 @@ namespace MLAPI
         /// Gets the networkId of the server
         /// </summary>
 		public uint ServerClientId => config.NetworkTransport != null ? config.NetworkTransport.ServerClientId : 0;
+
         /// <summary>
         /// The clientId the server calls the local client by, only valid for clients
         /// </summary>
@@ -69,20 +71,8 @@ namespace MLAPI
         }
         private uint localClientId;
 
-        /// <summary>
-        /// Gets a dictionary of connected clients and their clientId keys
-        /// </summary>
-        public readonly Dictionary<uint, NetworkedClient> ConnectedClients = new Dictionary<uint, NetworkedClient>();
-
-        /// <summary>
-        /// Gets a list of connected clients
-        /// </summary>
-        public readonly List<NetworkedClient> ConnectedClientsList = new List<NetworkedClient>();
-
-        /// <summary>
-        /// Gets a dictionary of the clients that have been accepted by the transport but are still pending by the MLAPI.
-        /// </summary>
-        public readonly Dictionary<uint, PendingClient> PendingClients = new Dictionary<uint, PendingClient>();
+        public ClientSet _connectedClients;
+        public ClientSet _pendingClients;
  
         public bool IsServer { get; internal set; }
 
@@ -187,9 +177,10 @@ namespace MLAPI
             lastEventTickTime = 0f;
             lastReceiveTickTime = 0f;
             eventOvershootCounter = 0f;
-            PendingClients.Clear();
-            ConnectedClients.Clear();
-            ConnectedClientsList.Clear();
+
+			_pendingClients = new ClientSet( config.MaxConnections );
+			_connectedClients = new ClientSet( config.MaxConnections );
+
             messageBuffer = new byte[config.MessageBufferSize];
             
             ResponseMessageManager.Clear();

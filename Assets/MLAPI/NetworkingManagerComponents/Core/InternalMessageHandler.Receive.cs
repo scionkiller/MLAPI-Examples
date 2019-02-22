@@ -198,14 +198,6 @@ namespace MLAPI.Internal
             using (PooledBitReader reader = PooledBitReader.Get(stream))
             {
                 netManager.LocalClientId = reader.ReadUInt32Packed();
-               
-			    /*uint sceneIndex = 0;
-                Guid sceneSwitchProgressGuid = new Guid();
-                if( netManager.config.EnableSceneSwitching )
-                {
-                    sceneIndex = reader.ReadUInt32Packed();
-                    sceneSwitchProgressGuid = new Guid(reader.ReadByteArray());
-                }*/
 
                 float netTime = reader.ReadSinglePacked();
                 int remoteStamp = reader.ReadInt32Packed();
@@ -219,11 +211,6 @@ namespace MLAPI.Internal
 				{
 					AddObjectInternal( netManager, reader, stream );
 				}
-
-                /*if (netManager.config.EnableSceneSwitching)
-                {
-                    NetworkSceneManager.OnSceneSwitch(sceneIndex, sceneSwitchProgressGuid);
-				}*/
 
                 netManager.IsConnectedClient = true;
                 if (netManager.OnClientConnectedCallback != null)

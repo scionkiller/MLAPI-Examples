@@ -46,6 +46,7 @@ public class SpawnAvatar : ClientState
         {
             BitWriter writer = new BitWriter(stream);
             writer.WriteByte((byte)MessageType.SpawnAvatarRequest);
+			writer.WriteUInt32( _network.LocalClientId );
 
             _network.SendCustomMessage( _network.ServerClientId, stream);
         }
