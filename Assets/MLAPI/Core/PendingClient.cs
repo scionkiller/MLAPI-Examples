@@ -1,8 +1,8 @@
 ﻿#if !DISABLE_CRYPTOGRAPHY
-using MLAPI.Cryptography;
+using Alpaca.Cryptography;
 #endif
 
-namespace MLAPI.Data
+namespace Alpaca.Data
 {
     /// <summary>
     /// A class representing a client that is currently in the process of connecting

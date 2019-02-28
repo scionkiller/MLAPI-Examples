@@ -3,9 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
-using MLAPI.Logging;
+using Alpaca.Logging;
 
-namespace MLAPI.Serialization
+namespace Alpaca.Serialization
 {
     [Obsolete]
     public class BitReaderDeprecated : IDisposable

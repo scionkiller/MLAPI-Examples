@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using MLAPI.Logging;
+using Alpaca.Logging;
 
-namespace MLAPI.Components
+namespace Alpaca.Components
 {
     /// <summary>
     /// The main class for controlling lag compensation

@@ -1,6 +1,6 @@
 using System;
 
-namespace MLAPI
+namespace Alpaca
 {
     /// <summary>
     /// The RpcResponse class exposed by the API. Represents a network Request/Response operation with a result

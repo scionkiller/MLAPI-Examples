@@ -1,7 +1,7 @@
 ﻿using System;
-using MLAPI.Transports;
+using Alpaca.Transports;
 
-namespace MLAPI.Configuration
+namespace Alpaca.Configuration
 {
     /// <summary>
     /// A data object that represents a NetworkTransport channel

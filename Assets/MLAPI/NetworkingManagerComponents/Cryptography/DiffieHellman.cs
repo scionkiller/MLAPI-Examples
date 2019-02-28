@@ -2,10 +2,14 @@
 using System;
 using System.Security.Cryptography;
 using System.Text;
-using MLAPI.Internal;
+
 using UnityEngine;
 
-namespace MLAPI.Cryptography
+using Alpaca.Internal;
+using Alpaca.Logging;
+
+
+namespace Alpaca.Cryptography
 {
     internal class EllipticDiffieHellman
     {
@@ -23,7 +27,7 @@ namespace MLAPI.Cryptography
                     }
                     catch (Exception)
                     {
-                        Debug.LogError("[MLAPI] CryptoLib failed to parse BigInt. If you are using .NET 2.0 Subset, switch to .NET 2.0 or .NET 4.5");
+						LogHelper.LogError( "CryptoLib failed to parse BigInt. If you are using .NET 2.0 Subset, switch to .NET 2.0 or .NET 4.5" );
                     }
                 }
 
@@ -46,7 +50,7 @@ namespace MLAPI.Cryptography
                     }
                     catch (Exception)
                     {
-                        Debug.LogError("[MLAPI] CryptoLib failed to parse BigInt. If you are using .NET 2.0 Subset, switch to .NET 2.0 or .NET 4.5");
+                        LogHelper.LogError( "CryptoLib failed to parse BigInt. If you are using .NET 2.0 Subset, switch to .NET 2.0 or .NET 4.5" );
                     }
                 }
 
@@ -68,7 +72,7 @@ namespace MLAPI.Cryptography
                     }
                     catch (Exception)
                     {
-                        Debug.LogError("[MLAPI] CryptoLib failed to parse BigInt. If you are using .NET 2.0 Subset, switch to .NET 2.0 or .NET 4.5");
+                        LogHelper.LogError( "CryptoLib failed to parse BigInt. If you are using .NET 2.0 Subset, switch to .NET 2.0 or .NET 4.5" );
                     }
                 }
 
@@ -90,7 +94,7 @@ namespace MLAPI.Cryptography
                     }
                     catch (Exception)
                     {
-                        Debug.LogError("[MLAPI] CryptoLib failed to parse BigInt. If you are using .NET 2.0 Subset, switch to .NET 2.0 or .NET 4.5");
+                        LogHelper.LogError( "CryptoLib failed to parse BigInt. If you are using .NET 2.0 Subset, switch to .NET 2.0 or .NET 4.5" );
                     }
                 }
 

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace MLAPI.Logging
+namespace Alpaca.Logging
 {
     public enum LogLevel
     {
@@ -23,8 +23,8 @@ namespace MLAPI.Logging
             }
         }
 
-        public static void LogInfo(string message) => Debug.Log("[MLAPI] " + message);
-        public static void LogWarning(string message) => Debug.LogWarning("[MLAPI] " + message);
-        public static void LogError(string message) => Debug.LogError("[MLAPI] " + message);
+        public static void LogInfo(string message) => Debug.Log("[Alpaca] " + message);
+        public static void LogWarning(string message) => Debug.LogWarning("[Alpaca] " + message);
+        public static void LogError(string message) => Debug.LogError("[Alpaca] " + message);
     }
 }

@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
-using MLAPI.Collections;
-using MLAPI.Components;
-using MLAPI.Internal;
+using Alpaca.Collections;
+using Alpaca.Components;
+using Alpaca.Internal;
 using UnityEngine;
 
-namespace MLAPI
+namespace Alpaca
 {
     //Based on: https://twotenpvp.github.io/lag-compensation-in-unity.html
     //Modified to be used with latency rather than fixed frames and subframes. Thus it will be less accrurate but more modular.
@@ -12,7 +12,7 @@ namespace MLAPI
     /// <summary>
     /// A component used for lag compensation. Each object with this component will get tracked
     /// </summary>
-    [AddComponentMenu("MLAPI/TrackedObject", -98)]
+    [AddComponentMenu("Alpaca/TrackedObject", -98)]
     public class TrackedObject : MonoBehaviour
     {
         internal Dictionary<float, TrackedPointData> FrameData = new Dictionary<float, TrackedPointData>();

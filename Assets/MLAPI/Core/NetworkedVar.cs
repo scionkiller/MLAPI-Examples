@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
-using MLAPI.NetworkedVar;
-using MLAPI.Serialization;
+using Alpaca.NetworkedVar;
+using Alpaca.Serialization;
 using System;
 
-namespace MLAPI
+namespace Alpaca
 {
     /// <summary>
     /// A variable that can be synchronized over the network.

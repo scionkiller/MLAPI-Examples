@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MLAPI.Collections
+namespace Alpaca.Collections
 {
     /// <summary>
     /// Queue with a fixed size

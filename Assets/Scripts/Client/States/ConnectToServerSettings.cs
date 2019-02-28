@@ -3,8 +3,8 @@ using System.IO;
 using UnityEngine;
 
 using TMPro;
-using MLAPI;
-using MLAPI.Serialization;
+using Alpaca;
+using Alpaca.Serialization;
 
 public class ConnectToServerSettings : ClientStateSettings
 {

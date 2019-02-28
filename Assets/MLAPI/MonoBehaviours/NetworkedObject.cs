@@ -1,18 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using MLAPI.Components;
-using MLAPI.Logging;
-using MLAPI.Serialization;
+using Alpaca.Components;
+using Alpaca.Logging;
+using Alpaca.Serialization;
 using UnityEngine;
 
 
-namespace MLAPI
+namespace Alpaca
 {
 	/// <summary>
 	/// A component used to identify that a GameObject is networked
 	/// </summary>
-	[AddComponentMenu("MLAPI/NetworkedObject", -99)]
+	[AddComponentMenu("Alpaca/NetworkedObject", -99)]
 	public sealed class NetworkedObject : MonoBehaviour
 	{
 		internal static readonly List<NetworkedBehaviour> NetworkedBehaviours = new List<NetworkedBehaviour>();
@@ -57,57 +57,41 @@ namespace MLAPI
 			}
 		}
 		private uint? _ownerClientId = null;
-		/// <summary>
-		/// The name of the NetworkedPrefab
-		/// </summary>
-		[Tooltip("The prefab name is the name that identifies this prefab. It has to not be the same as any other prefabs that are registered with the MLAPI and it has to be the same across projects if multiple projects are used.")]
+
+		[Tooltip("The prefab name is the name that identifies this prefab. It must be unique and the same across projects if multiple projects are used.")]
+		
 		public string NetworkedPrefabName = string.Empty;
 		/// <summary>
 		/// The hash used to identify the NetworkedPrefab, a hash of the NetworkedPrefabName
 		/// </summary>
 		public ulong NetworkedPrefabHash => SpawnManager.GetPrefabHash(NetworkedPrefabName);
-		[Obsolete("Use IsPlayerObject instead", false)]
-		public bool isPlayerObject => IsPlayerObject;
-		/// <summary>
-		/// Gets if this object is a player object
-		/// </summary>
+
+
 		public bool IsPlayerObject { get; internal set; }
-		[Obsolete("Use IsPooledObject instead", false)]
-		public bool isPooledObject => IsPooledObject;
-		/// <summary>
-		/// Gets if this object is part of a pool
-		/// </summary>
+
 		public bool IsPooledObject { get; internal set; }
-		/// <summary>
-		/// Gets the poolId this object is part of
-		/// </summary>
+
 		public ushort PoolId { get; internal set; }
-		[Obsolete("Use IsLocalPlayer instead", false)]
-		public bool isLocalPlayer => IsLocalPlayer;
+
 		/// <summary>
 		/// Gets if the object is the the personal clients player object
 		/// </summary>
 		public bool IsLocalPlayer => NetworkingManager.GetSingleton() != null && IsPlayerObject && OwnerClientId == NetworkingManager.GetSingleton().LocalClientId;
-		[Obsolete("Use IsOwner instead", false)]
-		public bool isOwner => IsOwner;
+
 		/// <summary>
 		/// Gets if the object is owned by the local player or if the object is the local player object
 		/// </summary>
 		public bool IsOwner => NetworkingManager.GetSingleton() != null && OwnerClientId == NetworkingManager.GetSingleton().LocalClientId;
-		[Obsolete("Use IsOwnedByServer instead", false)]
-		public bool isOwnedByServer => IsOwnedByServer;
+
 		/// <summary>
 		/// Gets wheter or not the object is owned by anyone
 		/// </summary>
 		public bool IsOwnedByServer => NetworkingManager.GetSingleton() != null && OwnerClientId == NetworkingManager.GetSingleton().ServerClientId;
-		[Obsolete("Use IsSpawned instead", false)]
-		public bool isSpawned => IsSpawned;
+
 		/// <summary>
 		/// Gets if the object has yet been spawned across the network
 		/// </summary>
 		public bool IsSpawned { get; internal set; }
-
-		//internal uint sceneSpawnedInIndex = 0;
 
 		/// <summary>
 		/// Wheter or not to destroy this object if it's owner is destroyed.

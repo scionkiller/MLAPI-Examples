@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace MLAPI.Internal
+namespace Alpaca.Internal
 {
     internal struct TrackedPointData
     {

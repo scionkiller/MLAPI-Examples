@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Reflection;
 using System.Linq;
-using MLAPI.Data;
+using Alpaca.Data;
 using System.IO;
-using MLAPI.Components;
-using MLAPI.Configuration;
-using MLAPI.Internal;
-using MLAPI.Logging;
-using MLAPI.NetworkedVar;
-using MLAPI.Serialization;
+using Alpaca.Components;
+using Alpaca.Configuration;
+using Alpaca.Internal;
+using Alpaca.Logging;
+using Alpaca.NetworkedVar;
+using Alpaca.Serialization;
 
-namespace MLAPI
+namespace Alpaca
 {
     /// <summary>
     /// The base class to override to write networked code. Inherits MonoBehaviour
@@ -312,59 +312,59 @@ namespace MLAPI
 
             //TODO: Do this efficiently.
 
-            if (!CouldHaveDirtyVars()) 
-                return;
+            if( !CouldHaveDirtyVars() ) { return; }
 
             networkedVarIndexesToReset.Clear();
             networkedVarIndexesToResetSet.Clear();
 
-			ValueSet<> clientList = _network.GetConnectedClients();  
-            for (int i = 0; i < clientList.GetCount(); i++)
+			ClientSet client = _network._connectedClients; 
+            for (int i = 0; i < client.GetCount(); i++)
             {
-                //This iterates over every "channel group".
+                // This iterates over every "channel group".
                 for (int j = 0; j < channelMappedVarIndexes.Count; j++)
                 {
-                    using (PooledBitStream stream = PooledBitStream.Get())
-                    {
-                        using (PooledBitWriter writer = PooledBitWriter.Get(stream))
-                        {
-                            writer.WriteUInt32Packed(NetworkId);
-                            writer.WriteUInt16Packed(_networkedObject.GetOrderIndex(this));
+                    using( PooledBitStream stream = PooledBitStream.Get() )
+					using( PooledBitWriter writer = PooledBitWriter.Get(stream) )
+					{
+						writer.WriteUInt32Packed(NetworkId);
+						writer.WriteUInt16Packed(_networkedObject.GetOrderIndex(this));
 
-                            uint clientId = clientList[i].ClientId;
-                            bool writtenAny = false;
-                            for (int k = 0; k < networkedVarFields.Count; k++)
-                            {
-                                if (!channelMappedVarIndexes[j].Contains(k))
-                                {
-                                    //This var does not belong to the currently iterating channel group.
-                                    writer.WriteBool(false);
-                                    continue;
-                                }
+						uint clientId = client.GetAt(i).ClientId;
+						bool writtenAny = false;
+						for (int k = 0; k < networkedVarFields.Count; k++)
+						{
+							if (!channelMappedVarIndexes[j].Contains(k))
+							{
+								//This var does n alse);
+								continue;
+							}
 
-                                bool isDirty = networkedVarFields[k].IsDirty(); //cache this here. You never know what operations users will do in the dirty methods
-                                writer.WriteBool(isDirty);
+							bool isDirty = networkedVarFields[k].IsDirty(); //cache this here. You never know what operations users will do in the dirty methods
+							writer.WriteBool(isDirty);
 
-                                if (isDirty && (!IsServer || networkedVarFields[k].CanClientRead(clientId)))
-                                {
-                                    writtenAny = true;
-                                    networkedVarFields[k].WriteDelta(stream);
-                                    if (!networkedVarIndexesToResetSet.Contains(k))
-                                    {
-                                        networkedVarIndexesToResetSet.Add(k);
-                                        networkedVarIndexesToReset.Add(k);
-                                    }
-                                }
-                            }
-                            
-                            if (writtenAny)
-                            {
-                                if (IsServer)
-                                    InternalMessageHandler.Send(clientId, MLAPIConstants.MLAPI_NETWORKED_VAR_DELTA, channelsForVarGroups[j], stream, SecuritySendFlags.None);
-                                else
-                                    InternalMessageHandler.Send(_network.ServerClientId, MLAPIConstants.MLAPI_NETWORKED_VAR_DELTA, channelsForVarGroups[j], stream, SecuritySendFlags.None);   
-                            }
-                        }
+							if (isDirty && (!IsServer || networkedVarFields[k].CanClientRead(clientId)))
+							{
+								writtenAny = true;
+								networkedVarFields[k].WriteDelta(stream);
+								if (!networkedVarIndexesToResetSet.Contains(k))
+								{
+									networkedVarIndexesToResetSet.Add(k);
+									networkedVarIndexesToReset.Add(k);
+								}
+							}
+						}
+						
+						if( writtenAny )
+						{
+							if( IsServer )
+							{
+								InternalMessageHandler.Send(clientId, Constants.ALPACA_NETWORKED_VAR_DELTA, channelsForVarGroups[j], stream, SecuritySendFlags.None);
+							}
+							else
+							{
+								InternalMessageHandler.Send(_network.ServerClientId, Constants.ALPACA_NETWORKED_VAR_DELTA, channelsForVarGroups[j], stream, SecuritySendFlags.None);   
+							}
+						}
                     }
                 }
             }
@@ -392,14 +392,16 @@ namespace MLAPI
             // TODO: Lot's of performance improvements to do here.
 			NetworkingManager network = NetworkingManager.GetSingleton();
 
-            using (PooledBitReader reader = PooledBitReader.Get(stream))
+            using( PooledBitReader reader = PooledBitReader.Get(stream) )
             {
-                for (int i = 0; i < networkedVarList.Count; i++)
+                for( int i = 0; i < networkedVarList.Count; i++ )
                 {
-                    if (!reader.ReadBool())
+                    if( !reader.ReadBool() )
+					{
                         continue;
+					}
 
-                    if (network.IsServer && !networkedVarList[i].CanClientWrite(clientId))
+                    if( network.IsServer && !networkedVarList[i].CanClientWrite(clientId) )
                     {
                         //This client wrote somewhere they are not allowed. This is critical
                         //We can't just skip this field. Because we don't actually know how to dummy read
@@ -649,7 +651,7 @@ namespace MLAPI
 
             if (stream.Position != 0)
             {
-                //Create a new stream so that the stream they get ONLY contains user data and not MLAPI headers
+                // Create a new stream so that the stream they get ONLY contains user data and not headers
                 using (PooledBitStream userStream = PooledBitStream.Get())
                 {
                     userStream.CopyUnreadFrom(stream);
@@ -700,7 +702,7 @@ namespace MLAPI
 
             if (stream.Position != 0)
             {
-                //Create a new stream so that the stream they get ONLY contains user data and not MLAPI headers
+                // Create a new stream so that the stream they get ONLY contains user data and not headers
                 using (PooledBitStream userStream = PooledBitStream.Get())
                 {
                     userStream.CopyUnreadFrom(stream);
@@ -800,7 +802,7 @@ namespace MLAPI
             }
         }
         
-        internal void SendClientRPCBoxed(ulong hash, List<uint> clientIds, string channel, SecuritySendFlags security, params object[] parameters)
+        internal void SendClientRPCBoxed(ulong hash, string channel, SecuritySendFlags security, params object[] parameters)
         {
             using (PooledBitStream stream = PooledBitStream.Get())
             {
@@ -810,7 +812,7 @@ namespace MLAPI
                     {
                         writer.WriteObjectPacked(parameters[i]);
                     }
-                    SendClientRPCPerformance(hash, clientIds, stream, channel, security);
+                    SendClientRPCPerformance(hash, stream, channel, security);
                 }
             }
         }
@@ -856,7 +858,7 @@ namespace MLAPI
                     }
                     else
                     {
-                        InternalMessageHandler.Send(_network.ServerClientId, MLAPIConstants.MLAPI_SERVER_RPC, string.IsNullOrEmpty(channel) ? "MLAPI_DEFAULT_MESSAGE" : channel, stream, security);
+                        InternalMessageHandler.Send(_network.ServerClientId, Constants.ALPACA_SERVER_RPC, string.IsNullOrEmpty(channel) ? "ALPACA_DEFAULT_MESSAGE" : channel, stream, security);
                     }
                 }
             }
@@ -913,7 +915,7 @@ namespace MLAPI
             
                         ResponseMessageManager.Add(response.Id, response);
                         
-                        InternalMessageHandler.Send(_network.ServerClientId, MLAPIConstants.MLAPI_SERVER_RPC_REQUEST, string.IsNullOrEmpty(channel) ? "MLAPI_DEFAULT_MESSAGE" : channel, stream, security);
+                        InternalMessageHandler.Send(_network.ServerClientId, Constants.ALPACA_SERVER_RPC_REQUEST, string.IsNullOrEmpty(channel) ? "ALPACA_DEFAULT_MESSAGE" : channel, stream, security);
 
                         return response;
                     }
@@ -921,7 +923,7 @@ namespace MLAPI
             }
         }
 
-        internal void SendClientRPCPerformance(ulong hash,  List<uint> clientIds, Stream messageStream, string channel, SecuritySendFlags security)
+        internal void SendClientRPCPerformance(ulong hash, Stream messageStream, string channel, SecuritySendFlags security)
         {            
             if (!IsServer && IsRunning)
             {
@@ -940,36 +942,19 @@ namespace MLAPI
 
                     stream.CopyFrom(messageStream);
 
-                    if (clientIds == null)
-                    {
-                        for (int i = 0; i < _network.ConnectedClientsList.Count; i++)
-                        {
-                            if (IsHost && _network.ConnectedClientsList[i].ClientId == _network.LocalClientId)
-                            {
-                                messageStream.Position = 0;
-                                InvokeClientRPCLocal(hash, _network.LocalClientId, messageStream);
-                            }
-                            else
-                            {
-                                InternalMessageHandler.Send(_network.ConnectedClientsList[i].ClientId, MLAPIConstants.MLAPI_CLIENT_RPC, string.IsNullOrEmpty(channel) ? "MLAPI_DEFAULT_MESSAGE" : channel, stream, security);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        for (int i = 0; i < clientIds.Count; i++)
-                        {
-                            if (IsHost && clientIds[i] == _network.LocalClientId)
-                            {
-                                messageStream.Position = 0;
-                                InvokeClientRPCLocal(hash, _network.LocalClientId, messageStream);
-                            }
-                            else
-                            {
-                                InternalMessageHandler.Send(clientIds[i], MLAPIConstants.MLAPI_CLIENT_RPC, string.IsNullOrEmpty(channel) ? "MLAPI_DEFAULT_MESSAGE" : channel, stream, security);
-                            }
-                        }
-                    }
+					for( int i = 0; i < _network._connectedClients.GetCount(); ++i )
+					{
+						NetworkedClient c = _network._connectedClients.GetAt(i);
+						if (IsHost && c.ClientId == _network.LocalClientId)
+						{
+							messageStream.Position = 0;
+							InvokeClientRPCLocal(hash, _network.LocalClientId, messageStream);
+						}
+						else
+						{
+							InternalMessageHandler.Send( c.ClientId, Constants.ALPACA_CLIENT_RPC, string.IsNullOrEmpty(channel) ? "ALPACA_DEFAULT_MESSAGE" : channel, stream, security);
+						}
+					}
                 }
             }
         }
@@ -994,18 +979,21 @@ namespace MLAPI
                     stream.CopyFrom(messageStream);
 
 
-                    for (int i = 0; i < _network.ConnectedClientsList.Count; i++)
+                    for (int i = 0; i < _network._connectedClients.GetCount(); i++)
                     {
-                        if (_network.ConnectedClientsList[i].ClientId == clientIdToIgnore)
+						NetworkedClient c = _network._connectedClients.GetAt(i);
+                        if( c.ClientId == clientIdToIgnore )
+						{
                             continue;
-                        if (IsHost && _network.ConnectedClientsList[i].ClientId == _network.LocalClientId)
+						}
+						if( IsHost && c.ClientId == _network.LocalClientId )
                         {
                             messageStream.Position = 0;
                             InvokeClientRPCLocal(hash, _network.LocalClientId, messageStream);
                         }
                         else
                         {
-                            InternalMessageHandler.Send(_network.ConnectedClientsList[i].ClientId, MLAPIConstants.MLAPI_CLIENT_RPC, string.IsNullOrEmpty(channel) ? "MLAPI_DEFAULT_MESSAGE" : channel, stream, security);
+                            InternalMessageHandler.Send( c.ClientId, Constants.ALPACA_CLIENT_RPC, string.IsNullOrEmpty(channel) ? "ALPACA_DEFAULT_MESSAGE" : channel, stream, security);
                         }
                     }
                 }
@@ -1038,7 +1026,7 @@ namespace MLAPI
                     }
                     else
                     {
-                        InternalMessageHandler.Send(clientId, MLAPIConstants.MLAPI_CLIENT_RPC, string.IsNullOrEmpty(channel) ? "MLAPI_DEFAULT_MESSAGE" : channel, stream, security);
+                        InternalMessageHandler.Send(clientId, Constants.ALPACA_CLIENT_RPC, string.IsNullOrEmpty(channel) ? "ALPACA_DEFAULT_MESSAGE" : channel, stream, security);
                     }
                 }
             }
@@ -1095,7 +1083,7 @@ namespace MLAPI
             
                         ResponseMessageManager.Add(response.Id, response);
                         
-                        InternalMessageHandler.Send(clientId, MLAPIConstants.MLAPI_CLIENT_RPC_REQUEST, string.IsNullOrEmpty(channel) ? "MLAPI_DEFAULT_MESSAGE" : channel, stream, security);
+                        InternalMessageHandler.Send(clientId, Constants.ALPACA_CLIENT_RPC_REQUEST, string.IsNullOrEmpty(channel) ? "ALPACA_DEFAULT_MESSAGE" : channel, stream, security);
                         
                         return response;
                     }
@@ -1103,17 +1091,5 @@ namespace MLAPI
             }
         }
         #endregion
-
-        /*/// <summary>
-        /// Gets the local instance of a object with a given NetworkId
-        /// </summary>
-        /// <param name="networkId"></param>
-        /// <returns></returns>
-        protected NetworkedObject GetNetworkedObject(uint networkId)
-        {
-            if(SpawnManager.SpawnedObjects.ContainsKey(networkId))
-                return SpawnManager.SpawnedObjects[networkId];
-            return null;
-		}*/
     }
 }

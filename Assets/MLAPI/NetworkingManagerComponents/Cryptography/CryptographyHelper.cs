@@ -1,11 +1,11 @@
 ﻿#if !DISABLE_CRYPTOGRAPHY
 using System.Security.Cryptography;
 using System.IO;
-using MLAPI.Serialization;
+using Alpaca.Serialization;
 using System.Security.Cryptography.X509Certificates;
 using System;
 
-namespace MLAPI.Cryptography
+namespace Alpaca.Cryptography
 {
     /// <summary>
     /// Helper class for encryption purposes
@@ -33,50 +33,6 @@ namespace MLAPI.Cryptography
         {
             if (OnValidateCertificateCallback != null) return OnValidateCertificateCallback(certificate, hostname);
             return certificate.Verify() && (hostname == certificate.GetNameInfo(X509NameType.DnsName, false) || hostname == "127.0.0.1");
-        }
-
-        /// <summary>
-        /// Gets the aes key for any given clientId
-        /// </summary>
-        /// <param name="clientId">The clientId of the client whose aes key we want</param>
-        /// <returns>The aes key in binary</returns>
-        public static byte[] GetClientKey(uint clientId)
-        {
-			NetworkingManager network = NetworkingManager.GetSingleton();
-			if( !network.IsServer )
-			{
-				return null;
-			}
-
-			NetworkedClient c = network._connectedClients.Find( clientId );
-			if( network.ConnectedClients.ContainsKey(clientId) )
-			{
-				return network.ConnectedClients[clientId].AesKey;
-			}
-			else if( network.PendingClients.ContainsKey(clientId) )
-			{
-				return network.PendingClients[clientId].AesKey;
-			}
-			else
-			{
-				return null;
-			}
-        }
-
-        /// <summary>
-        /// Gets the aes key for the server
-        /// </summary>
-        /// <returns>The servers aes key</returns>
-        public static byte[] GetServerKey()
-        {
-            if (NetworkingManager.GetSingleton().IsServer)
-            {
-                return null;
-            }
-            else
-            {
-                return NetworkingManager.GetSingleton().clientAesKey;
-            }
         }
 
         internal static bool ConstTimeArrayEqual(byte[] a, byte[] b)

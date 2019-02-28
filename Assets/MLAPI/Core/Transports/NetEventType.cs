@@ -1,4 +1,4 @@
-﻿namespace MLAPI.Transports
+﻿namespace Alpaca.Transports
 {
     /// <summary>
     /// Represents a netEvent when polling

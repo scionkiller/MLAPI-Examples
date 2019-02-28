@@ -25,7 +25,7 @@
 using System;
 using System.Security.Cryptography;
 
-namespace MLAPI.Internal
+namespace Alpaca.Internal
 {
     /// <summary>
     /// This is a BigInteger class. Holds integer that is more than 64-bit (long).

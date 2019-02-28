@@ -1,5 +1,5 @@
 ﻿#pragma warning disable 618
-using MLAPI;
+using Alpaca;
 using UnityEngine;
 
 namespace UnityEditor
@@ -22,10 +22,13 @@ namespace UnityEditor
         public override void OnInspectorGUI()
         {
             Init();
-            if (NetworkingManager.GetSingleton() == null || (!NetworkingManager.GetSingleton().IsServer && !NetworkingManager.GetSingleton().IsClient))
-                base.OnInspectorGUI(); //Only run this if we are NOT running server. This is where the ServerOnly box is drawn
 
-            if (!networkedObject.isSpawned && NetworkingManager.GetSingleton() != null && NetworkingManager.GetSingleton().IsServer)
+			NetworkingManager network = NetworkingManager.GetSingleton();
+
+            if( network == null || (!network.IsServer && !network.IsClient))
+                base.OnInspectorGUI(); // Only do default GUI if we are not running. This is where the ServerOnly box is drawn
+
+            if( !networkedObject.IsSpawned && network != null && network.IsServer)
             {
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField(new GUIContent("Spawn", "Spawns the object across the network"));
@@ -36,18 +39,18 @@ namespace UnityEditor
                 }
                 EditorGUILayout.EndHorizontal();
             }
-            else if (networkedObject.isSpawned)
+            else if (networkedObject.IsSpawned)
             {
                 EditorGUILayout.LabelField("PrefabName: ", networkedObject.NetworkedPrefabName, EditorStyles.label);
                 EditorGUILayout.LabelField("PrefabHash: ", networkedObject.NetworkedPrefabHash.ToString(), EditorStyles.label);
                 EditorGUILayout.LabelField("NetworkId: ", networkedObject.NetworkId.ToString(), EditorStyles.label);
                 EditorGUILayout.LabelField("OwnerId: ", networkedObject.OwnerClientId.ToString(), EditorStyles.label);
-                EditorGUILayout.LabelField("isSpawned: ", networkedObject.isSpawned.ToString(), EditorStyles.label);
-                EditorGUILayout.LabelField("isLocalPlayer: ", networkedObject.isLocalPlayer.ToString(), EditorStyles.label);
-                EditorGUILayout.LabelField("isOwner: ", networkedObject.isOwner.ToString(), EditorStyles.label);
-				EditorGUILayout.LabelField("isOwnedByServer: ", networkedObject.isOwnedByServer.ToString(), EditorStyles.label);
-                EditorGUILayout.LabelField("isPoolObject: ", networkedObject.isPooledObject.ToString(), EditorStyles.label);
-                EditorGUILayout.LabelField("isPlayerObject: ", networkedObject.isPlayerObject.ToString(), EditorStyles.label);
+                EditorGUILayout.LabelField("isSpawned: ", networkedObject.IsSpawned.ToString(), EditorStyles.label);
+                EditorGUILayout.LabelField("isLocalPlayer: ", networkedObject.IsLocalPlayer.ToString(), EditorStyles.label);
+                EditorGUILayout.LabelField("isOwner: ", networkedObject.IsOwner.ToString(), EditorStyles.label);
+				EditorGUILayout.LabelField("isOwnedByServer: ", networkedObject.IsOwnedByServer.ToString(), EditorStyles.label);
+                EditorGUILayout.LabelField("isPoolObject: ", networkedObject.IsPooledObject.ToString(), EditorStyles.label);
+                EditorGUILayout.LabelField("isPlayerObject: ", networkedObject.IsPlayerObject.ToString(), EditorStyles.label);
             }
         }
     }

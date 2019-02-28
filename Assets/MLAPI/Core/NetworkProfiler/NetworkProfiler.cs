@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
-using MLAPI.Collections;
-using MLAPI.Data;
-using MLAPI.Internal;
+using Alpaca.Collections;
+using Alpaca.Data;
+using Alpaca.Internal;
 using UnityEngine;
 
-namespace MLAPI.Profiling
+namespace Alpaca.Profiling
 {
     /// <summary>
     /// NetworkProfiler for profiling network traffic
@@ -120,7 +120,7 @@ namespace MLAPI.Profiling
             if (CurrentTick == null)
                 return;
             string channelName = MessageManager.reverseChannels.ContainsKey(channelId) ? MessageManager.reverseChannels[channelId] : "INVALID_CHANNEL";
-            string messageName = MLAPIConstants.MESSAGE_NAMES.Length < messageType ? MLAPIConstants.MESSAGE_NAMES[messageType] : "INVALID_MESSAGE_TYPE";
+            string messageName = Constants.MESSAGE_NAMES.Length < messageType ? Constants.MESSAGE_NAMES[messageType] : "INVALID_MESSAGE_TYPE";
 
             CurrentTick.StartEvent(eventType, bytes, channelName, messageName);
         }

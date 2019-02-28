@@ -8,7 +8,7 @@ using System.Diagnostics;
 using System.IO;
 using UnityEngine;
 
-namespace MLAPI.Serialization
+namespace Alpaca.Serialization
 {
     // Improved version of BitWriter
     /// <summary>

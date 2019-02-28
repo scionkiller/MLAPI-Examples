@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using MLAPI.Serialization;
+using Alpaca.Serialization;
 
-namespace MLAPI.Profiling
+namespace Alpaca.Profiling
 {
 	/// <summary>
 	/// The type of Tick

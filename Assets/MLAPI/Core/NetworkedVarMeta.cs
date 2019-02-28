@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace MLAPI.NetworkedVar
+namespace Alpaca.NetworkedVar
 {
 
     /// <summary>
@@ -92,7 +92,7 @@ namespace MLAPI.NetworkedVar
         /// The name of the channel to use for this variable.
         /// Variables with different channels will be split into different packets
         /// </summary>
-        public string SendChannel = "MLAPI_INTERNAL";
+        public string SendChannel = "ALPACA_INTERNAL";
         
         /// <summary>
         /// Constructs a new NetworkedVarSettings instance

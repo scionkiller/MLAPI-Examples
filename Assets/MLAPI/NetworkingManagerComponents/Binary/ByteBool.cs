@@ -4,7 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace MLAPI.Internal
+namespace Alpaca.Internal
 {
     [StructLayout(LayoutKind.Explicit)]
     internal struct ByteBool

@@ -6,12 +6,12 @@
 using System;
 using System.IO;
 using System.Text;
-using MLAPI.Components;
-using MLAPI.Internal;
-using MLAPI.Logging;
+using Alpaca.Components;
+using Alpaca.Internal;
+using Alpaca.Logging;
 using UnityEngine;
 
-namespace MLAPI.Serialization
+namespace Alpaca.Serialization
 {
     /// <summary>
     /// A BinaryReader that can do bit wise manipulation when backed by a BitStream

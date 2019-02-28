@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace MLAPI.Internal
+namespace Alpaca.Internal
 {
     internal static class ResponseMessageManager
     {

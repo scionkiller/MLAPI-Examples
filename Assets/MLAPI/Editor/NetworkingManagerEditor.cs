@@ -1,7 +1,7 @@
 ﻿using UnityEditor;
 using UnityEngine;
 using UnityEditorInternal;
-using MLAPI;
+using Alpaca;
 
 [CustomEditor(typeof(NetworkingManager), true)]
 [CanEditMultipleObjects]
@@ -123,11 +123,6 @@ public class NetworkingManagerEditor : Editor
             EditorGUILayout.Space();
             channelsList.DoLayoutList();
             EditorGUILayout.Space();
-            /*if( networkingManager.config.EnableSceneSwitching)
-            {
-                registeredScenesList.DoLayoutList();
-                EditorGUILayout.Space();
-            }*/
 
             serializedObject.ApplyModifiedProperties();
             base.OnInspectorGUI();

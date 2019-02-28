@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Linq;
-using MLAPI.Data;
-using MLAPI.Serialization;
-using MLAPI.Transports;
-using BitStream = MLAPI.Serialization.BitStream;
 using System.Security.Cryptography.X509Certificates;
 
-namespace MLAPI.Configuration
+using UnityEngine;
+
+using Alpaca.Data;
+using Alpaca.Serialization;
+using Alpaca.Transports;
+using BitStream = Alpaca.Serialization.BitStream;
+
+
+namespace Alpaca.Configuration
 {
     /// <summary>
     /// The configuration object used to start server, client and hosts
@@ -29,11 +32,11 @@ namespace MLAPI.Configuration
         /// </summary>
         public IUDPTransport NetworkTransport = null;
         /// <summary>
-        /// Only used if the transport is MLPAI-Relay
+        /// Only used if the transport is Alpaca-Relay
         /// </summary>
         public string RelayAddress = "127.0.0.1";
         /// <summary>
-        /// Only used if the transport is MLPAI-Relay
+        /// Only used if the transport is Alpaca-Relay
         /// </summary>
         public ushort RelayPort = 8888;
         /// <summary>
@@ -56,7 +59,7 @@ namespace MLAPI.Configuration
         [HideInInspector]
         public List<NetworkedPrefab> NetworkedPrefabs = new List<NetworkedPrefab>();
         /// <summary>
-        /// The size of the receive message buffer. This is the max message size including any MLAPI overheads.
+        /// The size of the receive message buffer. This is the max message size including any library overhead
         /// </summary>
         public int MessageBufferSize = 1024;
         /// <summary>
@@ -105,11 +108,6 @@ namespace MLAPI.Configuration
         /// </summary>
         public int SecondsHistory = 5;
 
-        /*
-		/// <summary>
-        /// Whether or not to enable scene switching
-        /// </summary>
-        public bool EnableSceneSwitching = true;*/
         /// <summary>
         /// If your logic uses the NetworkedTime, this should probably be turned off. If however it's needed to maximize accuracy, this is recommended to be turned on
         /// </summary>
@@ -223,7 +221,6 @@ namespace MLAPI.Configuration
                     writer.WriteInt32Packed(config.SecondsHistory);
                     writer.WriteBool(config.EnableEncryption);
                     writer.WriteBool(config.SignKeyExchange);
-                	//writer.WriteBool(config.EnableSceneSwitching);
                     writer.WriteInt32Packed(config.LoadSceneTimeOut);
                     writer.WriteBool(config.EnableTimeResync);
                     writer.WriteBits((byte)config.RpcHashSize, 3);
@@ -272,7 +269,7 @@ namespace MLAPI.Configuration
 
                     ushort networkedPrefabsCount = reader.ReadUInt16Packed();
                     config.NetworkedPrefabs.Clear();
-                    GameObject root = createDummyObject ? new GameObject("MLAPI: Dummy prefabs") : null;
+                    GameObject root = createDummyObject ? new GameObject("Alpaca: Dummy prefabs") : null;
                     for (int i = 0; i < networkedPrefabsCount; i++)
                     {
                         bool playerPrefab = reader.ReadBool();
@@ -303,7 +300,6 @@ namespace MLAPI.Configuration
                     config.SecondsHistory = reader.ReadInt32Packed();
                     config.EnableEncryption = reader.ReadBool();
                     config.SignKeyExchange = reader.ReadBool();
-                    //config.EnableSceneSwitching = reader.ReadBool();
                     config.LoadSceneTimeOut = reader.ReadInt32Packed();
                     config.EnableTimeResync = reader.ReadBool();
                     config.RpcHashSize = (HashSize)reader.ReadBits(3);
@@ -330,7 +326,7 @@ namespace MLAPI.Configuration
                 using (PooledBitWriter writer = PooledBitWriter.Get(stream))
                 {
                     writer.WriteUInt16Packed(ProtocolVersion);
-                    writer.WriteString(MLAPIConstants.MLAPI_PROTOCOL_VERSION);
+                    writer.WriteString(Constants.ALPACA_PROTOCOL_VERSION);
 
                     for (int i = 0; i < Channels.Count; i++)
                     {

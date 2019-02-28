@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.Networking;
 
-namespace MLAPI.Transports.UNET
+namespace Alpaca.Transports.UNET
 {
     [Serializable]
     public class UnetTransport : IUDPTransport

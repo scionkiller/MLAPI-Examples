@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-using MLAPI;
-using MLAPI.NetworkedVar;
+using Alpaca;
+using Alpaca.NetworkedVar;
 using UnityEngine;
 
 namespace UnityEditor

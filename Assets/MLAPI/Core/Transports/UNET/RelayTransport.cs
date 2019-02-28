@@ -6,7 +6,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace MLAPI.Transports.UNET
+namespace Alpaca.Transports.UNET
 {
     public static class RelayTransport
     {
@@ -270,7 +270,7 @@ namespace MLAPI.Transports.UNET
                     }
                 case NetworkEventType.DisconnectEvent:
                     {
-                        if ((NetworkError)error == NetworkError.CRCMismatch) Debug.LogError("[MLAPI.Relay] The MLAPI Relay detected a CRC mismatch. This could be due to the maxClients or other connectionConfig settings not being the same");
+                        if ((NetworkError)error == NetworkError.CRCMismatch) Debug.LogError("[Alpaca.Relay] The Alpaca Relay detected a CRC mismatch. This could be due to the maxClients or other connectionConfig settings not being the same");
                         return NetworkEventType.DisconnectEvent;
                     }
             }

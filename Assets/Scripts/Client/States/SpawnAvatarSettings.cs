@@ -2,8 +2,8 @@
 using UnityEngine.SceneManagement;
 
 using TMPro;
-using MLAPI;
-using MLAPI.Serialization;
+using Alpaca;
+using Alpaca.Serialization;
 
 public class SpawnAvatarSettings : ClientStateSettings
 {

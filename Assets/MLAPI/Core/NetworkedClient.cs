@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace MLAPI.Data
+namespace Alpaca.Data
 {
     /// <summary>
     /// A NetworkedClient

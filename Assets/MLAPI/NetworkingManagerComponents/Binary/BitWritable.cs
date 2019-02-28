@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Reflection;
 
-namespace MLAPI.Serialization 
+namespace Alpaca.Serialization 
 {
     /// <summary>
     /// Interface for serializable classes and structs

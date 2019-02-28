@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using MLAPI.Logging;
+using Alpaca.Logging;
 
-namespace MLAPI.Serialization
+namespace Alpaca.Serialization
 {
     /// <summary>
     /// Static class containing PooledBitStreams

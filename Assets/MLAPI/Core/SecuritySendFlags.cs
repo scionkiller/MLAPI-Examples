@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MLAPI.Data
+namespace Alpaca.Data
 {
     /// <summary>
     /// The security operations of a payload

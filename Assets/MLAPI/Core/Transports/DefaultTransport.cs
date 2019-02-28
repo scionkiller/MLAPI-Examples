@@ -1,4 +1,4 @@
-﻿namespace MLAPI.Transports
+﻿namespace Alpaca.Transports
 {
     /// <summary>
     /// Supported built in transport
@@ -10,9 +10,9 @@
         /// </summary>
         UNET,
         /// <summary>
-        /// MLAPI.Relay transport (UNET internally)
+        /// Alpaca.Relay transport (UNET internally)
         /// </summary>
-        MLAPI_Relay,
+        ALPACA_Relay,
         /// <summary>
         /// Custom transport
         /// </summary>

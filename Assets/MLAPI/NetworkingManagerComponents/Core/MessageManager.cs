@@ -1,16 +1,16 @@
 ﻿#if !DISABLE_CRYPTOGRAPHY
-using MLAPI.Cryptography;
+using Alpaca.Cryptography;
 #endif
-using MLAPI.Data;
-using MLAPI.Logging;
-using MLAPI.Serialization;
+using Alpaca.Data;
+using Alpaca.Logging;
+using Alpaca.Serialization;
 using System;
 using System.Collections.Generic;
 #if !DISABLE_CRYPTOGRAPHY
 using System.Security.Cryptography;
 #endif
 
-namespace MLAPI.Internal
+namespace Alpaca.Internal
 {
     internal static class MessageManager
     {
@@ -32,7 +32,7 @@ namespace MLAPI.Internal
                     if (inputStream.Length < 1)
                     {
                         if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogError("The incomming message was too small");
-                        messageType = MLAPIConstants.INVALID;
+                        messageType = Constants.INVALID;
                         security = SecuritySendFlags.None;
                         return null;
                     }
@@ -49,10 +49,12 @@ namespace MLAPI.Internal
 #if !DISABLE_CRYPTOGRAPHY
                     if (isEncrypted || isAuthenticated)
                     {
-                        if (!NetworkingManager.GetSingleton().config.EnableEncryption)
+						NetworkingManager network = NetworkingManager.GetSingleton();
+
+                        if (!network.config.EnableEncryption)
                         {
                             if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Got a encrypted and/or authenticated message but key exchange (\"encryption\") was not enabled");
-                            messageType = MLAPIConstants.INVALID;
+                            messageType = Constants.INVALID;
                             return null;
                         }
 
@@ -68,7 +70,7 @@ namespace MLAPI.Internal
                             if (readHmacLength != HMAC_BUFFER.Length)
                             {
                                 if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("HMAC length was invalid");
-                                messageType = MLAPIConstants.INVALID;
+                                messageType = Constants.INVALID;
                                 return null;
                             }
 
@@ -76,12 +78,11 @@ namespace MLAPI.Internal
                             inputStream.Position = hmacStartPos;
                             inputStream.Write(HMAC_PLACEHOLDER, 0, HMAC_PLACEHOLDER.Length);
 
-                            byte[] key = NetworkingManager.GetSingleton().IsServer ? CryptographyHelper.GetClientKey(clientId) : CryptographyHelper.GetServerKey();
-
-                            if (key == null)
+							byte[] key = network.GetPublicEncryptionKey(clientId);
+                            if( key == null )
                             {
                                 if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Failed to grab key");
-                                messageType = MLAPIConstants.INVALID;
+                                messageType = Constants.INVALID;
                                 return null;
                             }
 
@@ -93,7 +94,7 @@ namespace MLAPI.Internal
                                 if (!CryptographyHelper.ConstTimeArrayEqual(computedHmac, HMAC_BUFFER))
                                 {
                                     if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Received HMAC did not match the computed HMAC");
-                                    messageType = MLAPIConstants.INVALID;
+                                    messageType = Constants.INVALID;
                                     return null;
                                 }
                             }
@@ -106,7 +107,7 @@ namespace MLAPI.Internal
                             if (ivRead != IV_BUFFER.Length)
                             {
                                 if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogError("Invalid IV size");
-                                messageType = MLAPIConstants.INVALID;
+                                messageType = Constants.INVALID;
                                 return null;
                             }
 
@@ -117,12 +118,11 @@ namespace MLAPI.Internal
                                 rijndael.IV = IV_BUFFER;
                                 rijndael.Padding = PaddingMode.PKCS7;
 
-                                byte[] key = NetworkingManager.GetSingleton().IsServer ? CryptographyHelper.GetClientKey(clientId) : CryptographyHelper.GetServerKey();
-
+                                byte[] key = network.GetPublicEncryptionKey(clientId);
                                 if (key == null)
                                 {
                                     if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Failed to grab key");
-                                    messageType = MLAPIConstants.INVALID;
+                                    messageType = Constants.INVALID;
                                     return null;
                                 }
 
@@ -138,12 +138,12 @@ namespace MLAPI.Internal
                                 if (outputStream.Length == 0)
                                 {
                                     if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogError("The incomming message was too small");
-                                    messageType = MLAPIConstants.INVALID;
+                                    messageType = Constants.INVALID;
                                     return null;
                                 }
 
                                 int msgType = outputStream.ReadByte();
-                                messageType = msgType == -1 ? MLAPIConstants.INVALID : (byte)msgType;
+                                messageType = msgType == -1 ? Constants.INVALID : (byte)msgType;
                             }
 
                             return outputStream;
@@ -153,12 +153,12 @@ namespace MLAPI.Internal
                             if (inputStream.Length - inputStream.Position <= 0)
                             {
                                 if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogError("The incomming message was too small");
-                                messageType = MLAPIConstants.INVALID;
+                                messageType = Constants.INVALID;
                                 return null;
                             }
 
                             int msgType = inputStream.ReadByte();
-                            messageType = msgType == -1 ? MLAPIConstants.INVALID : (byte)msgType;
+                            messageType = msgType == -1 ? Constants.INVALID : (byte)msgType;
                             return inputStream;
                         }
                     }
@@ -178,7 +178,7 @@ namespace MLAPI.Internal
                     if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError(e.ToString());
 
                     security = SecuritySendFlags.None;
-                    messageType = MLAPIConstants.INVALID;
+                    messageType = Constants.INVALID;
                     return null;
                 }
             }
@@ -201,6 +201,8 @@ namespace MLAPI.Internal
 #if !DISABLE_CRYPTOGRAPHY
                     if (authenticated || encrypted)
                     {
+						NetworkingManager network = NetworkingManager.GetSingleton();
+
                         outWriter.WritePadBits();
                         long hmacWritePos = outStream.Position;
 
@@ -213,8 +215,7 @@ namespace MLAPI.Internal
                                 rijndael.GenerateIV();
                                 rijndael.Padding = PaddingMode.PKCS7;
 
-                                byte[] key = NetworkingManager.GetSingleton().IsServer ? CryptographyHelper.GetClientKey(clientId) : CryptographyHelper.GetServerKey();
-
+                                byte[] key = network.GetPublicEncryptionKey(clientId);
                                 if (key == null)
                                 {
                                     if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Failed to grab key");
@@ -240,8 +241,7 @@ namespace MLAPI.Internal
 
                         if (authenticated)
                         {
-                            byte[] key = NetworkingManager.GetSingleton().IsServer ? CryptographyHelper.GetClientKey(clientId) : CryptographyHelper.GetServerKey();
-
+                            byte[] key = network.GetPublicEncryptionKey(clientId);
                             if (key == null)
                             {
                                 if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Failed to grab key");

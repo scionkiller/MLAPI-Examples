@@ -10,22 +10,22 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
-using MLAPI.Logging;
-using MLAPI.Components;
-using MLAPI.Configuration;
+using Alpaca.Logging;
+using Alpaca.Components;
+using Alpaca.Configuration;
 #if !DISABLE_CRYPTOGRAPHY
-using MLAPI.Cryptography;
+using Alpaca.Cryptography;
 #endif
-using MLAPI.Data;
-using MLAPI.Internal;
-using MLAPI.Profiling;
-using MLAPI.Serialization;
-using MLAPI.Transports;
-using MLAPI.Transports.UNET;
-using BitStream = MLAPI.Serialization.BitStream;
+using Alpaca.Data;
+using Alpaca.Internal;
+using Alpaca.Profiling;
+using Alpaca.Serialization;
+using Alpaca.Transports;
+using Alpaca.Transports.UNET;
+using BitStream = Alpaca.Serialization.BitStream;
 
 
-namespace MLAPI
+namespace Alpaca
 {
 	public class ClientSet : ArraySet<uint, NetworkedClient>
 	{
@@ -33,8 +33,13 @@ namespace MLAPI
 		{}
 	}
 
+	public class PendingClientSet : ArraySet<uint, PendingClient>
+	{
+		public PendingClientSet( int capacity ) : base(capacity)
+		{}
+	}
 
-    [AddComponentMenu("MLAPI/NetworkingManager", -100)]
+    [AddComponentMenu("Alpaca/NetworkingManager", -100)]
     public class NetworkingManager : MonoBehaviour
     {
 		static NetworkingManager _singleton;
@@ -71,8 +76,10 @@ namespace MLAPI
         }
         private uint localClientId;
 
+		// TODO: make these private and improve encapsulation
+		// Will require moving of lots of code that belongs in this file but is scattered around
         public ClientSet _connectedClients;
-        public ClientSet _pendingClients;
+        public PendingClientSet _pendingClients;
  
         public bool IsServer { get; internal set; }
 
@@ -127,33 +134,22 @@ namespace MLAPI
         }
 
         /// <summary>
-        /// Sends custom message to a list of clients
+        /// Sends custom message to all clients
         /// </summary>
-        /// <param name="clientIds">The clients to send to, sends to everyone if null</param>
         /// <param name="stream">The message stream containing the data</param>
         /// <param name="channel">The channel to send the data on</param>
         /// <param name="security">The security settings to apply to the message</param>
-        public void SendCustomMessage(List<uint> clientIds, BitStream stream, string channel = null, SecuritySendFlags security = SecuritySendFlags.None)
+        public void BroadcastCustomMessage( BitStream stream, string channel = null, SecuritySendFlags security = SecuritySendFlags.None)
         {
             if (!IsServer)
             {
-                if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogWarning("Can not send custom message to multiple users as a client");
+                if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogWarning("Only the server can broadcast custom messages");
                 return;
             }
-            if (clientIds == null)
-            {
-                for (int i = 0; i < ConnectedClientsList.Count; i++)
-                {
-                    InternalMessageHandler.Send(ConnectedClientsList[i].ClientId, MLAPIConstants.MLAPI_CUSTOM_MESSAGE, string.IsNullOrEmpty(channel) ? "MLAPI_DEFAULT_MESSAGE" : channel, stream, security);
-                }
-            }
-            else
-            {
-                for (int i = 0; i < clientIds.Count; i++)
-                {
-                    InternalMessageHandler.Send(clientIds[i], MLAPIConstants.MLAPI_CUSTOM_MESSAGE, string.IsNullOrEmpty(channel) ? "MLAPI_DEFAULT_MESSAGE" : channel, stream, security);
-                }
-            }
+			for (int i = 0; i < _connectedClients.GetCount(); ++i)
+			{
+				InternalMessageHandler.Send( _connectedClients.GetAt(i).ClientId, Constants.ALPACA_CUSTOM_MESSAGE, string.IsNullOrEmpty(channel) ? "ALPACA_DEFAULT_MESSAGE" : channel, stream, security);
+			}
         }
 
         /// <summary>
@@ -165,8 +161,27 @@ namespace MLAPI
         /// <param name="security">The security settings to apply to the message</param>
         public void SendCustomMessage(uint clientId, BitStream stream, string channel = null, SecuritySendFlags security = SecuritySendFlags.None)
         {
-            InternalMessageHandler.Send(clientId, MLAPIConstants.MLAPI_CUSTOM_MESSAGE, string.IsNullOrEmpty(channel) ? "MLAPI_DEFAULT_MESSAGE" : channel, stream, security);
+            InternalMessageHandler.Send(clientId, Constants.ALPACA_CUSTOM_MESSAGE, string.IsNullOrEmpty(channel) ? "ALPACA_DEFAULT_MESSAGE" : channel, stream, security);
         }
+
+		// get the public key we need for encrypting a message to the target client, or server if we are a client
+		public byte[] GetPublicEncryptionKey( uint clientId )
+		{
+			if( IsServer )
+			{
+				NetworkedClient c = _connectedClients.Get( clientId );
+				if( c != null ) { return c.AesKey; }
+				
+				PendingClient p = _pendingClients.Get( clientId );
+				if( p != null ) { return p.AesKey; }
+
+				return null;
+			}
+			else
+			{
+				return clientAesKey;
+			}
+		}
 
         private object Init(bool server)
         {
@@ -178,7 +193,7 @@ namespace MLAPI
             lastReceiveTickTime = 0f;
             eventOvershootCounter = 0f;
 
-			_pendingClients = new ClientSet( config.MaxConnections );
+			_pendingClients = new PendingClientSet( config.MaxConnections );
 			_connectedClients = new ClientSet( config.MaxConnections );
 
             messageBuffer = new byte[config.MessageBufferSize];
@@ -189,8 +204,6 @@ namespace MLAPI
             SpawnManager.SpawnedObjects.Clear();
             SpawnManager.SpawnedObjectsList.Clear();
             SpawnManager.releasedNetworkObjectIds.Clear();
-            NetworkPoolManager.Pools.Clear();
-            NetworkPoolManager.PoolNamesToIndexes.Clear();
 
             try
             {
@@ -210,7 +223,7 @@ namespace MLAPI
 
             if (config.Transport == DefaultTransport.UNET)
                 config.NetworkTransport = new UnetTransport();
-            else if (config.Transport == DefaultTransport.MLAPI_Relay)
+            else if (config.Transport == DefaultTransport.ALPACA_Relay)
                 config.NetworkTransport = new RelayedTransport();
             else if (config.Transport == DefaultTransport.Custom && config.NetworkTransport == null)
                 throw new NullReferenceException("The current NetworkTransport is null");
@@ -228,48 +241,47 @@ namespace MLAPI
 				networkedPrefabName.Add(config.NetworkedPrefabs[i].name);
 			}
 
-            //MLAPI channels and messageTypes
             List<Channel> internalChannels = new List<Channel>
             {
                 new Channel()
                 {
-                    Name = "MLAPI_INTERNAL",
+                    Name = "ALPACA_INTERNAL",
                     Type = config.NetworkTransport.InternalChannel
                 },
                 new Channel()
                 {
-                    Name = "MLAPI_DEFAULT_MESSAGE",
+                    Name = "ALPACA_DEFAULT_MESSAGE",
                     Type = ChannelType.Reliable
                 },
                 new Channel()
                 {
-                    Name = "MLAPI_POSITION_UPDATE",
+                    Name = "ALPACA_POSITION_UPDATE",
                     Type = ChannelType.StateUpdate
                 },
                 new Channel()
                 {
-                    Name = "MLAPI_ANIMATION_UPDATE",
+                    Name = "ALPACA_ANIMATION_UPDATE",
                     Type = ChannelType.ReliableSequenced
                 },
                 new Channel()
                 {
-                    Name = "MLAPI_NAV_AGENT_STATE",
+                    Name = "ALPACA_NAV_AGENT_STATE",
                     Type = ChannelType.ReliableSequenced
                 },
                 new Channel()
                 {
-                    Name = "MLAPI_NAV_AGENT_CORRECTION",
+                    Name = "ALPACA_NAV_AGENT_CORRECTION",
                     Type = ChannelType.StateUpdate
                 },
                 new Channel()
                 {
-                    Name = "MLAPI_TIME_SYNC",
+                    Name = "ALPACA_TIME_SYNC",
                     Type = ChannelType.Unreliable
                 }
             };
 
             HashSet<string> channelNames = new HashSet<string>();
-            //Register internal channels
+            // Register internal channels
             for (int i = 0; i < internalChannels.Count; i++)
             {
                 if (channelNames.Contains(internalChannels[i].Name))
@@ -333,31 +345,25 @@ namespace MLAPI
 		public void StopServer()
         {
             if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("StopServer()");
-            HashSet<uint> disconnectedIds = new HashSet<uint>();
-            //Don't know if I have to disconnect the clients. I'm assuming the NetworkTransport does all the cleaning on shtudown. But this way the clients get a disconnect message from server (so long it does't get lost)
-            foreach (KeyValuePair<uint, NetworkedClient> pair in ConnectedClients)
-            {
-                if(!disconnectedIds.Contains(pair.Key))
-                {
-                    disconnectedIds.Add(pair.Key);
-					if (pair.Key == config.NetworkTransport.ServerClientId)
-                        continue;
 
-                    config.NetworkTransport.DisconnectClient(pair.Key);
-                }
-            }
-            
-            foreach (KeyValuePair<uint, PendingClient> pair in PendingClients)
-            {
-                if(!disconnectedIds.Contains(pair.Key))
-                {
-                    disconnectedIds.Add(pair.Key);
-                    if (pair.Key == config.NetworkTransport.ServerClientId)
-                        continue;
-
-                    config.NetworkTransport.DisconnectClient(pair.Key);
-                }
-            }
+            // Don't know if I have to disconnect the clients. I'm assuming the NetworkTransport does all the cleaning on shutdown.
+			// But this way the clients get a disconnect message from server (so long it does't get lost)
+			for( int i = 0; i < _connectedClients.GetCount(); ++i )
+			{
+				NetworkedClient c = _connectedClients.GetAt(i);
+				if( c.ClientId != config.NetworkTransport.ServerClientId )
+				{
+					config.NetworkTransport.DisconnectClient( c.ClientId );
+				}
+			}
+			for( int i = 0; i < _pendingClients.GetCount(); ++i )
+			{
+				PendingClient c = _pendingClients.GetAt(i);
+				if( c.ClientId != config.NetworkTransport.ServerClientId )
+				{
+					config.NetworkTransport.DisconnectClient( c.ClientId );
+				}
+			}
             
             IsServer = false;
             Shutdown();
@@ -430,11 +436,10 @@ namespace MLAPI
             IsListening = true;
 
 			uint hostClientId = config.NetworkTransport.ServerClientId;
-            ConnectedClients.Add(hostClientId, new NetworkedClient()
+            _connectedClients.Add( hostClientId, new NetworkedClient()
             {
                 ClientId = hostClientId
             });
-            ConnectedClientsList.Add(ConnectedClients[hostClientId]);
 
             if( prefabId != -1)
             {
@@ -450,7 +455,7 @@ namespace MLAPI
             IsServer = false;
             IsClient = false;
             StopServer();
-            //We don't stop client since we dont actually have a transport connection to our own host. We just handle host messages directly in the MLAPI
+            //We don't stop client since we dont actually have a transport connection to our own server
         }
 
         private void OnEnable()
@@ -500,11 +505,12 @@ namespace MLAPI
                 if((NetworkTime - lastSendTickTime >= (1f / config.SendTickrate)) || config.SendTickrate <= 0)
                 {
                     NetworkedObject.NetworkedVarPrepareSend();
-                    foreach (KeyValuePair<uint, NetworkedClient> pair in ConnectedClients)
-                    {
+					for( int i = 0; i < _connectedClients.GetCount(); ++i )
+					{
+						uint clientId = _connectedClients.GetAt(i).ClientId;
                         byte error;
-                        config.NetworkTransport.SendQueue(pair.Key, out error);
-                        if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("Send Pending Queue: " + pair.Key);
+                        config.NetworkTransport.SendQueue(clientId, out error);
+                        if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("Send Pending Queue: " + clientId);
                     }
                     lastSendTickTime = NetworkTime;
                 }
@@ -548,7 +554,7 @@ namespace MLAPI
                                                 EllipticDiffieHellman diffieHellman = new EllipticDiffieHellman(EllipticDiffieHellman.DEFAULT_CURVE, EllipticDiffieHellman.DEFAULT_GENERATOR, EllipticDiffieHellman.DEFAULT_ORDER);
                                                 byte[] diffieHellmanPublicPart = diffieHellman.GetPublicKey();
                                                 hailWriter.WriteByteArray(diffieHellmanPublicPart);
-                                                PendingClients.Add(clientId, new PendingClient()
+                                                _pendingClients.Add(clientId, new PendingClient()
                                                 {
                                                     ClientId = clientId,
                                                     ConnectionState = PendingClient.State.PendingHail,
@@ -559,7 +565,7 @@ namespace MLAPI
                                                 {
                                                     // Write public part signature (signed by certificate private)
                                                     X509Certificate2 certificate = config.ServerX509Certificate;
-                                                    if (!certificate.HasPrivateKey) throw new CryptographicException("[MLAPI] No private key was found in server certificate. Unable to sign key exchange");
+                                                    if (!certificate.HasPrivateKey) throw new CryptographicException("[Alpaca] No private key was found in server certificate. Unable to sign key exchange");
                                                     RSACryptoServiceProvider rsa = certificate.PrivateKey as RSACryptoServiceProvider;
 
                                                     if (rsa != null)
@@ -571,18 +577,18 @@ namespace MLAPI
                                                     }
                                                     else
                                                     {
-                                                        throw new CryptographicException("[MLAPI] Only RSA certificates are supported. No valid RSA key was found");
+                                                        throw new CryptographicException("[Alpaca] Only RSA certificates are supported. No valid RSA key was found");
                                                     }
                                                 }
                                             }
                                             // Send the hail
-                                            InternalMessageHandler.Send(clientId, MLAPIConstants.MLAPI_CERTIFICATE_HAIL, "MLAPI_INTERNAL", hailStream, SecuritySendFlags.None, true);
+                                            InternalMessageHandler.Send(clientId, Constants.ALPACA_CERTIFICATE_HAIL, "ALPACA_INTERNAL", hailStream, SecuritySendFlags.None, true);
                                         }
                                     }
                                     else
                                     {
 #endif
-                                        PendingClients.Add(clientId, new PendingClient()
+                                        _pendingClients.Add(clientId, new PendingClient()
                                         {
                                             ClientId = clientId,
                                             ConnectionState = PendingClient.State.PendingConnection
@@ -610,8 +616,10 @@ namespace MLAPI
                                 if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("Disconnect Event From " + clientId);
 
                                 if (IsServer)
-                                    OnClientDisconnectFromServer(clientId);
-                                else
+								{
+                                    OnClientDisconnect(clientId);
+								}
+								else
                                 {
                                     IsConnectedClient = false;
                                     StopClient();
@@ -672,32 +680,26 @@ namespace MLAPI
 					}
                 }
 
-                InternalMessageHandler.Send(ServerClientId, MLAPIConstants.MLAPI_CONNECTION_REQUEST, "MLAPI_INTERNAL", stream, SecuritySendFlags.Authenticated | SecuritySendFlags.Encrypted, true);
+                InternalMessageHandler.Send(ServerClientId, Constants.ALPACA_CONNECTION_REQUEST, "ALPACA_INTERNAL", stream, SecuritySendFlags.Authenticated | SecuritySendFlags.Encrypted, true);
             }
         }
 
         private IEnumerator ApprovalTimeout(uint clientId)
         {
             float timeStarted = NetworkTime;
-            //We yield every frame incase a pending client disconnects and someone else gets its connection id
-            while (NetworkTime - timeStarted < config.ClientConnectionBufferTimeout && PendingClients.ContainsKey(clientId))
+            // We yield every frame in case a pending client disconnects and someone else gets its connection id
+            while (NetworkTime - timeStarted < config.ClientConnectionBufferTimeout && (_pendingClients.Get(clientId) != null) )
             {
                 yield return null;
             }
             
-            if (PendingClients.ContainsKey(clientId) && !ConnectedClients.ContainsKey(clientId))
+            if( _pendingClients.Get(clientId) != null && _connectedClients.Get(clientId) == null )
             {
                 // Timeout
                 if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("Client " + clientId + " Handshake Timed Out");
                 DisconnectClient(clientId);
             }
         }
-
-        /*internal IEnumerator TimeOutSwitchSceneProgress(SceneSwitchProgress switchSceneProgress)
-        {
-            yield return new WaitForSeconds(this.config.LoadSceneTimeOut);
-            switchSceneProgress.SetTimedOut();
-        }*/
 
         private void HandleIncomingData(uint clientId, byte[] data, int channelId, int totalSize)
         {
@@ -714,7 +716,7 @@ namespace MLAPI
                         if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Message unwrap could not be completed. Was the header corrupt? Crypto error?");
                         return;
                     }
-                    else if (messageType == MLAPIConstants.INVALID)
+                    else if (messageType == Constants.INVALID)
                     {
                         if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Message unwrap read an invalid messageType");
                         return;
@@ -725,96 +727,95 @@ namespace MLAPI
 
                     if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("Data Header: messageType=" + messageType);
 
-                    // Client tried to send a network message that was not the connection request before he was accepted.
-                    if (IsServer && (config.EnableEncryption && PendingClients.ContainsKey(clientId) && PendingClients[clientId].ConnectionState == PendingClient.State.PendingHail && messageType != MLAPIConstants.MLAPI_CERTIFICATE_HAIL_RESPONSE) ||
-                        (PendingClients.ContainsKey(clientId) && PendingClients[clientId].ConnectionState == PendingClient.State.PendingConnection && messageType != MLAPIConstants.MLAPI_CONNECTION_REQUEST))
-                    {
-                        if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("Message recieved from clientId " + clientId + " before it has been accepted");
-                        return;
-                    }
+                    // Pending client tried to send a network message that was not the connection request before he was accepted.
+					if( IsServer )
+					{
+						PendingClient p = _pendingClients.Get(clientId);
+						if(  (p.ConnectionState == PendingClient.State.PendingHail       && messageType != Constants.ALPACA_CERTIFICATE_HAIL_RESPONSE)
+						  || (p.ConnectionState == PendingClient.State.PendingConnection && messageType != Constants.ALPACA_CONNECTION_REQUEST       )
+						  )
+						{
+							if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("Message recieved from clientId " + clientId + " before it has been accepted");
+							return;
+						}
+					}
 
                     #region INTERNAL MESSAGE
 
                     switch (messageType)
                     {
-                        case MLAPIConstants.MLAPI_CONNECTION_REQUEST:
+                        case Constants.ALPACA_CONNECTION_REQUEST:
                             if (IsServer)
                                 InternalMessageHandler.HandleConnectionRequest(clientId, messageStream, channelId);
                             break;
-                        case MLAPIConstants.MLAPI_CONNECTION_APPROVED:
+                        case Constants.ALPACA_CONNECTION_APPROVED:
                             if (IsClient)
                                 InternalMessageHandler.HandleConnectionApproved(clientId, messageStream, channelId);
                             break;
-                        case MLAPIConstants.MLAPI_ADD_OBJECT:
+                        case Constants.ALPACA_ADD_OBJECT:
                             if (IsClient) InternalMessageHandler.HandleAddObject(clientId, messageStream, channelId);
                             break;
-                        case MLAPIConstants.MLAPI_CLIENT_DISCONNECT:
+                        case Constants.ALPACA_CLIENT_DISCONNECT:
                             if (IsClient)
                                 InternalMessageHandler.HandleClientDisconnect(clientId, messageStream, channelId);
                             break;
-                        case MLAPIConstants.MLAPI_DESTROY_OBJECT:
+                        case Constants.ALPACA_DESTROY_OBJECT:
                             if (IsClient) InternalMessageHandler.HandleDestroyObject(clientId, messageStream, channelId);
                             break;
-                        //case MLAPIConstants.MLAPI_SWITCH_SCENE:
-                        //   if (IsClient) InternalMessageHandler.HandleSwitchScene(clientId, messageStream, channelId);
-                        //    break;
-                        case MLAPIConstants.MLAPI_SPAWN_POOL_OBJECT:
+                        case Constants.ALPACA_SPAWN_POOL_OBJECT:
                             if (IsClient) InternalMessageHandler.HandleSpawnPoolObject(clientId, messageStream, channelId);
                             break;
-                        case MLAPIConstants.MLAPI_DESTROY_POOL_OBJECT:
+                        case Constants.ALPACA_DESTROY_POOL_OBJECT:
                             if (IsClient)
                                 InternalMessageHandler.HandleDestroyPoolObject(clientId, messageStream, channelId);
                             break;
-                        case MLAPIConstants.MLAPI_CHANGE_OWNER:
+                        case Constants.ALPACA_CHANGE_OWNER:
                             if (IsClient) InternalMessageHandler.HandleChangeOwner(clientId, messageStream, channelId);
                             break;
-                        case MLAPIConstants.MLAPI_ADD_OBJECTS:
+                        case Constants.ALPACA_ADD_OBJECTS:
                             if (IsClient) InternalMessageHandler.HandleAddObjects(clientId, messageStream, channelId);
                             break;
-                        case MLAPIConstants.MLAPI_TIME_SYNC:
+                        case Constants.ALPACA_TIME_SYNC:
                             if (IsClient) InternalMessageHandler.HandleTimeSync(clientId, messageStream, channelId);
                             break;
-                        case MLAPIConstants.MLAPI_NETWORKED_VAR_DELTA:
+                        case Constants.ALPACA_NETWORKED_VAR_DELTA:
                             InternalMessageHandler.HandleNetworkedVarDelta(clientId, messageStream, channelId);
                             break;
-                        case MLAPIConstants.MLAPI_NETWORKED_VAR_UPDATE:
+                        case Constants.ALPACA_NETWORKED_VAR_UPDATE:
                             InternalMessageHandler.HandleNetworkedVarUpdate(clientId, messageStream, channelId);
                             break;
-                        case MLAPIConstants.MLAPI_SERVER_RPC:
+                        case Constants.ALPACA_SERVER_RPC:
                             if (IsServer) InternalMessageHandler.HandleServerRPC(clientId, messageStream, channelId);
                             break;
-                        case MLAPIConstants.MLAPI_SERVER_RPC_REQUEST:
+                        case Constants.ALPACA_SERVER_RPC_REQUEST:
                             if (IsServer) InternalMessageHandler.HandleServerRPCRequest(clientId, messageStream, channelId, security);
                             break;
-                        case MLAPIConstants.MLAPI_SERVER_RPC_RESPONSE:
+                        case Constants.ALPACA_SERVER_RPC_RESPONSE:
                             if (IsClient) InternalMessageHandler.HandleServerRPCResponse(clientId, messageStream, channelId);
                             break;
-                        case MLAPIConstants.MLAPI_CLIENT_RPC:
+                        case Constants.ALPACA_CLIENT_RPC:
                             if (IsClient) InternalMessageHandler.HandleClientRPC(clientId, messageStream, channelId);
                             break;
-                        case MLAPIConstants.MLAPI_CLIENT_RPC_REQUEST:
+                        case Constants.ALPACA_CLIENT_RPC_REQUEST:
                             if (IsClient) InternalMessageHandler.HandleClientRPCRequest(clientId, messageStream, channelId, security);
                             break;
-                        case MLAPIConstants.MLAPI_CLIENT_RPC_RESPONSE:
+                        case Constants.ALPACA_CLIENT_RPC_RESPONSE:
                             if (IsServer) InternalMessageHandler.HandleClientRPCResponse(clientId, messageStream, channelId);
                             break;
-                        case MLAPIConstants.MLAPI_CUSTOM_MESSAGE:
+                        case Constants.ALPACA_CUSTOM_MESSAGE:
                             InternalMessageHandler.HandleCustomMessage(clientId, messageStream, channelId);
                             break;
 #if !DISABLE_CRYPTOGRAPHY
-                        case MLAPIConstants.MLAPI_CERTIFICATE_HAIL:
+                        case Constants.ALPACA_CERTIFICATE_HAIL:
                             if (IsClient) InternalMessageHandler.HandleHailRequest(clientId, messageStream, channelId);
                             break;
-                        case MLAPIConstants.MLAPI_CERTIFICATE_HAIL_RESPONSE:
+                        case Constants.ALPACA_CERTIFICATE_HAIL_RESPONSE:
                             if (IsServer) InternalMessageHandler.HandleHailResponse(clientId, messageStream, channelId);
                             break;
-                        case MLAPIConstants.MLAPI_GREETINGS:
+                        case Constants.ALPACA_GREETINGS:
                             if (IsClient) InternalMessageHandler.HandleGreetings(clientId, messageStream, channelId);
                             break;
 #endif
-                        /*case MLAPIConstants.MLAPI_CLIENT_SWITCH_SCENE_COMPLETED:
-                            if (IsServer) InternalMessageHandler.HandleClientSwitchSceneCompleted(clientId, messageStream, channelId);
-                            break;*/
                         default:
                             if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Read unrecognized messageType " + messageType);
                             break;
@@ -832,72 +833,64 @@ namespace MLAPI
 #endif
         internal void DisconnectClient(uint clientId)
         {
-            if (!IsServer)
-                return;
+            if( !IsServer ) { return; }
 
-            if (ConnectedClients.ContainsKey(clientId))
-                ConnectedClients.Remove(clientId);
-
-            if (PendingClients.ContainsKey(clientId))
-                PendingClients.Remove(clientId);
-
-            for (int i = ConnectedClientsList.Count - 1; i > -1; i--)
-            {
-                if (ConnectedClientsList[i].ClientId == clientId)
-                    ConnectedClientsList.RemoveAt(i);
-            }
+			_connectedClients.Remove( clientId );
+			_pendingClients.Remove( clientId );
 
             config.NetworkTransport.DisconnectClient(clientId);
         }
 
-        internal void OnClientDisconnectFromServer(uint clientId)
+        internal void OnClientDisconnect( uint clientId )
         {
-            if (PendingClients.ContainsKey(clientId))
-                PendingClients.Remove(clientId);
-            
-            if (ConnectedClients.ContainsKey(clientId))
-            {
-                if (IsServer )
-                {
-                    if (ConnectedClients[clientId].PlayerObject != null)
-                        Destroy(ConnectedClients[clientId].PlayerObject.gameObject);
-                    
-                    for (int i = 0; i < ConnectedClients[clientId].OwnedObjects.Count; i++)
-                    {
-                        if (ConnectedClients[clientId].OwnedObjects[i] != null)
-                        {
-                            if (!ConnectedClients[clientId].OwnedObjects[i].DontDestroyWithOwner)
-                            {
-                                Destroy(ConnectedClients[clientId].OwnedObjects[i].gameObject);
-                            }
-                            else
-                            {
-                                ConnectedClients[clientId].OwnedObjects[i].RemoveOwnership();
-                            }
-                        }
-                    }
-                }
+			if( IsClient )
+			{
+				_connectedClients.Remove( clientId );
+				return;
+			}
 
-                for (int i = 0; i < ConnectedClientsList.Count; i++)
-                {
-                    if (ConnectedClientsList[i].ClientId == clientId)
+			bool didRemove = false;
+			if( _pendingClients.Get( clientId ) != null)
+			{
+				didRemove = _pendingClients.Remove( clientId );
+			}
+			else
+			{
+				NetworkedClient c = _connectedClients.Get( clientId );
+				if( c != null )
+				{
+                    if( c.PlayerObject != null )
+					{
+						Destroy( c.PlayerObject.gameObject );
+						c.PlayerObject = null;
+					}
+                    
+                    for( int i = 0; i < c.OwnedObjects.Count; ++i )
                     {
-                        ConnectedClientsList.RemoveAt(i);
-                        break;
+						NetworkedObject obj = c.OwnedObjects[i];
+						if( obj.DontDestroyWithOwner )
+						{
+							obj.RemoveOwnership();
+						}
+						else
+						{
+							Destroy( obj.gameObject );
+						}
                     }
+					c.OwnedObjects.Clear();
+
+					didRemove = _connectedClients.Remove( clientId );
                 }
-                
-                ConnectedClients.Remove(clientId);
             }
 
-            if (IsServer)
+            if( didRemove )
             {
                 using (PooledBitStream stream = PooledBitStream.Get())
                 {
                     using (PooledBitWriter writer = PooledBitWriter.Get(stream))
                     {
                         writer.WriteUInt32Packed(clientId);
-                        InternalMessageHandler.Send(MLAPIConstants.MLAPI_CLIENT_DISCONNECT, "MLAPI_INTERNAL", clientId, stream, SecuritySendFlags.None);
+                        InternalMessageHandler.Send(Constants.ALPACA_CLIENT_DISCONNECT, "ALPACA_INTERNAL", clientId, stream, SecuritySendFlags.None);
                     }
                 }
             }
@@ -913,97 +906,89 @@ namespace MLAPI
                     writer.WriteSinglePacked(NetworkTime);
                     int timestamp = config.NetworkTransport.GetNetworkTimestamp();
                     writer.WriteInt32Packed(timestamp);
-                    InternalMessageHandler.Send(MLAPIConstants.MLAPI_TIME_SYNC, "MLAPI_TIME_SYNC", stream, SecuritySendFlags.None);
+                    InternalMessageHandler.Send(Constants.ALPACA_TIME_SYNC, "ALPACA_TIME_SYNC", stream, SecuritySendFlags.None);
                 }
             }
         }
 
         internal void HandleApproval(uint clientId, bool approved)
         {
-            if(approved)
-            {
-                // Inform new client it got approved   
-                byte[] aesKey = PendingClients.ContainsKey(clientId) ? PendingClients[clientId].AesKey : null;
-                if (PendingClients.ContainsKey(clientId))
-                    PendingClients.Remove(clientId);
-                NetworkedClient client = new NetworkedClient()
-                {
-                    ClientId = clientId,
-#if !DISABLE_CRYPTOGRAPHY
-                    AesKey = aesKey
-#endif
-                };
-                ConnectedClients.Add(clientId, client);
-                ConnectedClientsList.Add(client);
-
-                int amountOfObjectsToSend = SpawnManager.SpawnedObjects.Values.Count;
-
-                using (PooledBitStream stream = PooledBitStream.Get())
-                {
-                    using (PooledBitWriter writer = PooledBitWriter.Get(stream))
-                    {
-                        writer.WriteUInt32Packed(clientId);
-                        /*if(config.EnableSceneSwitching) 
-                        {
-                            writer.WriteUInt32Packed(NetworkSceneManager.currentSceneIndex);
-                            writer.WriteByteArray(NetworkSceneManager.currentSceneSwitchProgressGuid.ToByteArray());
-						}*/
-
-                        writer.WriteSinglePacked(NetworkTime);
-                        writer.WriteInt32Packed(config.NetworkTransport.GetNetworkTimestamp());
-
-						writer.WriteInt32Packed(amountOfObjectsToSend);
-
-						foreach (KeyValuePair<uint, NetworkedObject> pair in SpawnManager.SpawnedObjects)
-						{
-							writer.WriteBool(pair.Value.IsPlayerObject);
-							writer.WriteUInt32Packed(pair.Value.NetworkId);
-							writer.WriteUInt32Packed(pair.Value.OwnerClientId);
-							writer.WriteUInt64Packed(pair.Value.NetworkedPrefabHash);
-							writer.WriteBool(pair.Value.gameObject.activeInHierarchy);
-
-							writer.WriteSinglePacked(pair.Value.transform.position.x);
-							writer.WriteSinglePacked(pair.Value.transform.position.y);
-							writer.WriteSinglePacked(pair.Value.transform.position.z);
-
-							writer.WriteSinglePacked(pair.Value.transform.rotation.eulerAngles.x);
-							writer.WriteSinglePacked(pair.Value.transform.rotation.eulerAngles.y);
-							writer.WriteSinglePacked(pair.Value.transform.rotation.eulerAngles.z);
-
-							pair.Value.WriteNetworkedVarData(stream, clientId);
-						}
-
-                        InternalMessageHandler.Send(clientId, MLAPIConstants.MLAPI_CONNECTION_APPROVED, "MLAPI_INTERNAL", stream, SecuritySendFlags.Encrypted | SecuritySendFlags.Authenticated, true);
-
-                        if (OnClientConnectedCallback != null)
-                            OnClientConnectedCallback.Invoke(clientId);
-                    }
-                }
-
-                //Inform old clients of the new player
-
-                foreach (var clientPair in ConnectedClients)
-                {
-                    if (clientPair.Key == clientId)
-                        continue; //The new client.
-
-                    using (PooledBitStream stream = PooledBitStream.Get())
-                    {
-                        using (PooledBitWriter writer = PooledBitWriter.Get(stream))
-                        {
-                            writer.WriteUInt32Packed(clientId);
-                            InternalMessageHandler.Send(clientPair.Key, MLAPIConstants.MLAPI_ADD_OBJECT, "MLAPI_INTERNAL", stream, SecuritySendFlags.None);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                if (PendingClients.ContainsKey(clientId))
-                    PendingClients.Remove(clientId);
-
+			if( !approved )
+			{
+				_pendingClients.Remove( clientId );
                 config.NetworkTransport.DisconnectClient(clientId);
-            }
+			}
+
+			// Inform new client it got approved
+
+			PendingClient p = _pendingClients.Get( clientId );
+			byte[] aesKey = p != null ? p.AesKey : null;
+			_pendingClients.Remove( clientId );
+
+			NetworkedClient client = new NetworkedClient()
+			{
+				ClientId = clientId,
+#if !DISABLE_CRYPTOGRAPHY
+				AesKey = aesKey
+#endif
+			};
+			_connectedClients.Add(clientId, client);
+
+			int amountOfObjectsToSend = SpawnManager.SpawnedObjects.Values.Count;
+
+			using( PooledBitStream stream = PooledBitStream.Get() )
+			{
+				using( PooledBitWriter writer = PooledBitWriter.Get(stream) )
+				{
+					writer.WriteUInt32Packed(clientId);
+					writer.WriteSinglePacked(NetworkTime);
+					writer.WriteInt32Packed(config.NetworkTransport.GetNetworkTimestamp());
+					writer.WriteInt32Packed(amountOfObjectsToSend);
+
+					foreach (KeyValuePair<uint, NetworkedObject> pair in SpawnManager.SpawnedObjects)
+					{
+						writer.WriteBool(pair.Value.IsPlayerObject);
+						writer.WriteUInt32Packed(pair.Value.NetworkId);
+						writer.WriteUInt32Packed(pair.Value.OwnerClientId);
+						writer.WriteUInt64Packed(pair.Value.NetworkedPrefabHash);
+						writer.WriteBool(pair.Value.gameObject.activeInHierarchy);
+
+						writer.WriteSinglePacked(pair.Value.transform.position.x);
+						writer.WriteSinglePacked(pair.Value.transform.position.y);
+						writer.WriteSinglePacked(pair.Value.transform.position.z);
+
+						writer.WriteSinglePacked(pair.Value.transform.rotation.eulerAngles.x);
+						writer.WriteSinglePacked(pair.Value.transform.rotation.eulerAngles.y);
+						writer.WriteSinglePacked(pair.Value.transform.rotation.eulerAngles.z);
+
+						pair.Value.WriteNetworkedVarData(stream, clientId);
+					}
+
+					InternalMessageHandler.Send(clientId, Constants.ALPACA_CONNECTION_APPROVED, "ALPACA_INTERNAL", stream, SecuritySendFlags.Encrypted | SecuritySendFlags.Authenticated, true);
+
+					if( OnClientConnectedCallback != null ) { OnClientConnectedCallback.Invoke(clientId); }
+				}
+			}
+
+			// Inform old clients of the new player
+
+			for( int i = 0; i < _connectedClients.GetCount(); ++i )
+			{
+				NetworkedClient c = _connectedClients.GetAt(i);
+				if( c.ClientId == clientId )
+				{
+					continue; // the new client
+				}
+
+				using (PooledBitStream stream = PooledBitStream.Get())
+				{
+					using (PooledBitWriter writer = PooledBitWriter.Get(stream))
+					{
+						writer.WriteUInt32Packed(clientId);
+						InternalMessageHandler.Send( c.ClientId, Constants.ALPACA_ADD_OBJECT, "ALPACA_INTERNAL", stream, SecuritySendFlags.None );
+					}
+				}
+			}
         }
     }
 }

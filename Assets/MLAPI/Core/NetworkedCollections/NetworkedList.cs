@@ -1,9 +1,9 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using MLAPI.Serialization;
+using Alpaca.Serialization;
 
-namespace MLAPI.NetworkedVar.Collections
+namespace Alpaca.NetworkedVar.Collections
 {
     /// <summary>
     /// Event based networkedVar container for syncing Lists

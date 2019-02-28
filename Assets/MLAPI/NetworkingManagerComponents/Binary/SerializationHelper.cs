@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using MLAPI.Internal;
+using Alpaca.Internal;
 using UnityEngine;
 
-namespace MLAPI.Serialization
+namespace Alpaca.Serialization
 {
     /// <summary>
     /// Helper class providing helper serialization methods

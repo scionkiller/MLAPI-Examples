@@ -37,7 +37,8 @@ public class ArraySet<K, V> where K : struct where V : class
 		return null;
 	}
 
-	public void Add( K key, V value )
+	// returns true if it actually added a value
+	public bool Add( K key, V value )
 	{
 		System.Diagnostics.Debug.Assert( value != null );
 
@@ -46,7 +47,7 @@ public class ArraySet<K, V> where K : struct where V : class
 			if( _key[i].Equals(key) )
 			{
 				_value[i] = value;
-				return;
+				return false;
 			}
 		}
 
@@ -55,9 +56,12 @@ public class ArraySet<K, V> where K : struct where V : class
 		_key[_count] = key;
 		_value[_count] = value;
 		++_count;
+
+		return true;
 	}
 
-	public void Remove( K key )
+	// returns true if it actually removed a value
+	public bool Remove( K key )
 	{
 		bool found = false;
 		for( int i = 0; i < _count; ++i )
@@ -76,7 +80,10 @@ public class ArraySet<K, V> where K : struct where V : class
 			// remove last value in array
 			--_count;
 			_value[_count] = null;
+			return true;
 		}
+
+		return false;
 	}
 
 	public V this[K key]

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine.Networking;
 
-namespace MLAPI.Transports.UNET
+namespace Alpaca.Transports.UNET
 {
     public class RelayedTransport : IUDPTransport
     {

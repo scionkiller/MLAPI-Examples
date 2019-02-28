@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MLAPI.Data
+namespace Alpaca.Data
 {
     internal static class UnsignedIntegerArrayExtensions
     {

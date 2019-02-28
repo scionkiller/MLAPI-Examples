@@ -1,10 +1,10 @@
 ﻿#if !DISABLE_CRYPTOGRAPHY
-using MLAPI.Data;
+using Alpaca.Data;
 using System;
 using System.Collections.Generic;
-using MLAPI.Internal;
+using Alpaca.Internal;
 
-namespace MLAPI.Cryptography
+namespace Alpaca.Cryptography
 {
     internal class CurvePoint
     {

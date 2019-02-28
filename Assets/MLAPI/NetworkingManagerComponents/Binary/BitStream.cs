@@ -1,9 +1,9 @@
 ﻿using System;
 using System.IO;
-using static MLAPI.Serialization.Arithmetic;
+using static Alpaca.Serialization.Arithmetic;
 
 
-namespace MLAPI.Serialization
+namespace Alpaca.Serialization
 {
     /// <summary>
     /// A stream that can be used at the bit level

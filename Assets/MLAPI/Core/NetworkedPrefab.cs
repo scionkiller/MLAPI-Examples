@@ -1,8 +1,8 @@
 ﻿using System;
-using MLAPI.Logging;
+using Alpaca.Logging;
 using UnityEngine;
 
-namespace MLAPI.Data
+namespace Alpaca.Data
 {
     /// <summary>
     /// A class that represents a NetworkedPrefab

@@ -1,18 +1,18 @@
 ﻿using System.Collections.Generic;
 using System.IO;
-using MLAPI.Profiling;
-using MLAPI.Serialization;
+using Alpaca.Profiling;
+using Alpaca.Serialization;
 using UnityEngine;
-using BitStream = MLAPI.Serialization.BitStream;
+using BitStream = Alpaca.Serialization.BitStream;
 
 namespace UnityEditor
 {
-    public class MLAPIProfiler : EditorWindow
+    public class AlpacaProfiler : EditorWindow
     {
-        [MenuItem("Window/MLAPI Profiler")]
+        [MenuItem("Window/Alpaca Profiler")]
         public static void ShowWindow()
         {
-            GetWindow<MLAPIProfiler>();
+            GetWindow<AlpacaProfiler>();
         }
 
         GUIStyle wrapStyle

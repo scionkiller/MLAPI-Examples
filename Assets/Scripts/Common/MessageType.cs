@@ -1,4 +1,4 @@
-﻿// used for MLAPI custom messages
+﻿// used for custom Alpaca messages
 enum MessageType : byte
 {
 	  Invalid = 0

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MLAPI.Internal
+namespace Alpaca.Internal
 {
     internal static class TypeExtensions
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MLAPI.Data
+namespace Alpaca.Data
 {
     /// <summary>
     /// Provides extension methods for getting hashes
