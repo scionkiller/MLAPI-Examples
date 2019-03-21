@@ -6,6 +6,10 @@ using TMPro;
 using Alpaca;
 using Alpaca.Serialization;
 
+
+namespace OneRoom
+{
+
 public class ConnectToServerSettings : ClientStateSettings
 {
 	public TMP_Text display;
@@ -21,7 +25,7 @@ public class ConnectToServer : ClientState
 	ConnectToServerSettings _settings;
 	ClientStateId _transitionState;
 
-	NetworkingManager _network;
+	AlpacaNetwork _network;
 
 	float _exitTime;
 	float _nextConnectionAttemptTime;
@@ -127,3 +131,5 @@ public class ConnectToServer : ClientState
 		_exitTime = Time.time + MINIMUM_DISPLAY_TIME;
 	}
 }
+
+} // namespace OneRoom

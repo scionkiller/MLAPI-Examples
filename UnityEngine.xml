@@ -25271,124 +25271,124 @@ Only usable on Android, Windows Phone or Windows Tablets.</para>
         <para>Base class for AnimationClips and BlendTrees.</para>
       </summary>
     </member>
-    <member name="T:UnityEngine.Network">
+    <member name="T:UnityEngine.AlpacaNetwork">
       <summary>
         <para>The network class is at the heart of the network implementation and provides the core functions.</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.connections">
+    <member name="P:UnityEngine.AlpacaNetwork.connections">
       <summary>
         <para>All connected players.</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.connectionTesterIP">
+    <member name="P:UnityEngine.AlpacaNetwork.connectionTesterIP">
       <summary>
-        <para>The IP address of the connection tester used in Network.TestConnection.</para>
+        <para>The IP address of the connection tester used in AlpacaNetwork.TestConnection.</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.connectionTesterPort">
+    <member name="P:UnityEngine.AlpacaNetwork.connectionTesterPort">
       <summary>
-        <para>The port of the connection tester used in Network.TestConnection.</para>
+        <para>The port of the connection tester used in AlpacaNetwork.TestConnection.</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.incomingPassword">
+    <member name="P:UnityEngine.AlpacaNetwork.incomingPassword">
       <summary>
         <para>Set the password for the server (for incoming connections).</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.isClient">
+    <member name="P:UnityEngine.AlpacaNetwork.isClient">
       <summary>
         <para>Returns true if your peer type is client.</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.isMessageQueueRunning">
+    <member name="P:UnityEngine.AlpacaNetwork.isMessageQueueRunning">
       <summary>
         <para>Enable or disable the processing of network messages.</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.isServer">
+    <member name="P:UnityEngine.AlpacaNetwork.isServer">
       <summary>
         <para>Returns true if your peer type is server.</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.logLevel">
+    <member name="P:UnityEngine.AlpacaNetwork.logLevel">
       <summary>
         <para>Set the log level for network messages (default is Off).</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.maxConnections">
+    <member name="P:UnityEngine.AlpacaNetwork.maxConnections">
       <summary>
         <para>Set the maximum amount of connections/players allowed.</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.minimumAllocatableViewIDs">
+    <member name="P:UnityEngine.AlpacaNetwork.minimumAllocatableViewIDs">
       <summary>
         <para>Get or set the minimum number of ViewID numbers in the ViewID pool given to clients by the server.</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.natFacilitatorIP">
+    <member name="P:UnityEngine.AlpacaNetwork.natFacilitatorIP">
       <summary>
         <para>The IP address of the NAT punchthrough facilitator.</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.natFacilitatorPort">
+    <member name="P:UnityEngine.AlpacaNetwork.natFacilitatorPort">
       <summary>
         <para>The port of the NAT punchthrough facilitator.</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.peerType">
+    <member name="P:UnityEngine.AlpacaNetwork.peerType">
       <summary>
         <para>The status of the peer type, i.e. if it is disconnected, connecting, server or client.</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.player">
+    <member name="P:UnityEngine.AlpacaNetwork.player">
       <summary>
         <para>Get the local NetworkPlayer instance.</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.proxyIP">
+    <member name="P:UnityEngine.AlpacaNetwork.proxyIP">
       <summary>
         <para>The IP address of the proxy server.</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.proxyPassword">
+    <member name="P:UnityEngine.AlpacaNetwork.proxyPassword">
       <summary>
         <para>Set the proxy server password.</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.proxyPort">
+    <member name="P:UnityEngine.AlpacaNetwork.proxyPort">
       <summary>
         <para>The port of the proxy server.</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.sendRate">
+    <member name="P:UnityEngine.AlpacaNetwork.sendRate">
       <summary>
-        <para>The default send rate of network updates for all Network Views.</para>
+        <para>The default send rate of network updates for all AlpacaNetwork Views.</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.time">
+    <member name="P:UnityEngine.AlpacaNetwork.time">
       <summary>
         <para>Get the current network time (seconds).</para>
       </summary>
     </member>
-    <member name="P:UnityEngine.Network.useProxy">
+    <member name="P:UnityEngine.AlpacaNetwork.useProxy">
       <summary>
         <para>Indicate if proxy support is needed, in which case traffic is relayed through the proxy server.</para>
       </summary>
     </member>
-    <member name="M:UnityEngine.Network.AllocateViewID">
+    <member name="M:UnityEngine.AlpacaNetwork.AllocateViewID">
       <summary>
         <para>Query for the next available network view ID number and allocate it (reserve).</para>
       </summary>
     </member>
-    <member name="M:UnityEngine.Network.CloseConnection(UnityEngine.NetworkPlayer,System.Boolean)">
+    <member name="M:UnityEngine.AlpacaNetwork.CloseConnection(UnityEngine.NetworkPlayer,System.Boolean)">
       <summary>
         <para>Close the connection to another system.</para>
       </summary>
       <param name="target"></param>
       <param name="sendDisconnectionNotification"></param>
     </member>
-    <member name="M:UnityEngine.Network.Connect(System.String,System.Int32)">
+    <member name="M:UnityEngine.AlpacaNetwork.Connect(System.String,System.Int32)">
       <summary>
         <para>Connect to the specified host (ip or domain name) and server port.</para>
       </summary>
@@ -25396,7 +25396,7 @@ Only usable on Android, Windows Phone or Windows Tablets.</para>
       <param name="remotePort"></param>
       <param name="password"></param>
     </member>
-    <member name="M:UnityEngine.Network.Connect(System.String,System.Int32,System.String)">
+    <member name="M:UnityEngine.AlpacaNetwork.Connect(System.String,System.Int32,System.String)">
       <summary>
         <para>Connect to the specified host (ip or domain name) and server port.</para>
       </summary>
@@ -25404,103 +25404,103 @@ Only usable on Android, Windows Phone or Windows Tablets.</para>
       <param name="remotePort"></param>
       <param name="password"></param>
     </member>
-    <member name="M:UnityEngine.Network.Connect(System.String[],System.Int32)">
+    <member name="M:UnityEngine.AlpacaNetwork.Connect(System.String[],System.Int32)">
       <summary>
-        <para>This function is exactly like Network.Connect but can accept an array of IP addresses.</para>
+        <para>This function is exactly like AlpacaNetwork.Connect but can accept an array of IP addresses.</para>
       </summary>
       <param name="IPs"></param>
       <param name="remotePort"></param>
       <param name="password"></param>
     </member>
-    <member name="M:UnityEngine.Network.Connect(System.String[],System.Int32,System.String)">
+    <member name="M:UnityEngine.AlpacaNetwork.Connect(System.String[],System.Int32,System.String)">
       <summary>
-        <para>This function is exactly like Network.Connect but can accept an array of IP addresses.</para>
+        <para>This function is exactly like AlpacaNetwork.Connect but can accept an array of IP addresses.</para>
       </summary>
       <param name="IPs"></param>
       <param name="remotePort"></param>
       <param name="password"></param>
     </member>
-    <member name="M:UnityEngine.Network.Connect(System.String)">
+    <member name="M:UnityEngine.AlpacaNetwork.Connect(System.String)">
       <summary>
         <para>Connect to a server GUID. NAT punchthrough can only be performed this way.</para>
       </summary>
       <param name="GUID"></param>
       <param name="password"></param>
     </member>
-    <member name="M:UnityEngine.Network.Connect(System.String,System.String)">
+    <member name="M:UnityEngine.AlpacaNetwork.Connect(System.String,System.String)">
       <summary>
         <para>Connect to a server GUID. NAT punchthrough can only be performed this way.</para>
       </summary>
       <param name="GUID"></param>
       <param name="password"></param>
     </member>
-    <member name="M:UnityEngine.Network.Connect(UnityEngine.HostData)">
+    <member name="M:UnityEngine.AlpacaNetwork.Connect(UnityEngine.HostData)">
       <summary>
         <para>Connect to the host represented by a HostData structure returned by the Master Server.</para>
       </summary>
       <param name="hostData"></param>
       <param name="password"></param>
     </member>
-    <member name="M:UnityEngine.Network.Connect(UnityEngine.HostData,System.String)">
+    <member name="M:UnityEngine.AlpacaNetwork.Connect(UnityEngine.HostData,System.String)">
       <summary>
         <para>Connect to the host represented by a HostData structure returned by the Master Server.</para>
       </summary>
       <param name="hostData"></param>
       <param name="password"></param>
     </member>
-    <member name="M:UnityEngine.Network.Destroy(UnityEngine.NetworkViewID)">
+    <member name="M:UnityEngine.AlpacaNetwork.Destroy(UnityEngine.NetworkViewID)">
       <summary>
         <para>Destroy the object associated with this view ID across the network.</para>
       </summary>
       <param name="viewID"></param>
     </member>
-    <member name="M:UnityEngine.Network.Destroy(UnityEngine.GameObject)">
+    <member name="M:UnityEngine.AlpacaNetwork.Destroy(UnityEngine.GameObject)">
       <summary>
         <para>Destroy the object across the network.</para>
       </summary>
       <param name="gameObject"></param>
     </member>
-    <member name="M:UnityEngine.Network.DestroyPlayerObjects(UnityEngine.NetworkPlayer)">
+    <member name="M:UnityEngine.AlpacaNetwork.DestroyPlayerObjects(UnityEngine.NetworkPlayer)">
       <summary>
         <para>Destroy all the objects based on view IDs belonging to this player.</para>
       </summary>
       <param name="playerID"></param>
     </member>
-    <member name="M:UnityEngine.Network.Disconnect()">
+    <member name="M:UnityEngine.AlpacaNetwork.Disconnect()">
       <summary>
         <para>Close all open connections and shuts down the network interface.</para>
       </summary>
       <param name="timeout"></param>
     </member>
-    <member name="M:UnityEngine.Network.Disconnect(System.Int32)">
+    <member name="M:UnityEngine.AlpacaNetwork.Disconnect(System.Int32)">
       <summary>
         <para>Close all open connections and shuts down the network interface.</para>
       </summary>
       <param name="timeout"></param>
     </member>
-    <member name="M:UnityEngine.Network.GetAveragePing(UnityEngine.NetworkPlayer)">
+    <member name="M:UnityEngine.AlpacaNetwork.GetAveragePing(UnityEngine.NetworkPlayer)">
       <summary>
         <para>The last average ping time to the given player in milliseconds.</para>
       </summary>
       <param name="player"></param>
     </member>
-    <member name="M:UnityEngine.Network.GetLastPing(UnityEngine.NetworkPlayer)">
+    <member name="M:UnityEngine.AlpacaNetwork.GetLastPing(UnityEngine.NetworkPlayer)">
       <summary>
         <para>The last ping time to the given player in milliseconds.</para>
       </summary>
       <param name="player"></param>
     </member>
-    <member name="M:UnityEngine.Network.HavePublicAddress">
+    <member name="M:UnityEngine.AlpacaNetwork.HavePublicAddress">
       <summary>
         <para>Check if this machine has a public IP address.</para>
       </summary>
     </member>
-    <member name="M:UnityEngine.Network.InitializeSecurity">
+    <member name="M:UnityEngine.AlpacaNetwork.InitializeSecurity">
       <summary>
         <para>Initializes security layer.</para>
       </summary>
     </member>
-    <member name="M:UnityEngine.Network.InitializeServer(System.Int32,System.Int32)">
+    <member name="M:UnityEngine.AlpacaNetwork.InitializeServer(System.Int32,System.Int32)">
       <summary>
         <para>Initialize the server.</para>
       </summary>
@@ -25508,7 +25508,7 @@ Only usable on Android, Windows Phone or Windows Tablets.</para>
       <param name="listenPort"></param>
       <param name="useNat"></param>
     </member>
-    <member name="M:UnityEngine.Network.InitializeServer(System.Int32,System.Int32,System.Boolean)">
+    <member name="M:UnityEngine.AlpacaNetwork.InitializeServer(System.Int32,System.Int32,System.Boolean)">
       <summary>
         <para>Initialize the server.</para>
       </summary>
@@ -25516,47 +25516,47 @@ Only usable on Android, Windows Phone or Windows Tablets.</para>
       <param name="listenPort"></param>
       <param name="useNat"></param>
     </member>
-    <member name="M:UnityEngine.Network.Instantiate(UnityEngine.Object,UnityEngine.Vector3,UnityEngine.Quaternion,System.Int32)">
+    <member name="M:UnityEngine.AlpacaNetwork.Instantiate(UnityEngine.Object,UnityEngine.Vector3,UnityEngine.Quaternion,System.Int32)">
       <summary>
-        <para>Network instantiate a prefab.</para>
+        <para>AlpacaNetwork instantiate a prefab.</para>
       </summary>
       <param name="prefab"></param>
       <param name="position"></param>
       <param name="rotation"></param>
       <param name="group"></param>
     </member>
-    <member name="M:UnityEngine.Network.RemoveRPCs(UnityEngine.NetworkPlayer)">
+    <member name="M:UnityEngine.AlpacaNetwork.RemoveRPCs(UnityEngine.NetworkPlayer)">
       <summary>
         <para>Remove all RPC functions which belong to this player ID.</para>
       </summary>
       <param name="playerID"></param>
     </member>
-    <member name="M:UnityEngine.Network.RemoveRPCs(UnityEngine.NetworkPlayer,System.Int32)">
+    <member name="M:UnityEngine.AlpacaNetwork.RemoveRPCs(UnityEngine.NetworkPlayer,System.Int32)">
       <summary>
         <para>Remove all RPC functions which belong to this player ID and were sent based on the given group.</para>
       </summary>
       <param name="playerID"></param>
       <param name="group"></param>
     </member>
-    <member name="M:UnityEngine.Network.RemoveRPCs(UnityEngine.NetworkViewID)">
+    <member name="M:UnityEngine.AlpacaNetwork.RemoveRPCs(UnityEngine.NetworkViewID)">
       <summary>
         <para>Remove the RPC function calls accociated with this view ID number.</para>
       </summary>
       <param name="viewID"></param>
     </member>
-    <member name="M:UnityEngine.Network.RemoveRPCsInGroup(System.Int32)">
+    <member name="M:UnityEngine.AlpacaNetwork.RemoveRPCsInGroup(System.Int32)">
       <summary>
         <para>Remove all RPC functions which belong to given group number.</para>
       </summary>
       <param name="group"></param>
     </member>
-    <member name="M:UnityEngine.Network.SetLevelPrefix(System.Int32)">
+    <member name="M:UnityEngine.AlpacaNetwork.SetLevelPrefix(System.Int32)">
       <summary>
         <para>Set the level prefix which will then be prefixed to all network ViewID numbers.</para>
       </summary>
       <param name="prefix"></param>
     </member>
-    <member name="M:UnityEngine.Network.SetReceivingEnabled(UnityEngine.NetworkPlayer,System.Int32,System.Boolean)">
+    <member name="M:UnityEngine.AlpacaNetwork.SetReceivingEnabled(UnityEngine.NetworkPlayer,System.Int32,System.Boolean)">
       <summary>
         <para>Enable or disables the reception of messages in a specific group number from a specific player.</para>
       </summary>
@@ -25564,14 +25564,14 @@ Only usable on Android, Windows Phone or Windows Tablets.</para>
       <param name="group"></param>
       <param name="enabled"></param>
     </member>
-    <member name="M:UnityEngine.Network.SetSendingEnabled(System.Int32,System.Boolean)">
+    <member name="M:UnityEngine.AlpacaNetwork.SetSendingEnabled(System.Int32,System.Boolean)">
       <summary>
         <para>Enables or disables transmission of messages and RPC calls on a specific network group number.</para>
       </summary>
       <param name="group"></param>
       <param name="enabled"></param>
     </member>
-    <member name="M:UnityEngine.Network.SetSendingEnabled(UnityEngine.NetworkPlayer,System.Int32,System.Boolean)">
+    <member name="M:UnityEngine.AlpacaNetwork.SetSendingEnabled(UnityEngine.NetworkPlayer,System.Int32,System.Boolean)">
       <summary>
         <para>Enable or disable transmission of messages and RPC calls based on target network player as well as the network group.</para>
       </summary>
@@ -25579,25 +25579,25 @@ Only usable on Android, Windows Phone or Windows Tablets.</para>
       <param name="group"></param>
       <param name="enabled"></param>
     </member>
-    <member name="M:UnityEngine.Network.TestConnection()">
+    <member name="M:UnityEngine.AlpacaNetwork.TestConnection()">
       <summary>
         <para>Test this machines network connection.</para>
       </summary>
       <param name="forceTest"></param>
     </member>
-    <member name="M:UnityEngine.Network.TestConnection(System.Boolean)">
+    <member name="M:UnityEngine.AlpacaNetwork.TestConnection(System.Boolean)">
       <summary>
         <para>Test this machines network connection.</para>
       </summary>
       <param name="forceTest"></param>
     </member>
-    <member name="M:UnityEngine.Network.TestConnectionNAT()">
+    <member name="M:UnityEngine.AlpacaNetwork.TestConnectionNAT()">
       <summary>
         <para>Test the connection specifically for NAT punch-through connectivity.</para>
       </summary>
       <param name="forceTest"></param>
     </member>
-    <member name="M:UnityEngine.Network.TestConnectionNAT(System.Boolean)">
+    <member name="M:UnityEngine.AlpacaNetwork.TestConnectionNAT(System.Boolean)">
       <summary>
         <para>Test the connection specifically for NAT punch-through connectivity.</para>
       </summary>
@@ -25605,7 +25605,7 @@ Only usable on Android, Windows Phone or Windows Tablets.</para>
     </member>
     <member name="T:UnityEngine.NetworkConnectionError">
       <summary>
-        <para>Possible status messages returned by Network.Connect and in MonoBehaviour.OnFailedToConnect|OnFailedToConnect in case the error was not immediate.</para>
+        <para>Possible status messages returned by AlpacaNetwork.Connect and in MonoBehaviour.OnFailedToConnect|OnFailedToConnect in case the error was not immediate.</para>
       </summary>
     </member>
     <member name="F:UnityEngine.NetworkConnectionError.AlreadyConnectedToAnotherServer">
@@ -25763,7 +25763,7 @@ Only usable on Android, Windows Phone or Windows Tablets.</para>
       <summary>
         <para>Defines the duration in milliseconds that the receiver waits for before it sends an acknowledgement back without waiting for any data payload. Default value = 33.
 
-Network clients that send data to a server may do so using many different quality of service (QOS) modes, some of which (reliable modes) expect the server to send back acknowledgement of receipt of data sent.
+AlpacaNetwork clients that send data to a server may do so using many different quality of service (QOS) modes, some of which (reliable modes) expect the server to send back acknowledgement of receipt of data sent.
 
 Servers must periodically acknowledge data packets received over channels with reliable QOS modes by sending packets containing acknowledgement data (also known as "acks") back to the client. If the server were to send an acknowledgement immediately after receiving each packet from the client there would be significant overhead (the acknowledgement is a 32 or 64 bit integer, which is very small compared to the whole size of the packet which also contains the IP and the UDP header). AckDelay allows the server some time to accumulate a list of received reliable data packets to acknowledge, and decreases traffic overhead by combining many acknowledgements into a single packet.</para>
       </summary>
@@ -26322,7 +26322,7 @@ WebSocket message fragments are called "frames". A WebSocket host has a buffer t
       <param name="netId">The NetworkID of the match to join. This is found through calling NetworkMatch.ListMatches and picking a result from the returned list of matches.</param>
       <param name="matchPassword">The password of the match. Leave empty if there is no password for the match, and supply the text string password if the match was configured to have one of the NetworkMatch.CreateMatch request.</param>
       <param name="publicClientAddress">The optional public client address. This value will be stored on the matchmaker and given to other clients listing matches. You should send this value if you want your players to be able to connect directly with each other over the internet. Alternatively you can pass an empty string and it will not affect the ability to interface with matchmaker or use relay server.</param>
-      <param name="privateClientAddress">The optional private client address. This value will be stored on the matchmaker and given to other clients listing matches. You should send this value if you want your players to be able to connect directly with each other over a Local Area Network. Alternatively you can pass an empty string and it will not affect the ability to interface with matchmaker or use relay server.</param>
+      <param name="privateClientAddress">The optional private client address. This value will be stored on the matchmaker and given to other clients listing matches. You should send this value if you want your players to be able to connect directly with each other over a Local Area AlpacaNetwork. Alternatively you can pass an empty string and it will not affect the ability to interface with matchmaker or use relay server.</param>
       <param name="eloScoreForClient">The Elo score for the client joining the match being created. If this number is set on all clients to indicate relative skill level, this number is used to return matches ordered by those that are most suitable for play given a listing player's skill level. This may be 0 on all clients, which would disable any Elo calculations in the MatchMaker.</param>
       <param name="requestDomain">The request domain for this request. Only requests in the same domain can interface with each other. For example if a NetworkMatch.CreateMatch is made with domain 1, only ListMatches that also specify domain 1 will find that match. Use this value to silo different (possibly incompatible) client versions.</param>
       <param name="callback">The callback to be invoked when this call completes.</param>
@@ -27225,12 +27225,12 @@ Can only be called by the relay group owner.</para>
     </member>
     <member name="F:UnityEngine.Networking.ReactorModel.FixRateReactor">
       <summary>
-        <para>Network thread will sleep up to threadawake timeout, after that it will try receive up to maxpoolsize amount of messages and then will try perform send operation for connection whihc ready to send.</para>
+        <para>AlpacaNetwork thread will sleep up to threadawake timeout, after that it will try receive up to maxpoolsize amount of messages and then will try perform send operation for connection whihc ready to send.</para>
       </summary>
     </member>
     <member name="F:UnityEngine.Networking.ReactorModel.SelectReactor">
       <summary>
-        <para>Network thread will sleep up to threadawake timeout, or up to receive event on socket will happened. Awaked thread will try to read up to maxpoolsize packets from socket and will try update connections ready to send (with fixing awaketimeout rate).</para>
+        <para>AlpacaNetwork thread will sleep up to threadawake timeout, or up to receive event on socket will happened. Awaked thread will try to read up to maxpoolsize packets from socket and will try update connections ready to send (with fixing awaketimeout rate).</para>
       </summary>
     </member>
     <member name="T:UnityEngine.Networking.Types.AppID">
@@ -27300,7 +27300,7 @@ Can only be called by the relay group owner.</para>
     </member>
     <member name="T:UnityEngine.Networking.Types.NetworkID">
       <summary>
-        <para>Network ID, used for match making.</para>
+        <para>AlpacaNetwork ID, used for match making.</para>
       </summary>
     </member>
     <member name="F:UnityEngine.Networking.Types.NetworkID.Invalid">
@@ -27409,7 +27409,7 @@ Can only be called by the relay group owner.</para>
     </member>
     <member name="T:UnityEngine.NetworkPeerType">
       <summary>
-        <para>Describes the status of the network interface peer type as returned by Network.peerType.</para>
+        <para>Describes the status of the network interface peer type as returned by AlpacaNetwork.peerType.</para>
       </summary>
     </member>
     <member name="F:UnityEngine.NetworkPeerType.Client">
@@ -27488,17 +27488,17 @@ Can only be called by the relay group owner.</para>
     </member>
     <member name="F:UnityEngine.NetworkReachability.NotReachable">
       <summary>
-        <para>Network is not reachable.</para>
+        <para>AlpacaNetwork is not reachable.</para>
       </summary>
     </member>
     <member name="F:UnityEngine.NetworkReachability.ReachableViaCarrierDataNetwork">
       <summary>
-        <para>Network is reachable via carrier data network.</para>
+        <para>AlpacaNetwork is reachable via carrier data network.</para>
       </summary>
     </member>
     <member name="F:UnityEngine.NetworkReachability.ReachableViaLocalAreaNetwork">
       <summary>
-        <para>Network is reachable via WiFi or cable.</para>
+        <para>AlpacaNetwork is reachable via WiFi or cable.</para>
       </summary>
     </member>
     <member name="T:UnityEngine.NetworkStateSynchronization">
@@ -44602,7 +44602,7 @@ Useful for restarting a trail from a new position.</para>
     </member>
     <member name="F:UnityEngine.XR.WSA.WebCam.CapturePixelFormat.PNG">
       <summary>
-        <para>Portable Network Graphics Format.</para>
+        <para>Portable AlpacaNetwork Graphics Format.</para>
       </summary>
     </member>
     <member name="T:UnityEngine.XR.WSA.WebCam.PhotoCapture">

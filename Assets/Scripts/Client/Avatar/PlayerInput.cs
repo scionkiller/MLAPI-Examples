@@ -28,7 +28,7 @@ public class PlayerInput
 		_quitGame = Input.GetKeyUp( KeyCode.Escape );
 		_interact = Input.GetMouseButtonUp( 0 );
 
-		Debug.Log( String.Format( "UpdateInput - x: {0} y: {1} walk: {2} strafe: {3}", _cursorX, _cursorY, _walk, _strafe ) );
+		//Debug.Log( String.Format( "UpdateInput - x: {0} y: {1} walk: {2} strafe: {3}", _cursorX, _cursorY, _walk, _strafe ) );
 	}
 
 	public float GetCursorX() { return _cursorX; }

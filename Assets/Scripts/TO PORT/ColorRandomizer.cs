@@ -5,10 +5,11 @@ using Alpaca;
 using Alpaca.Serialization;
 using UnityEngine;
 
-public class ColorRandomizer : NetworkedBehaviour
+public class ColorRandomizer : Conduct
 {
     public MeshRenderer meshRenderer;
 
+	/*
     [ClientRPC]
     private void OnChangeColor(uint clientId, Stream stream)
     {
@@ -38,5 +39,6 @@ public class ColorRandomizer : NetworkedBehaviour
             }
         }
     }
+	*/
 
 }

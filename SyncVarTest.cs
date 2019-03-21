@@ -3,7 +3,7 @@ using Alpaca.MonoBehaviours.Core;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class SyncVarTest : NetworkedBehaviour
+public class SyncVarTest : Conduct
 {
     [SyncedVar]
     public string MySyncedName;
@@ -24,7 +24,7 @@ public class SyncVarTest : NetworkedBehaviour
             MySyncedName = "SyncVarTest: " + Random.Range(50, 10000) + " (Press space on server)";
             GameObject go = Instantiate(prefab);
             go.transform.position = transform.position + new Vector3(0, 1f, 0);
-            go.GetComponent<NetworkedObject>().Spawn();
+            go.GetComponent<Entity>().Spawn();
         }
     }
 

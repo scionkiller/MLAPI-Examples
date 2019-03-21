@@ -22,6 +22,6 @@ public class ServerWorld
 		_settings = serverWorldSettings;
 	}
 
-	public NetworkingManager GetNetwork() { return _worldSettings.network; }
+	public AlpacaNetwork GetNetwork() { return _worldSettings.network; }
 	public string GetRoomName() { return _settings.roomScene; }
 }

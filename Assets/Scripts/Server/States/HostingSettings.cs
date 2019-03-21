@@ -1,15 +1,18 @@
+using System.IO;
+
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 using TMPro;
+
 using Alpaca;
 using Alpaca.Serialization;
-using System.IO;
 
 public class HostingSettings : ServerStateSettings
 {
 	public TMP_Text display;
-    public NetworkedObject avatarPrefab;
+	// TODO: ensure this is a prefab object only (assets folder not scene)
+    public Entity avatarPrefab;
 }
 
 public class Hosting : ServerState
@@ -18,7 +21,7 @@ public class Hosting : ServerState
 	HostingSettings _settings;
 	ServerStateId _transitionState;
 
-	NetworkingManager _network;
+	AlpacaNetwork _network;
 
 
 	#region ServerState interface (including FsmState interface)
@@ -89,7 +92,7 @@ public class Hosting : ServerState
 
         if( message != MessageType.SpawnAvatarRequest )
         {
-            Debug.LogError("FATAL ERROR: unexpected network message type: " + message);
+            Debug.LogError( "FATAL ERROR: unexpected network message type: " + message );
             return;
         }
 
@@ -98,9 +101,12 @@ public class Hosting : ServerState
 		float x = 10f * Mathf.Cos( randomTau );
 		float z = 10f * Mathf.Cos( randomTau );
 
-        NetworkedObject avatar = NetworkedObject.Instantiate(_settings.avatarPrefab, new Vector3( x, 0f, z), Quaternion.identity);
-		avatar.OwnerClientId = clientId;
-        avatar.SpawnAsPlayerObject(clientId);
+		int prefabIndex = _network.FindPrefabIndex( _settings.avatarPrefab );
+		if( prefabIndex == AlpacaConstant.PREFAB_INDEX_INVALID )
+		{
+			Debug.LogError( "FATAL ERROR: could not found avatar prefab" );
+		}
+		_network.SpawnEntityServer( clientId, prefabIndex, true, new Vector3( x, 0f, z), Quaternion.identity );
     }
 
 }

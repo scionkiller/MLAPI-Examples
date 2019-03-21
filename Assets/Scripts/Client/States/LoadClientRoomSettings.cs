@@ -5,6 +5,9 @@ using TMPro;
 using Alpaca;
 
 
+namespace OneRoom
+{
+
 public class LoadClientRoomSettings : ClientStateSettings
 {
 	public TMP_Text display;
@@ -18,7 +21,7 @@ public class LoadClientRoom : ClientState
 	LoadClientRoomSettings _settings;
 	ClientStateId _transitionState;
 
-    NetworkingManager _network;
+    AlpacaNetwork _network;
 
     float _exitTime;
 	AsyncOperation _load;
@@ -83,3 +86,5 @@ public class LoadClientRoom : ClientState
     #endregion // ClientState interface
 
 }
+
+} // namespace OneRoom

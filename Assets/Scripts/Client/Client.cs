@@ -3,6 +3,9 @@
 using Archer.StateMachine;
 
 
+namespace OneRoom
+{
+
 public interface ClientState : FSMState
 {
 	void Initialize( ClientWorld world, ClientStateSettings settings );
@@ -106,3 +109,5 @@ public class Client : MonoBehaviour
         }
 	}
 }
+
+} // namespace OneRoom

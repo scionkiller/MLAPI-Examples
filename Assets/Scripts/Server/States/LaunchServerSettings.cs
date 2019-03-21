@@ -18,7 +18,7 @@ public class LaunchServer : ServerState
 	LaunchServerSettings _settings;
 	ServerStateId _transitionState;
 
-	NetworkingManager _network;
+	AlpacaNetwork _network;
 
 	float _exitTime;
 	bool _serverLaunchedSuccessfully;

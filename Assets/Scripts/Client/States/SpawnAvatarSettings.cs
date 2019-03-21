@@ -5,6 +5,10 @@ using TMPro;
 using Alpaca;
 using Alpaca.Serialization;
 
+
+namespace OneRoom
+{
+
 public class SpawnAvatarSettings : ClientStateSettings
 {
     public TMP_Text display;
@@ -18,7 +22,7 @@ public class SpawnAvatar : ClientState
     SpawnAvatarSettings _settings;
     ClientStateId _transitionState;
 
-	NetworkingManager _network;
+	AlpacaNetwork _network;
     float _exitTime;
 
 
@@ -77,7 +81,7 @@ public class SpawnAvatar : ClientState
 
 	// PRIVATE
 
-	void OnAvatarSpawn( GameObject spawnedPrefab )
+	void OnAvatarSpawn( Entity spawnedPrefab )
 	{
 		Avatar a = spawnedPrefab.GetComponent<Avatar>();
 		if( a == null )
@@ -92,3 +96,5 @@ public class SpawnAvatar : ClientState
 		_exitTime = Time.time + MINIMUM_DISPLAY_TIME;
 	}
 }
+
+} // namespace OneRoom

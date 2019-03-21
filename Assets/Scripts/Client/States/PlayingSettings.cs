@@ -5,6 +5,9 @@ using TMPro;
 using Alpaca;
 
 
+namespace OneRoom
+{
+
 public class PlayingSettings : ClientStateSettings
 {
 	public TMP_Text display;
@@ -59,3 +62,5 @@ public class Playing : ClientState
 
 	#endregion // ClientState interface
 }
+
+} // namespace OneRoom

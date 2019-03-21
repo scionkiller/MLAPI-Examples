@@ -26,7 +26,7 @@ public class ClientWorld
 		_clientRoom = null;
 	}
 
-	public NetworkingManager GetNetwork() { return _worldSettings.network; }
+	public AlpacaNetwork GetNetwork() { return _worldSettings.network; }
 
 	public string GetClientRoom() { return _clientRoom; }
 	public void SetClientRoom( string room ) { _clientRoom = room; }
