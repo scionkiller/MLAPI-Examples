@@ -1,30 +1,34 @@
 ﻿using UnityEngine;
 
-namespace Alpaca.Logging
+namespace Alpaca
 {
-    public enum LogLevel
+    public enum LogLevel : int
     {
-        Developer,
-        Normal,
-        Error,
-        Nothing
+          Info
+		, Warning
+		, Error
+		, Nothing
     }
 
-    public static class LogHelper
+    public static class Log
     {
-        public static LogLevel CurrentLogLevel
-        {
-            get
-            {
-                if (AlpacaNetwork.GetSingleton() == null)
-                    return LogLevel.Normal;
-                else
-                    return AlpacaNetwork.GetSingleton().LogLevel;
-            }
-        }
+		static readonly string ALPACA_PREFIX = "[Alpaca] ";
 
-        public static void LogInfo(string message) => Debug.Log("[Alpaca] " + message);
-        public static void LogWarning(string message) => Debug.LogWarning("[Alpaca] " + message);
-        public static void LogError(string message) => Debug.LogError("[Alpaca] " + message);
+		public static LogLevel s_logLevel = LogLevel.Warning;
+
+        public static void LogInfo( string message )
+		{
+			if( s_logLevel <= LogLevel.Info ) { Debug.Log( ALPACA_PREFIX + message); }
+		}
+
+        public static void LogWarning( string message )
+		{
+			if( s_logLevel <= LogLevel.Warning ) { Debug.LogWarning( ALPACA_PREFIX + message); }
+		}
+
+        public static void LogError(string message)
+		{
+			if( s_logLevel <= LogLevel.Error ) { Debug.LogError( ALPACA_PREFIX + message ); }
+		}
     }
 }

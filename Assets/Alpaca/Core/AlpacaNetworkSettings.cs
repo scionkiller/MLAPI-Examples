@@ -1,4 +1,7 @@
-﻿using System;
+﻿/*
+
+
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,9 +13,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.SceneManagement;
 
-using Alpaca.Logging;
 using Alpaca.Components;
-using Alpaca.Configuration;
 using Alpaca.Cryptography;
 using Alpaca.Data;
 using Alpaca.Internal;
@@ -22,210 +23,11 @@ using Alpaca.Transports;
 using BitStream = Alpaca.Serialization.BitStream;
 
 
-namespace Alpaca
+
+
+
+public class AlpacaNetwork
 {
-
-// Size of hashed data (usually a string).
-// Note that it might end up packed down smaller when sent over the network.
-public enum HashSize
-{
-	  TwoBytes = 0
-	, FourBytes
-	, EightBytes
-	, COUNT
-}
-
-public class AlpacaNetworkSettings : MonoBehaviour
-{
-	const int HASH_SIZE_BITS = 2;
-
-	// Nothing to see here, just making sure we don't screw ourselves over.
-	// static assert that we are sending enough bits to encode the hash size
-	#pragma warning disable 219 // disable warning that this fake constant isn't used
-	const uint _STATIC_ASSERT_HASH_SIZE_BITS_BIG_ENOUGH = ((int)HashSize.COUNT <= (1<<HASH_SIZE_BITS) ) ? 0 : -666;
-	#pragma warning restore 219
-
-	static readonly uint protocolVersion = 1;
-
-
-	public TransportType transport = TransportType.UNET;
-
-	public List<Channel> channel = new List<Channel>();
-	public List<Entity> entity = new List<Entity>();
-
-	// The size of the receive message buffer. This is the max message size including any library overhead
-	public int messageBufferSize = 1024;
-
-	// Amount of times per second every pending message will be sent and received message queue will be emptied
-	// Having Conduct send rates greater than this is pointless.
-	public int networkChecksPerSecond = 64;
-	// The max amount of messages to process per send or receive tick. This is to prevent flooding.
-	public int maxEventsPerCheck = 500;
-
-	public int maxClientCount = 64;
-
-	// in seconds
-	public int lagCompensationHistory = 5;
-
-	// How many bytes to use for hashing strings. Leave this to 2 bytes unless you are facing hash collisions
-	public HashSize stringHashSize = HashSize.TwoBytes;
-
-	// If your logic uses the NetworkedTime, this should probably be turned off. If however it's needed to maximize accuracy, this is recommended to be turned on
-	public bool enableTimeResync = false;
-
-
-	[Header("Cryptography")]
-	public bool enableEncryption = false;
-	/// Whether or not to enable signed diffie hellman key exchange.
-	public bool signKeyExchange = false;
-	// Pfx file in base64 encoding containing private and public key
-	[TextArea]
-	public string serverBase64PfxCertificate;
-
-
-
-	// TODO: cozeroff These are client only settings, and should be on a client settings object
-	// when we get around to separating the work of the client from the work of the server
-
-	// BEGIN CLIENT ONLY
-	[Header("Client Only")]
-	// how to contact the server to connect
-	public int connectPort = 7777;
-	public string connectAddress = "127.0.0.1";
-
-	// END CLIENT ONLY
-
-	// TODO: cozeroff These are server only settings, and should be on a client settings object
-	// when we get around to separating the work of the client from the work of the server
-
-	// BEGIN SERVER ONLY
-	[Header("ServerOnly")]
-	public int clientHandshakeTimeout = 10;
-
-	// END SERVER ONLY
-
-
-
-	public ulong ComputeHash()
-	{
-		channel.Sort( CompareChannelByName );
-
-		using( PooledBitStream stream = PooledBitStream.Get() )
-		using( PooledBitWriter writer = PooledBitWriter.Get(stream) )
-		{
-			writer.WriteUInt32Packed( protocolVersion );
-			writer.WriteString(AlpacaConstant.ALPACA_PROTOCOL_VERSION);
-
-			for (int i = 0; i < Channels.Count; i++)
-			{
-				writer.WriteString(Channels[i].Name);
-				writer.WriteByte((byte)Channels[i].Type);
-			}
-
-			writer.WriteBool(EnableEncryption);
-			writer.WriteBool(SignKeyExchange);
-			writer.WriteBits((byte)StringHashSize, HASH_SIZE_BITS);
-			stream.PadStream();
-
-			ConfigHash = stream.ToArray().GetStableHash64();
-			return ConfigHash.Value;
-		}
-	}
-
-	private static int CompareChannelByName( Channel a, Channel b )
-	{
-		// our implementation should not have nulls
-		Debug.Assert( a != null && b != null );
-		return a.Name.CompareTo( b.Name );
-	}
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-[AddComponentMenu("Alpaca/AlpacaNetwork", -100)]
-public class AlpacaNetwork : MonoBehaviour
-{
-
-	/*
-	/// <summary>
-	/// A synchronized time, represents the time in seconds since the server application started. Is replicated across all clients
-	/// </summary>
-	public float NetworkTime { get; internal set; }
-
-	[HideInInspector]
-	public LogLevel LogLevel = LogLevel.Normal;
-	
-	/// <summary>
-	/// Gets the networkId of the server
-	/// </summary>
-	public uint ServerClientId => config.NetworkTransport != null ? config.NetworkTransport.ServerClientId : 0;
-
-	/// <summary>
-	/// The clientId the server calls the local client by, only valid for clients
-	/// </summary>
-	public uint LocalClientId 
-	{
-		get
-		{
-			if (IsServer) return config.NetworkTransport.ServerClientId;
-			else return localClientId;
-		}
-		internal set
-		{
-			localClientId = value;
-		}
-	}
-	private uint localClientId;
-
-	// TODO: make these private and improve encapsulation
-	// Will require moving of lots of code that belongs in this file but is scattered around
-	public ClientSet _connectedClients;
-	public PendingClientSet _pendingClients;
-
-	public bool IsServer { get; internal set; }
-
-	public bool IsClient { get; internal set; }
-
-	public bool IsListening { get; internal set; }
-	private byte[] messageBuffer;
-
-	public bool IsConnectedClient { get; internal set; }
-
-	public Action<uint> OnClientConnectedCallback = null;
-	public Action<uint> OnClientDisconnectCallback = null;
-	public Action<Entity> OnAvatarSpawn = null;
-	public Action<Entity> OnEntitySpawn = null;
-
-
-
-
-
-
-
 	/// <summary>
 	/// Gets the currently in use certificate
 	/// </summary>
@@ -256,20 +58,6 @@ public class AlpacaNetwork : MonoBehaviour
 	}
 	private byte[] serverX509CertificateBytes = null;
 
-
-
-
-
-	/// <summary>
-	/// Delegate used for incoming custom messages
-	/// </summary>
-	/// <param name="clientId">The clientId that sent the message</param>
-	/// <param name="stream">The stream containing the message data</param>
-	public delegate void CustomMessageDelegete(uint clientId, Stream stream);
-	/// <summary>
-	/// Event invoked when custom messages arrive
-	/// </summary>
-	public event CustomMessageDelegete OnIncomingCustomMessage;
 	/// <summary>
 	/// The current hostname we are connected to, used to validate certificate
 	/// </summary>
@@ -277,7 +65,18 @@ public class AlpacaNetwork : MonoBehaviour
 
 	internal byte[] clientAesKey;
 
-	private uint entityIdCounter = 0;
+
+
+
+	
+
+
+
+
+
+
+
+
 
 	internal void InvokeOnIncomingCustomMessage(uint clientId, Stream stream)
 	{
@@ -333,121 +132,6 @@ public class AlpacaNetwork : MonoBehaviour
 			return clientAesKey;
 		}
 		return null;
-	}
-
-	private object Init(bool server)
-	{
-		if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("Init()");
-		LocalClientId = 0;
-		NetworkTime = 0f;
-		lastSendTickTime = 0f;
-		lastEventTickTime = 0f;
-		lastReceiveTickTime = 0f;
-		eventOvershootCounter = 0f;
-
-		_pendingClients = new PendingClientSet( config.MaxConnections );
-		_connectedClients = new ClientSet( config.MaxConnections );
-
-		messageBuffer = new byte[config.MessageBufferSize];
-		
-		ResponseMessageManager.Clear();
-		MessageManager.channels.Clear();
-		MessageManager.reverseChannels.Clear();
-		SpawnManager.SpawnedObjects.Clear();
-		SpawnManager.SpawnedObjectsList.Clear();
-		//SpawnManager.releasedEntityIds.Clear();
-
-		try
-		{
-			if (server && !string.IsNullOrEmpty(config.ServerBase64PfxCertificate))
-			{
-				config.ServerX509Certificate = new X509Certificate2(Convert.FromBase64String(config.ServerBase64PfxCertificate));
-				if (!config.ServerX509Certificate.HasPrivateKey)
-				{
-					if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("The imported PFX file did not have a private key");
-				}
-			}
-		}
-		catch (CryptographicException ex)
-		{
-			if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Importing of certificate failed: " + ex.ToString());
-		}
-
-		if (config.Transport == DefaultTransport.UNET)
-			config.NetworkTransport = new UnetTransport();
-
-		object settings = config.NetworkTransport.GetSettings(); //Gets a new "settings" object for the transport currently used.
-
-		List<Channel> internalChannels = new List<Channel>
-		{
-			new Channel()
-			{
-				Name = "ALPACA_INTERNAL",
-				Type = config.NetworkTransport.InternalChannel
-			},
-			new Channel()
-			{
-				Name = "ALPACA_DEFAULT_MESSAGE",
-				Type = ChannelType.Reliable
-			},
-			new Channel()
-			{
-				Name = "ALPACA_POSITION_UPDATE",
-				Type = ChannelType.StateUpdate
-			},
-			new Channel()
-			{
-				Name = "ALPACA_ANIMATION_UPDATE",
-				Type = ChannelType.ReliableSequenced
-			},
-			new Channel()
-			{
-				Name = "ALPACA_NAV_AGENT_STATE",
-				Type = ChannelType.ReliableSequenced
-			},
-			new Channel()
-			{
-				Name = "ALPACA_NAV_AGENT_CORRECTION",
-				Type = ChannelType.StateUpdate
-			},
-			new Channel()
-			{
-				Name = "ALPACA_TIME_SYNC",
-				Type = ChannelType.Unreliable
-			}
-		};
-
-		HashSet<string> channelNames = new HashSet<string>();
-		// Register internal channels
-		for (int i = 0; i < internalChannels.Count; i++)
-		{
-			if (channelNames.Contains(internalChannels[i].Name))
-			{
-				if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("Duplicate channel name: " + config.Channels[i].Name);
-				continue;
-			}
-			int channelId = config.NetworkTransport.AddChannel(internalChannels[i].Type, settings);
-			MessageManager.channels.Add(internalChannels[i].Name, channelId);
-			channelNames.Add(internalChannels[i].Name);
-			MessageManager.reverseChannels.Add(channelId, internalChannels[i].Name);
-		}
-
-		//Register user channels
-		config.Channels = config.Channels.OrderBy(x => x.Name).ToList();
-		for (int i = 0; i < config.Channels.Count; i++)
-		{
-			if(channelNames.Contains(config.Channels[i].Name))
-			{
-				if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("Duplicate channel name: " + config.Channels[i].Name);
-				continue;
-			}
-			int channelId = config.NetworkTransport.AddChannel(config.Channels[i].Type, settings);
-			MessageManager.channels.Add(config.Channels[i].Name, channelId);
-			channelNames.Add(config.Channels[i].Name);
-			MessageManager.reverseChannels.Add(channelId, config.Channels[i].Name);
-		}
-
-		return settings;
 	}
 
 	// Returns true on success
@@ -584,11 +268,7 @@ public class AlpacaNetwork : MonoBehaviour
 			config.NetworkTransport.Shutdown();
 	}
 
-	private float lastReceiveTickTime;
-	private float lastSendTickTime;
-	private float lastEventTickTime;
-	private float eventOvershootCounter;
-	private float lastTimeSyncTime;
+	
 
 	private void Update()
 	{
@@ -1174,7 +854,9 @@ public class AlpacaNetwork : MonoBehaviour
 	{
 		return ++entityIdCounter;
 	}
-	*/
 }
 
 } // namespace Alpaca
+
+
+*/

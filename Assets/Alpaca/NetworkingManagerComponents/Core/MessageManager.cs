@@ -2,7 +2,7 @@
 using Alpaca.Cryptography;
 #endif
 using Alpaca.Data;
-using Alpaca.Logging;
+
 using Alpaca.Serialization;
 using System;
 using System.Collections.Generic;

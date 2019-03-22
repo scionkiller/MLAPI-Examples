@@ -1,34 +1,34 @@
-﻿namespace Alpaca.Transports.UNET
+﻿using System;
+using System.Runtime.InteropServices;
+
+
+namespace Alpaca
 {
-    /// <summary>
-    /// Represents a ClientId structure
-    /// </summary>
-    public struct NetId
+    // Represents the id of a Node, which is a specific server or client
+	[StructLayout(LayoutKind.Explicit)]
+    public struct NodeId
     {
-        //The NetId uses a ushort as connectionId and byte as hostId. Explanation: https://blogs.unity3d.com/2014/06/11/all-about-the-unity-networking-transport-layer/#comment-167515
+		public static readonly NodeId SERVER_NODE_ID = new NodeId( true, 0, 0 );
+
+		[FieldOffset(0)]
+		public byte flags;  // for now used only to determine if the node is a server
+
+		[FieldOffset(1)]
+		public byte hostId;  // hostId this client is on ?!?
+
+		[FieldOffset(2)] 
+		public UInt16 connectionId; // id this client is assigned to
+
+		[FieldOffset(0)]
+		public UInt32 id; // the above data packed into 32 bits
 
 
-        /// <summary>
-        /// The hostId this client is on
-        /// </summary>
-        public byte HostId;
-        /// <summary>
-        /// The connectionId this client is assigned
-        /// </summary>
-        public ushort ConnectionId;
-        /// <summary>
-        /// Meta data about hte client
-        /// </summary>
-        public byte Meta;
-
-        /// <summary>
-        /// Returns wheter or not the clientId represents a -1
-        /// </summary>
-        /// <returns><c>true</c>, if server, <c>false</c> otherwise.</returns>
         public bool IsServer()
         {
-            return Meta == 1;
+            return (flags & 0x1) != 0;
         }
+
+		// TODO: cozeroff, finish this damn calss
         /// <summary>
         /// Initializes a new instance of the netId struct from transport values
         /// </summary>
@@ -51,54 +51,20 @@
             ConnectionId = (ushort)((byte)((clientId >> 8) & 0xFF) | (ushort)(((clientId >> 16) & 0xFF) << 8));
             Meta = (byte)((clientId >> 24) & 0xFF);
         }
-        /// <summary>
-        /// Gets the clientId.
-        /// </summary>
-        /// <returns>The client identifier.</returns>
-        public uint GetClientId()
-        {
-            return HostId | (uint)((ConnectionId & 0xFF) << 8) | (uint)(((ConnectionId >> 8) & 0xFF) << 16) | (uint)(Meta << 24);
-        }
-        /// <summary>
-        /// Checks if two NetId's are equal
-        /// </summary>
-        /// <param name="obj">NetId to compare to</param>
-        /// <returns>Wheter or not the two NetIds are equal</returns>
-        public override bool Equals (object obj)
-        {
-            if (obj == null || GetType() != obj.GetType())
-                return false;
 
-            NetId key = (NetId)obj;
-            return (HostId == key.HostId) && (ConnectionId == key.ConnectionId);
-        }
-        /// <summary>
-        /// Returns a hash code for the instance
-        /// </summary>
-        /// <returns>Returns a hash code for the instance</returns>
         public override int GetHashCode()
         {
-            return (int)GetClientId();
+            return (int)id;
         }
-        /// <summary>
-        /// Checks if two NetId's are equal
-        /// </summary>
-        /// <param name="client1">First netId</param>
-        /// <param name="client2">Second netId</param>
-        /// <returns>Wheter or not the two NetIds are equal</returns>
-        public static bool operator ==(NetId client1, NetId client2)
+
+        public static bool operator ==(NodeId A, NodeId B)
         {
-			return (client1.HostId == client2.HostId && client1.ConnectionId == client2.ConnectionId) || (client1.IsServer() == client2.IsServer());
+			return (A.id == B.id);
         }
-        /// <summary>
-        /// Checks if two NetId's are not equal
-        /// </summary>
-        /// <param name="client1">First netId</param>
-        /// <param name="client2">Second netId</param>
-        /// <returns>Wheter or not the two NetIds are not equal</returns>
-        public static bool operator !=(NetId client1, NetId client2)
+
+        public static bool operator !=(NodeId A, NodeId B)
         {
-            return !(client1 == client2);
+            return !(A == B);
         }
     }
 }

@@ -7,9 +7,7 @@ using UnityEngine;
 
 using Alpaca.Data;
 using Alpaca.Components;
-using Alpaca.Configuration;
 using Alpaca.Internal;
-using Alpaca.Logging;
 using Alpaca.Serialization;
 
 

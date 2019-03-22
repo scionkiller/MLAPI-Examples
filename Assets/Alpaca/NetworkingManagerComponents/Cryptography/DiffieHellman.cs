@@ -5,7 +5,7 @@ using System.Text;
 using UnityEngine;
 
 using Alpaca.Internal;
-using Alpaca.Logging;
+
 
 
 namespace Alpaca.Cryptography

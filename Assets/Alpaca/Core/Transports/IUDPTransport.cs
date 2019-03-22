@@ -10,10 +10,6 @@
         /// </summary>
         ChannelType InternalChannel { get; }
         /// <summary>
-        /// The clientId the transport identifies as the server, should be constant
-        /// </summary>
-        uint ServerClientId { get; }
-        /// <summary>
         /// Queues a message for sending.
         /// </summary>
         /// <param name="clientId">The clientId to send to</param>

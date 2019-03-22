@@ -4,7 +4,6 @@ using System.Linq;
 
 using UnityEngine;
 
-using Alpaca.Configuration;
 using Alpaca.Serialization;
 using Alpaca.Data;
 

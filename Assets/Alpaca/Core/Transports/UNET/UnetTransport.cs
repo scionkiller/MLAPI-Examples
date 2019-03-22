@@ -9,7 +9,6 @@ namespace Alpaca.Transports.UNET
     public class UnetTransport : IUDPTransport
     {
         public ChannelType InternalChannel => ChannelType.ReliableFragmentedSequenced;
-		public uint ServerClientId => new NetId(0, 0, true).GetClientId();
         public int serverConnectionId;
         public int serverHostId;
         public static readonly List<TransportHost> ServerTransports = new List<TransportHost>()

@@ -8,7 +8,7 @@ using System.IO;
 using System.Text;
 using Alpaca.Components;
 using Alpaca.Internal;
-using Alpaca.Logging;
+
 using UnityEngine;
 
 namespace Alpaca.Serialization

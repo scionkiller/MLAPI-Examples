@@ -1,12 +1,12 @@
 ﻿namespace Alpaca
 {
-	public enum TransportType
+	public enum TransportType : int
 	{
 		  UNET
 		, COUNT
 	}
 
-    public enum ChannelType
+    public enum ChannelType : int
     {
         // Unreliable message
         Unreliable,
@@ -37,7 +37,7 @@
 		public static readonly int CLIENT_OWNER_LIMIT = 32;
 		public static readonly int PREFAB_INDEX_INVALID = -1;
 
-        public static readonly string ALPACA_PROTOCOL_VERSION = "6.0.0";
+        public static readonly string ALPACA_PROTOCOL_VERSION = "0.8.0";
 
 		// must be const, used in switch statement
         public const byte ALPACA_CERTIFICATE_HAIL              =  0;

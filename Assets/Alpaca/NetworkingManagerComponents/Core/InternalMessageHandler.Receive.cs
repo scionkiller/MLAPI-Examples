@@ -7,7 +7,7 @@ using Alpaca.Components;
 using Alpaca.Cryptography;
 #endif
 using Alpaca.Data;
-using Alpaca.Logging;
+
 using Alpaca.Serialization;
 using UnityEngine;
 

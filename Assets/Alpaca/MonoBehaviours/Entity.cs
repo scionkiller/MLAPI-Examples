@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using Alpaca.Components;
-using Alpaca.Logging;
 using Alpaca.Serialization;
 using UnityEngine;
 

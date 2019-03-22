@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Alpaca.Data
+namespace Alpaca.Serialization
 {
     /// <summary>
     /// Provides extension methods for getting hashes
