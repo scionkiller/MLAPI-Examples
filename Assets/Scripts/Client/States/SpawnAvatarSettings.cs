@@ -22,7 +22,7 @@ public class SpawnAvatar : ClientState
     SpawnAvatarSettings _settings;
     ClientStateId _transitionState;
 
-	AlpacaNetwork _network;
+	ClientNode _network;
     float _exitTime;
 
 
@@ -31,7 +31,7 @@ public class SpawnAvatar : ClientState
     public void Initialize(ClientWorld world, ClientStateSettings settings)
     {
         _world = world;
-		_network = _world.GetNetwork();
+		_network = _world.GetClientNode();
         _settings = (SpawnAvatarSettings)settings;
         _settings.Hide();
         _transitionState = ClientStateId.NO_TRANSITION;

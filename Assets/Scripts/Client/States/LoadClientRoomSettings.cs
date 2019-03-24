@@ -21,7 +21,7 @@ public class LoadClientRoom : ClientState
 	LoadClientRoomSettings _settings;
 	ClientStateId _transitionState;
 
-    AlpacaNetwork _network;
+    ClientNode _network;
 
     float _exitTime;
 	AsyncOperation _load;

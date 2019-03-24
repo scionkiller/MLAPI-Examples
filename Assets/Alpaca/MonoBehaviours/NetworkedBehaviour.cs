@@ -93,7 +93,6 @@ namespace Alpaca
 		// this is a per-child cache of FieldInfo[] for every SyncVar
 		static readonly Dictionary<Type, FieldInfo[]> s_syncVarCache = new Dictionary<Type, FieldInfo[]>();
 
-		protected AlpacaNetwork _network = null;
 		protected bool _isLocalOwned;
 		protected uint _ownerClientId;
 		// our index into the parent entity's array
@@ -106,10 +105,8 @@ namespace Alpaca
 
 		public uint GetOwnerClientId() { return _ownerClientId; }
 
-		public void InitializeNetworkBehaviour( AlpacaNetwork network )
+		public void InitializeNetworkBehaviour()
 		{
-			_network = network;
-
 			// TODO: cozeroff set flags here
 
 			//CacheAttributes();

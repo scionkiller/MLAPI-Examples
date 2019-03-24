@@ -21,7 +21,7 @@ public class Hosting : ServerState
 	HostingSettings _settings;
 	ServerStateId _transitionState;
 
-	AlpacaNetwork _network;
+	ServerNode _network;
 
 
 	#region ServerState interface (including FsmState interface)
@@ -29,7 +29,7 @@ public class Hosting : ServerState
 	public void Initialize( ServerWorld world, ServerStateSettings settings )
 	{
 		_world = world;
-		_network = _world.GetNetwork();
+		_network = _world.GetServerNode();
 
 		_settings = (HostingSettings)settings;
 		_settings.Hide();
@@ -42,8 +42,8 @@ public class Hosting : ServerState
 
 		_settings.display.text = "Ready";
 
-		_network.OnClientConnectedCallback = OnClientConnected;
-        _network.OnIncomingCustomMessage += OnCustomMessage;
+		_network.SetOnClientConnect( OnClientConnected );
+		_network.SetOnCustomMessage( OnCustomMessage );
     }
 
 	public void OnExit()
@@ -68,15 +68,15 @@ public class Hosting : ServerState
 
 	// PRIVATE
 
-	void OnClientConnected( uint clientId )
+	void OnClientConnected( NodeId clientId )
 	{
 		using( PooledBitStream stream = PooledBitStream.Get() )
+		using( PooledBitWriter writer = PooledBitWriter.Get( stream ) )
 		{
-			BitWriter writer = new BitWriter(stream);
 			writer.WriteByte( (byte)MessageType.ConfirmClientConnection );
 			writer.WriteString( _world.GetRoomName(), true );
 
-			_network.SendCustomMessage( clientId, stream );
+			_network.SendCustomMessage( clientId, writer );
 		}
 
 		// TODO: remove
@@ -84,9 +84,8 @@ public class Hosting : ServerState
 
 	}
 
-    void OnCustomMessage(uint receiverId, Stream stream)
+    void OnCustomMessage( uint receiverId, BitReader reader )
     {
-        BitReader reader = new BitReader(stream);
         MessageType message = (MessageType)reader.ReadByte();
 		uint clientId = reader.ReadUInt32();
 

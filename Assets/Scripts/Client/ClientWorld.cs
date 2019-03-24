@@ -6,6 +6,7 @@ using UnityEngine;
 [System.Serializable]
 public class ClientWorldSettings
 {
+	public ClientNodeSettings clientNodeSettings;
 }
 
 // put any data needed to be shared between client states here
@@ -18,15 +19,22 @@ public class ClientWorld
 	string _clientRoom;
 	AvatarController _avatar;
 
+	ClientNode _networkNode;
+	
+
 	public ClientWorld( WorldSettings worldSettings, ClientWorldSettings clientWorldSettings )
 	{
         _worldSettings = worldSettings;
 		_settings = clientWorldSettings;
 
 		_clientRoom = null;
+		_avatar = null;
+
+		_networkNode = null;
 	}
 
-	public AlpacaNetwork GetNetwork() { return _worldSettings.network; }
+	public void StartClientNode() { _networkNode = new ClientNode( _worldSettings.commonNodeSettings, _settings.clientNodeSettings ); }
+	public ClientNode GetClientNode() { return _networkNode; }
 
 	public string GetClientRoom() { return _clientRoom; }
 	public void SetClientRoom( string room ) { _clientRoom = room; }

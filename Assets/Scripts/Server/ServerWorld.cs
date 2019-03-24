@@ -4,6 +4,7 @@
 [System.Serializable]
 public class ServerWorldSettings
 {
+	public ServerNodeSettings serverNodeSettings;
 	// TODO: eventually this would be read in from the command line or similar
 	public string roomScene;
 }
@@ -15,13 +16,17 @@ public class ServerWorld
     WorldSettings _worldSettings;
 	ServerWorldSettings _settings;
 
+	ServerNode _networkNode;
+
 
 	public ServerWorld( WorldSettings worldSettings, ServerWorldSettings serverWorldSettings )
 	{
         _worldSettings = worldSettings;
 		_settings = serverWorldSettings;
+		_networkNode = new ServerNode( _worldSettings.commonNodeSettings, _settings.serverNodeSettings );
 	}
 
-	public AlpacaNetwork GetNetwork() { return _worldSettings.network; }
+	public ServerNode GetServerNode() { return _networkNode; }
+	public int GetServerPort() { return _worldSettings.commonNodeSettings.connectionPort; }
 	public string GetRoomName() { return _settings.roomScene; }
 }

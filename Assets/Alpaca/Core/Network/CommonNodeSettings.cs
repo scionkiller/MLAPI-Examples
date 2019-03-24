@@ -56,6 +56,9 @@ public class CommonNodeSettings : MonoBehaviour
 
 	public LogLevel logLevel = LogLevel.Warning;
 
+	// the port that the server will open to listen for connections, and that the client will attempt to connect to
+	public int connectionPort = 7777;
+
 
 	[Header("Cryptography")]
 	public bool enableEncryption = false;

@@ -84,8 +84,6 @@ namespace Alpaca
 		List<Conduct> _Conducts = new List<Conduct>();
 
 
-		AlpacaNetwork _network;
-
 		uint _id;            // unique across the network
 		uint _ownerClientId; // could be a client or the server
 		int _prefabIndex;   // index into NetworkConfig.NetworkedPrefabs
@@ -95,16 +93,13 @@ namespace Alpaca
 
 		// STATIC 
 
-		public static Entity SpawnEntity(AlpacaNetwork network, Spawn data)
+		public static Entity SpawnEntity( List<Entity> entityPrefab, Spawn data )
 		{
-			Entity prefab = network.config.NetworkedPrefabs[data.prefabIndex];
+			Entity prefab = entityPrefab[data.prefabIndex];
 			Entity entity = GameObject.Instantiate<Entity>(prefab, data.position, data.rotation);
 			Debug.Assert(entity != null);
 
-			entity.InitializeEntity(network, data);
-
-			// TODO: cozeroff implement this
-			//network.AddEntity(entity.GetId(), entity);
+			entity.InitializeEntity( data );
 
 			return entity;
 		}
@@ -112,9 +107,8 @@ namespace Alpaca
 
 		// PRIVATE
 
-		void InitializeEntity(AlpacaNetwork network, Spawn data)
+		void InitializeEntity( Spawn data)
 		{
-			_network = network;
 			_id = data.id;
 			_prefabIndex = data.prefabIndex;
 			_isAvatar = data.isAvatar;
@@ -123,17 +117,17 @@ namespace Alpaca
 
 			foreach (Conduct b in _Conducts)
 			{
-				b.InitializeNetworkBehaviour(_network);
+				b.InitializeNetworkBehaviour();
 			}
 		}
 
 		public uint GetId() { return _id; }
 
 		public uint GetOwnerClientId() { return _ownerClientId; }
-		public void SetOwnerClientId(uint ownerClientId)
+		public void SetOwnerClientId( uint ownerClientId, uint localClientId )
 		{
 			_ownerClientId = ownerClientId;
-			_hasAuthority = (ownerClientId == _network.LocalClientId);
+			_hasAuthority = (ownerClientId == localClientId);
 
 			foreach (Conduct b in _Conducts)
 			{

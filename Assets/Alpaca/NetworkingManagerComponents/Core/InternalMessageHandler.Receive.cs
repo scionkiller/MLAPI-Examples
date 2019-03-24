@@ -539,14 +539,14 @@ namespace Alpaca.Internal
 
 		// PRIVATE
 
-		static void SpawnEntityClient( AlpacaNetwork network, PooledBitReader reader )
+		static void SpawnEntityClient( ClientNode network, PooledBitReader reader )
 		{
-			Debug.Assert( network.IsClient );
-
 			Entity.Spawn data = new Entity.Spawn();
 			data.ReadFrom( reader );
 
-			Entity entity = Entity.SpawnEntity( network, data );
+			Entity entity = Entity.SpawnEntity( network.GetEntityPrefab(), data );
+			// TODO: cozeroff implement this
+			//network.AddEntity(entity.GetId(), entity);
 			// TODO: cozeroff still necessary or can SyncVars just both use initial values?
 			entity.ReadNetworkedVarData( reader );
 

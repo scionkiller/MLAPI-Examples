@@ -18,10 +18,9 @@ public class LaunchServer : ServerState
 	LaunchServerSettings _settings;
 	ServerStateId _transitionState;
 
-	AlpacaNetwork _network;
+	ServerNode _network;
 
 	float _exitTime;
-	bool _serverLaunchedSuccessfully;
 
 
 	#region ServerState interface (including FsmState interface)
@@ -29,7 +28,7 @@ public class LaunchServer : ServerState
 	public void Initialize( ServerWorld world, ServerStateSettings settings )
 	{
 		_world = world;
-		_network = _world.GetNetwork();
+		_network = _world.GetServerNode();
 
 		_settings = (LaunchServerSettings)settings;
 		_settings.Hide();
@@ -52,7 +51,8 @@ public class LaunchServer : ServerState
 	
 	public void OnUpdate()
 	{
-		if(  _serverLaunchedSuccessfully
+		if(  _network != null
+		  && _network.IsRunning()
 		  && Time.time > _exitTime
 		  )
 		{
@@ -72,19 +72,17 @@ public class LaunchServer : ServerState
 
 	void StartServerAttempt()
 	{
-		_settings.display.text += "Launching server on port: " + _network.config.ConnectPort + "\n";
+		_settings.display.text += "Launching server on port: " + _world.GetServerPort();
 
 		string error;
-		if( _network.StartServer( out error ) )
+		if( _network.Start( out error ) )
 		{
 			_settings.display.text += "Server launched successfully.\n";
-			_serverLaunchedSuccessfully = true;
 		}
 		else
 		{
 			_settings.display.text += "Connection attempt failed with error:\n";
 			_settings.display.text += error + "\n\n";
-			_serverLaunchedSuccessfully = false;
 		}
 	}
 }

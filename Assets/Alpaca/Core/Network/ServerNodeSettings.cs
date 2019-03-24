@@ -1,5 +1,7 @@
 ﻿using UnityEngine;
 
+using Alpaca.Serialization;
+
 
 namespace Alpaca
 {
@@ -41,7 +43,7 @@ public class ServerNode
 	System.Action<Entity> _onAvatarSpawn = null;
 	System.Action<Entity> _onEntitySpawn = null;
 	// TODO: cozeroff probably not a stream, should be a BitReader or similar
-	System.Action<NodeId, Stream> _onCustomMessage = null;
+	System.Action<NodeId, BitReader> _onCustomMessage = null;
 
 
 
@@ -52,11 +54,11 @@ public class ServerNode
 	public NodeId GetLocalNodeId() { return NodeId.SERVER_NODE_ID; }
 	public float GetNetworkTime() { return _networkTime; }
 	
-	public void SetOnClientConnect   ( System.Action<NodeId> callback         ) { _onClientConnect    = callback; }
-	public void SetOnClientDisconnect( System.Action<NodeId> callback         ) { _onClientDisconnect = callback; }
-	public void SetOnAvatarSpawn     ( System.Action<Entity> callback         ) { _onAvatarSpawn      = callback; }
-	public void SetOnEntitySpawn     ( System.Action<Entity> callback         ) { _onEntitySpawn      = callback; }
-	public void SetOnCustomMessage   ( System.Action<NodeId, Stream> callback ) { _onCustomMessage    = callback; }
+	public void SetOnClientConnect   ( System.Action<NodeId> callback            ) { _onClientConnect    = callback; }
+	public void SetOnClientDisconnect( System.Action<NodeId> callback            ) { _onClientDisconnect = callback; }
+	public void SetOnAvatarSpawn     ( System.Action<Entity> callback            ) { _onAvatarSpawn      = callback; }
+	public void SetOnEntitySpawn     ( System.Action<Entity> callback            ) { _onEntitySpawn      = callback; }
+	public void SetOnCustomMessage   ( System.Action<NodeId, BitReader> callback ) { _onCustomMessage    = callback; }
 
 
 	public ServerNode( CommonNodeSettings commonSettings, ServerNodeSettings serverSettings )

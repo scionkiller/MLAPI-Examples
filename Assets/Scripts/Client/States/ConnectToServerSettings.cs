@@ -25,7 +25,7 @@ public class ConnectToServer : ClientState
 	ConnectToServerSettings _settings;
 	ClientStateId _transitionState;
 
-	AlpacaNetwork _network;
+	ClientNode _network;
 
 	float _exitTime;
 	float _nextConnectionAttemptTime;
@@ -42,7 +42,7 @@ public class ConnectToServer : ClientState
 		_settings.Hide();
 		_transitionState = ClientStateId.NO_TRANSITION;
 		
-		_network = _world.GetNetwork();
+		_network = _world.GetClientNode();
 	}
 
 	public void OnEnter()

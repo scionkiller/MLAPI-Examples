@@ -7,7 +7,6 @@ namespace Alpaca
 public class ClientNodeSettings : MonoBehaviour
 {
 	// how to contact the server to connect
-	public int connectPort = 7777;
 	public string connectAddress = "127.0.0.1";
 }
 

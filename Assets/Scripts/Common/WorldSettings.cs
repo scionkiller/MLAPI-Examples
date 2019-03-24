@@ -5,7 +5,6 @@ using Alpaca;
 
 public class WorldSettings : MonoBehaviour
 {
-    public int networkVersion = 1;
-
-    public AlpacaNetwork network = null;
+    public int oneRoomNetworkVersion = 1;
+    public CommonNodeSettings commonNodeSettings;
 }

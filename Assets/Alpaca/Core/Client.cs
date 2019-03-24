@@ -1,7 +1,7 @@
 ﻿using Alpaca.Cryptography;
 
 
-namespace Alpaca.Data
+namespace Alpaca
 {
 	
 	public class ClientSet : ArraySet<uint, Client>
