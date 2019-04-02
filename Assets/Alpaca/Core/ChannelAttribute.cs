@@ -7,6 +7,6 @@ namespace Alpaca.Data
 {
     public class ChannelSetting : Attribute
     {
-        public string channel { get; set; } = "ALPACA_DEFAULT_MESSAGE";
+        public string channel { get; set; } = "INTERNAL_CHANNEL_CLIENT_RELIABLE";
     }
 }

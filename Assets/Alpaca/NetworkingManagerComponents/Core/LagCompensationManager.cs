@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 
 
+/*
 namespace Alpaca.Components
 {
     /// <summary>
@@ -23,7 +24,7 @@ namespace Alpaca.Components
         {
             if(!AlpacaNetwork.GetSingleton().IsServer)
             {
-                if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("Lag compensation simulations are only to be ran on the server");
+                Log.Warn("Lag compensation simulations are only to be ran on the server");
                 return;
             }
             for (int i = 0; i < simulationObjects.Count; i++)
@@ -49,7 +50,7 @@ namespace Alpaca.Components
         {
             if (!AlpacaNetwork.GetSingleton().IsServer)
             {
-                if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("Lag compensation simulations are only to be ran on the server");
+                Log.Warn("Lag compensation simulations are only to be ran on the server");
                 return;
             }
             float milisecondsDelay = AlpacaNetwork.GetSingleton().config.NetworkTransport.GetCurrentRTT(clientId, out error) / 2f;
@@ -65,3 +66,4 @@ namespace Alpaca.Components
         }
     }
 }
+*/

@@ -1,4 +1,6 @@
-﻿using Alpaca.Cryptography;
+﻿using System;
+
+using Alpaca.Cryptography;
 
 
 namespace Alpaca
@@ -16,7 +18,7 @@ namespace Alpaca
 		{}
 	}
 
-	public class EntitySet : ArraySet< uint, Entity >
+	public class EntitySet : ArraySet< EntityIndex, Entity >
 	{
 		public EntitySet( int capacity ) : base( capacity )
 		{}
@@ -84,12 +86,12 @@ namespace Alpaca
 
 		public void AddOwnedEntity( Entity entity )
 		{
-			_ownedEntity.Add( entity.GetId(), entity );
+			_ownedEntity.Add( entity.GetIndex(), entity );
 		}
 
 		public void RemoveOwnedEntity( Entity entity )
 		{
-			_ownedEntity.Remove( entity.GetId() );
+			_ownedEntity.Remove( entity.GetIndex() );
 		}
     }
 }

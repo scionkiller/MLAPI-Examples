@@ -11,16 +11,16 @@ namespace Alpaca
 	// All objects shared over the network must have this MonoBehaviour.
 	// It must be at the root of the GameObject in question and should have
 	// all child Conducts set in the _Conducts list.
-	[AddComponentMenu("Alpaca/Entity", -99)]
+	[AddComponentMenu("Alpaca/Entity")]
 	public sealed class Entity : MonoBehaviour
 	{
 		// simple struct used to contain data for spawning and to send it over the network
 		// for explanations of members see main class below it
 		public struct Spawn
 		{
-			public uint id;
-			public uint ownerClientId;
-			public int prefabIndex;
+			public EntityIndex id;
+			public NodeIndex owner;
+			public EntityPrefabIndex prefabIndex;
 			public bool isAvatar;
 
 			public Vector3 position;
@@ -28,16 +28,16 @@ namespace Alpaca
 
 
 			public Spawn
-				(uint idArg
-				, uint ownerClientIdArg
-				, int prefabIndexArg
+				( EntityIndex idArg
+				, NodeIndex ownerArg
+				, EntityPrefabIndex prefabIndexArg
 				, bool isAvatarArg
 				, Vector3 positionArg
 				, Quaternion rotationArg
 				)
 			{
 				id = idArg;
-				ownerClientId = ownerClientIdArg;
+				owner = ownerArg;
 				prefabIndex = prefabIndexArg;
 				isAvatar = isAvatarArg;
 				position = positionArg;
@@ -46,9 +46,9 @@ namespace Alpaca
 
 			public void ReadFrom(PooledBitReader reader)
 			{
-				id = reader.ReadUInt32Packed();
-				ownerClientId = reader.ReadUInt32Packed();
-				prefabIndex = reader.ReadInt32Packed();
+				id.ReadFrom( reader );
+				owner.ReadFrom( reader );
+				prefabIndex.ReadFrom( reader );
 				isAvatar = reader.ReadBool();
 
 				position.x = reader.ReadSinglePacked();
@@ -63,9 +63,9 @@ namespace Alpaca
 
 			public void WriteTo(PooledBitWriter writer)
 			{
-				writer.WriteUInt32Packed(id);
-				writer.WriteUInt32Packed(ownerClientId);
-				writer.WriteInt32Packed(prefabIndex);
+				id.WriteTo( writer );
+				owner.WriteTo( writer );
+				prefabIndex.WriteTo( writer );
 				writer.WriteBool(isAvatar);
 
 				writer.WriteSinglePacked(position.x);
@@ -81,25 +81,22 @@ namespace Alpaca
 
 
 		[SerializeField]
-		List<Conduct> _Conducts = new List<Conduct>();
+		Conduct[] _conduct = null;
 
-
-		uint _id;            // unique across the network
-		uint _ownerClientId; // could be a client or the server
-		int _prefabIndex;   // index into NetworkConfig.NetworkedPrefabs
-		bool _isAvatar;      // Does this object represent the client in the world? The server cannot own player objects.      
-		bool _hasAuthority;  // Is this object owned by the client (or server) that is currently executing?
+		EntityIndex _id;                 // unique across the network
+		EntityPrefabIndex _prefabIndex; 
+		bool _isAvatar;                  // Does this object represent the client in the world? The server cannot own player objects.      
 
 
 		// STATIC 
 
-		public static Entity SpawnEntity( List<Entity> entityPrefab, Spawn data )
+		public static Entity SpawnEntity( List<Entity> entityPrefab, Spawn data, NodeIndex localNodeIndex )
 		{
-			Entity prefab = entityPrefab[data.prefabIndex];
+			Entity prefab = entityPrefab[data.prefabIndex.GetIndex()];
 			Entity entity = GameObject.Instantiate<Entity>(prefab, data.position, data.rotation);
 			Debug.Assert(entity != null);
 
-			entity.InitializeEntity( data );
+			entity.InitializeEntity( data, localNodeIndex );
 
 			return entity;
 		}
@@ -107,58 +104,22 @@ namespace Alpaca
 
 		// PRIVATE
 
-		void InitializeEntity( Spawn data)
+		void InitializeEntity( Spawn data, NodeIndex localNodeIndex )
 		{
 			_id = data.id;
 			_prefabIndex = data.prefabIndex;
 			_isAvatar = data.isAvatar;
 
-			SetOwnerClientId(data.ownerClientId);
-
-			foreach (Conduct b in _Conducts)
+			foreach( Conduct b in _conduct )
 			{
-				b.InitializeNetworkBehaviour();
+				b.InitializeConduct( data.owner, localNodeIndex );
 			}
 		}
 
-		public uint GetId() { return _id; }
+		int GetConductCount() { return _conduct.Length; }
+		Conduct GetConductAt( int conductIndex ) { return _conduct[conductIndex]; }
 
-		public uint GetOwnerClientId() { return _ownerClientId; }
-		public void SetOwnerClientId( uint ownerClientId, uint localClientId )
-		{
-			_ownerClientId = ownerClientId;
-			_hasAuthority = (ownerClientId == localClientId);
-
-			foreach (Conduct b in _Conducts)
-			{
-				//b.SetOwnerId( /* TODO */ );
-			}
-		}
-
+		public EntityIndex GetIndex() { return _id; }
 		public bool IsAvatar() { return _isAvatar; }
-
-		public void NetworkedVarUpdate()
-		{
-			foreach (Conduct b in _Conducts)
-			{
-				b.NetworkedVarUpdate(_id);
-			}
-		}
-
-		public void WriteNetworkedVarData(PooledBitWriter writer, uint clientId)
-		{
-			foreach (Conduct b in _Conducts)
-			{
-				b.WriteNetworkedVarData(writer, clientId);
-			}
-		}
-
-		public void ReadNetworkedVarData(PooledBitReader reader)
-		{
-			foreach (Conduct b in _Conducts)
-			{
-				b.ReadNetworkedVarData(reader);
-			}
-		}
 	}
 }

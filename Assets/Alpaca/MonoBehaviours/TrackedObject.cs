@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace Alpaca
 {
+	/*
     //Based on: https://twotenpvp.github.io/lag-compensation-in-unity.html
     //Modified to be used with latency rather than fixed frames and subframes. Thus it will be less accrurate but more modular.
 
@@ -122,4 +123,5 @@ namespace Alpaca
             Framekeys.Enqueue(AlpacaNetwork.GetSingleton().NetworkTime);
         }
     }
+	*/
 }

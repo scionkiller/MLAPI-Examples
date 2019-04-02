@@ -13,6 +13,7 @@ using UnityEngine;
 
 namespace Alpaca.Internal
 {
+	/*
     internal static partial class InternalMessageHandler
     {
 #if !DISABLE_CRYPTOGRAPHY
@@ -35,7 +36,7 @@ namespace Alpaca.Internal
                         {
                             // The certificate is not valid :(
                             // Man in the middle.
-                            LogHelper.LogError("Invalid certificate. Possible man in the middle attack? Disconnecting");
+                            Log.Error("Invalid certificate. Possible man in the middle attack? Disconnecting");
                             network.StopClient();
                             return;
                         }
@@ -62,7 +63,7 @@ namespace Alpaca.Internal
                             {
                                 if (!rsa.VerifyData(serverDiffieHellmanPublicPart, sha, serverDiffieHellmanPublicPartSignature))
                                 {
-                                    if (LogHelper.CurrentLogLevel <= LogLevel.Normal) if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("Invalid signature. Disconnecting");
+                                    Log.Warn("Invalid signature. Disconnecting");
                                     network.StopClient();
                                     return;
                                 }   
@@ -102,14 +103,13 @@ namespace Alpaca.Internal
                     }
                 }
                 // Send HailResponse
-                InternalMessageHandler.Send(AlpacaNetwork.GetSingleton().ServerClientId, AlpacaConstant.ALPACA_CERTIFICATE_HAIL_RESPONSE, "ALPACA_INTERNAL", outStream, SecuritySendFlags.None, true);
+                InternalMessageHandler.Send(AlpacaNetwork.GetSingleton().ServerClientId, AlpacaConstant.ALPACA_CERTIFICATE_HAIL_RESPONSE, "INTERNAL_CHANNEL_RELIABLE", outStream, SecuritySendFlags.None, true);
             }
         }
 
         // Ran on server
         internal static void HandleHailResponse(uint clientId, Stream stream, int channelId)
         {
-			/*
 			AlpacaNetwork network = AlpacaNetwork.GetSingleton();
 			PendingClient p = network._pendingClients.Get(clientId);
             if(  p == null
@@ -146,7 +146,7 @@ namespace Alpaca.Internal
                                 if (!CryptographyHelper.ConstTimeArrayEqual(clientHash, serverHash))
                                 {
                                     //Man in the middle.
-                                    if (LogHelper.CurrentLogLevel <= LogLevel.Normal) if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("Signature doesnt match for the key exchange public part. Disconnecting");
+                                    Log.Warn("Signature doesnt match for the key exchange public part. Disconnecting");
                                     network.DisconnectClient(clientId);
                                     return;
                                 }
@@ -170,9 +170,8 @@ namespace Alpaca.Internal
                 {
                     writer.WriteInt64Packed(DateTime.Now.Ticks); // This serves no purpose.
                 }
-                InternalMessageHandler.Send(clientId, AlpacaConstant.ALPACA_GREETINGS, "ALPACA_INTERNAL", outStream, SecuritySendFlags.None, true);
+                InternalMessageHandler.Send(clientId, AlpacaConstant.ALPACA_GREETINGS, "INTERNAL_CHANNEL_RELIABLE", outStream, SecuritySendFlags.None, true);
             }
-			*/
         }
 
         internal static void HandleGreetings(uint clientId, Stream stream, int channelId)
@@ -192,7 +191,7 @@ namespace Alpaca.Internal
 				// TODO: find out why this config comparison fails when built on different machines, and restore this safety check
                 // if(  !netManager.config.CompareConfig(configHash) )
                 // {
-                //     if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("NetworkConfiguration mismatch. The configuration between the server and client does not match");
+                //     Log.Warn("NetworkConfiguration mismatch. The configuration between the server and client does not match");
                 //     netManager.DisconnectClient(clientId);
                 //     return;
                 // }
@@ -299,7 +298,6 @@ namespace Alpaca.Internal
 
         internal static void HandleChangeOwner(uint clientId, Stream stream, int channelId)
         {
-			/*
 			AlpacaNetwork network = AlpacaNetwork.GetSingleton();
 
             using (PooledBitReader reader = PooledBitReader.Get(stream))
@@ -308,7 +306,6 @@ namespace Alpaca.Internal
                 uint ownerClientId = reader.ReadUInt32Packed();
                 _entity[entityId].SetOwnerClientId( ownerClientId );
             }
-			*/
         }
 
         internal static void HandleTimeSync(uint clientId, Stream stream, int channelId)
@@ -325,7 +322,6 @@ namespace Alpaca.Internal
 
         internal static void HandleNetworkedVarDelta(uint clientId, Stream stream, int channelId)
         {
-			/*
             using (PooledBitReader reader = PooledBitReader.Get(stream))
             {
                 uint netId = reader.ReadUInt32Packed();
@@ -336,23 +332,21 @@ namespace Alpaca.Internal
                     Conduct instance = SpawnManager.SpawnedObjects[netId].GetBehaviourAtOrderIndex(orderIndex);
                     if (instance == null)
                     {
-                        if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("NetworkedVar message recieved for a non existant behaviour");
+                        Log.Warn("NetworkedVar message recieved for a non existant behaviour");
                         return;
                     }
                     Conduct.HandleNetworkedVarDeltas(instance.networkedVarFields, reader, clientId, instance);
                 }
                 else
                 {
-                    if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("NetworkedVar message recieved for a non existant object with id: " + netId);
+                    Log.Warn("NetworkedVar message recieved for a non existant object with id: " + netId);
                     return;
                 }
             }
-			*/
         }
 
         internal static void HandleNetworkedVarUpdate(uint clientId, Stream stream, int channelId)
         {
-            /*
 			using (PooledBitReader reader = PooledBitReader.Get(stream))
             {
                 uint netId = reader.ReadUInt32Packed();
@@ -363,172 +357,17 @@ namespace Alpaca.Internal
                     Conduct instance = SpawnManager.SpawnedObjects[netId].GetBehaviourAtOrderIndex(orderIndex);
                     if (instance == null)
                     {
-                        if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("NetworkedVar message recieved for a non existant behaviour");
+                        Log.Warn("NetworkedVar message recieved for a non existant behaviour");
                         return;
                     }
                     Conduct.HandleNetworkedVarUpdate(instance.networkedVarFields, stream, clientId, instance);
                 }
                 else
                 {
-                    if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("NetworkedVar message recieved for a non existant object with id: " + netId);
+                    Log.Warn("NetworkedVar message recieved for a non existant object with id: " + netId);
                     return;
                 }
-            }
-			*/
-        }
-        
-        internal static void HandleServerRPC(uint clientId, Stream stream, int channelId)
-        {
-			/*
-            using (PooledBitReader reader = PooledBitReader.Get(stream))
-            {
-                uint networkId = reader.ReadUInt32Packed();
-                ushort behaviourId = reader.ReadUInt16Packed();
-                ulong hash = reader.ReadUInt64Packed();
-
-                if (SpawnManager.SpawnedObjects.ContainsKey(networkId)) 
-                { 
-                    Conduct behaviour = SpawnManager.SpawnedObjects[networkId].GetBehaviourAtOrderIndex(behaviourId);
-                    if (behaviour != null)
-                    {
-                        behaviour.OnRemoteServerRPC(hash, clientId, stream);
-                    }
-                }
-            }
-			*/
-        }
-        
-        internal static void HandleServerRPCRequest(uint clientId, Stream stream, int channelId, SecuritySendFlags security)
-        {
-			/*
-            using (PooledBitReader reader = PooledBitReader.Get(stream))
-            {
-                uint networkId = reader.ReadUInt32Packed();
-                ushort behaviourId = reader.ReadUInt16Packed();
-                ulong hash = reader.ReadUInt64Packed();
-                ulong responseId = reader.ReadUInt64Packed();
-
-                if (SpawnManager.SpawnedObjects.ContainsKey(networkId)) 
-                { 
-                    Conduct behaviour = SpawnManager.SpawnedObjects[networkId].GetBehaviourAtOrderIndex(behaviourId);
-                    if (behaviour != null)
-                    {
-                        object result = behaviour.OnRemoteServerRPC(hash, clientId, stream);
-
-                        using (PooledBitStream responseStream = PooledBitStream.Get())
-                        {
-                            using (PooledBitWriter responseWriter = PooledBitWriter.Get(responseStream))
-                            {
-                                responseWriter.WriteUInt64Packed(responseId);
-                                responseWriter.WriteObjectPacked(result);
-                            }
-                            
-                            InternalMessageHandler.Send(clientId, AlpacaConstant.ALPACA_SERVER_RPC_RESPONSE, MessageManager.reverseChannels[channelId], responseStream, security);
-                        }
-                    }
-                }
-            }
-			*/
-        }
-        
-        internal static void HandleServerRPCResponse(uint clientId, Stream stream, int channelId)
-        {
-			/*
-            using (PooledBitReader reader = PooledBitReader.Get(stream))
-            {
-                ulong responseId = reader.ReadUInt64Packed();
-
-                if (ResponseMessageManager.ContainsKey(responseId))
-                {
-                    RpcResponseBase responseBase = ResponseMessageManager.GetByKey(responseId);
-
-                    if (responseBase.GetId() != clientId) return;
-                    
-                    ResponseMessageManager.Remove(responseId);
-                    
-                    responseBase.IsDone = true;
-                    responseBase.Result = reader.ReadObjectPacked(responseBase.Type);
-                    responseBase.IsSuccessful = true;
-                }
-            }
-			*/
-        }
-        
-        internal static void HandleClientRPC(uint clientId, Stream stream, int channelId)
-        {
-			/*
-            using (PooledBitReader reader = PooledBitReader.Get(stream))
-            {
-                uint networkId = reader.ReadUInt32Packed();
-                ushort behaviourId = reader.ReadUInt16Packed();
-                ulong hash = reader.ReadUInt64Packed();
-                
-                if (SpawnManager.SpawnedObjects.ContainsKey(networkId)) 
-                {
-                    Conduct behaviour = SpawnManager.SpawnedObjects[networkId].GetBehaviourAtOrderIndex(behaviourId);
-                    if (behaviour != null)
-                    {
-                        behaviour.OnRemoteClientRPC(hash, clientId, stream);
-                    }
-                }
-            }
-			*/
-        }
-        
-        internal static void HandleClientRPCRequest(uint clientId, Stream stream, int channelId, SecuritySendFlags security)
-        {
-			/*
-            using (PooledBitReader reader = PooledBitReader.Get(stream))
-            {
-                uint networkId = reader.ReadUInt32Packed();
-                ushort behaviourId = reader.ReadUInt16Packed();
-                ulong hash = reader.ReadUInt64Packed();
-                ulong responseId = reader.ReadUInt64Packed();
-                
-                if (SpawnManager.SpawnedObjects.ContainsKey(networkId)) 
-                {
-                    Conduct behaviour = SpawnManager.SpawnedObjects[networkId].GetBehaviourAtOrderIndex(behaviourId);
-                    if (behaviour != null)
-                    {
-                        object result = behaviour.OnRemoteClientRPC(hash, clientId, stream);
-                        
-                        using (PooledBitStream responseStream = PooledBitStream.Get())
-                        {
-                            using (PooledBitWriter responseWriter = PooledBitWriter.Get(responseStream))
-                            {
-                                responseWriter.WriteUInt64Packed(responseId);
-                                responseWriter.WriteObjectPacked(result);
-                            }
-                            
-                            InternalMessageHandler.Send(clientId, AlpacaConstant.ALPACA_CLIENT_RPC_RESPONSE, MessageManager.reverseChannels[channelId], responseStream, security);
-                        }
-                    }
-                }
-            }
-			*/
-        }
-        
-        internal static void HandleClientRPCResponse(uint clientId, Stream stream, int channelId)
-        {
-			/*
-            using (PooledBitReader reader = PooledBitReader.Get(stream))
-            {
-                ulong responseId = reader.ReadUInt64Packed();
-
-                if (ResponseMessageManager.ContainsKey(responseId))
-                {
-                    RpcResponseBase responseBase = ResponseMessageManager.GetByKey(responseId);
-                    
-                    if (responseBase.ClientId != clientId) return;
-                    
-                    ResponseMessageManager.Remove(responseId);
-                    
-                    responseBase.IsDone = true;
-                    responseBase.Result = reader.ReadObjectPacked(responseBase.Type);
-                    responseBase.IsSuccessful = true;
-                }
-            }
-			*/
+			}
         }
         
         internal static void HandleCustomMessage(uint clientId, Stream stream, int channelId)
@@ -555,10 +394,8 @@ namespace Alpaca.Internal
 				uint ownerClientId = entity.GetOwnerClientId();
 
 				// TODO: cozeroff
-				/*
 				Client c = new Client( ownerClientId, entity, null );
 				network._connectedClients.Add( ownerClientId, c );
-				*/
 
 				if( network.OnAvatarSpawn != null
 				  && ownerClientId == network.LocalClientId
@@ -574,4 +411,5 @@ namespace Alpaca.Internal
 			}
 		}
     }
+	*/
 }

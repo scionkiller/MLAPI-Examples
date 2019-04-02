@@ -26,7 +26,7 @@ namespace Alpaca.Cryptography
                     }
                     catch (Exception)
                     {
-						LogHelper.LogError( "CryptoLib failed to parse BigInt. If you are using .NET 2.0 Subset, switch to .NET 2.0 or .NET 4.5" );
+						Log.Error( "CryptoLib failed to parse BigInt. If you are using .NET 2.0 Subset, switch to .NET 2.0 or .NET 4.5" );
                     }
                 }
 
@@ -49,7 +49,7 @@ namespace Alpaca.Cryptography
                     }
                     catch (Exception)
                     {
-                        LogHelper.LogError( "CryptoLib failed to parse BigInt. If you are using .NET 2.0 Subset, switch to .NET 2.0 or .NET 4.5" );
+                        Log.Error( "CryptoLib failed to parse BigInt. If you are using .NET 2.0 Subset, switch to .NET 2.0 or .NET 4.5" );
                     }
                 }
 
@@ -71,7 +71,7 @@ namespace Alpaca.Cryptography
                     }
                     catch (Exception)
                     {
-                        LogHelper.LogError( "CryptoLib failed to parse BigInt. If you are using .NET 2.0 Subset, switch to .NET 2.0 or .NET 4.5" );
+                        Log.Error( "CryptoLib failed to parse BigInt. If you are using .NET 2.0 Subset, switch to .NET 2.0 or .NET 4.5" );
                     }
                 }
 
@@ -93,7 +93,7 @@ namespace Alpaca.Cryptography
                     }
                     catch (Exception)
                     {
-                        LogHelper.LogError( "CryptoLib failed to parse BigInt. If you are using .NET 2.0 Subset, switch to .NET 2.0 or .NET 4.5" );
+                        Log.Error( "CryptoLib failed to parse BigInt. If you are using .NET 2.0 Subset, switch to .NET 2.0 or .NET 4.5" );
                     }
                 }
 

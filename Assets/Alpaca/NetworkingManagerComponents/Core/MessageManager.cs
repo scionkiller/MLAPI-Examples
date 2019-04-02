@@ -12,6 +12,7 @@ using System.Security.Cryptography;
 
 namespace Alpaca.Internal
 {
+	/*
     internal static class MessageManager
     {
         internal static readonly Dictionary<string, int> channels = new Dictionary<string, int>();
@@ -31,7 +32,7 @@ namespace Alpaca.Internal
                 {
                     if (inputStream.Length < 1)
                     {
-                        if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogError("The incomming message was too small");
+                        Log.Error("The incomming message was too small");
                         messageType = AlpacaConstant.INVALID;
                         security = SecuritySendFlags.None;
                         return null;
@@ -53,7 +54,7 @@ namespace Alpaca.Internal
 
                         if (!network.config.EnableEncryption)
                         {
-                            if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Got a encrypted and/or authenticated message but key exchange (\"encryption\") was not enabled");
+                            Log.Error("Got a encrypted and/or authenticated message but encryption was not enabled");
                             messageType = AlpacaConstant.INVALID;
                             return null;
                         }
@@ -69,7 +70,7 @@ namespace Alpaca.Internal
 
                             if (readHmacLength != HMAC_BUFFER.Length)
                             {
-                                if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("HMAC length was invalid");
+                                Log.Error("HMAC length was invalid");
                                 messageType = AlpacaConstant.INVALID;
                                 return null;
                             }
@@ -81,7 +82,7 @@ namespace Alpaca.Internal
 							byte[] key = network.GetPublicEncryptionKey(clientId);
                             if( key == null )
                             {
-                                if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Failed to grab key");
+                                Log.Error("Failed to grab key");
                                 messageType = AlpacaConstant.INVALID;
                                 return null;
                             }
@@ -93,7 +94,7 @@ namespace Alpaca.Internal
 
                                 if (!CryptographyHelper.ConstTimeArrayEqual(computedHmac, HMAC_BUFFER))
                                 {
-                                    if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Received HMAC did not match the computed HMAC");
+                                    Log.Error("Received HMAC did not match the computed HMAC");
                                     messageType = AlpacaConstant.INVALID;
                                     return null;
                                 }
@@ -106,7 +107,7 @@ namespace Alpaca.Internal
 
                             if (ivRead != IV_BUFFER.Length)
                             {
-                                if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogError("Invalid IV size");
+                                Log.Error("Invalid IV size");
                                 messageType = AlpacaConstant.INVALID;
                                 return null;
                             }
@@ -121,7 +122,7 @@ namespace Alpaca.Internal
                                 byte[] key = network.GetPublicEncryptionKey(clientId);
                                 if (key == null)
                                 {
-                                    if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Failed to grab key");
+                                    Log.Error("Failed to grab key");
                                     messageType = AlpacaConstant.INVALID;
                                     return null;
                                 }
@@ -137,7 +138,7 @@ namespace Alpaca.Internal
 
                                 if (outputStream.Length == 0)
                                 {
-                                    if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogError("The incomming message was too small");
+                                    Log.Error("The incomming message was too small");
                                     messageType = AlpacaConstant.INVALID;
                                     return null;
                                 }
@@ -152,7 +153,7 @@ namespace Alpaca.Internal
                         {
                             if (inputStream.Length - inputStream.Position <= 0)
                             {
-                                if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogError("The incomming message was too small");
+                                Log.Error("The incomming message was too small");
                                 messageType = AlpacaConstant.INVALID;
                                 return null;
                             }
@@ -174,8 +175,8 @@ namespace Alpaca.Internal
                 }
                 catch (Exception e)
                 {
-                    if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogError("Error while unwrapping headers");
-                    if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError(e.ToString());
+                    Log.Error("Error while unwrapping headers");
+                    Log.Error(e.ToString());
 
                     security = SecuritySendFlags.None;
                     messageType = AlpacaConstant.INVALID;
@@ -218,7 +219,7 @@ namespace Alpaca.Internal
                                 byte[] key = network.GetPublicEncryptionKey(clientId);
                                 if (key == null)
                                 {
-                                    if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Failed to grab key");
+                                    Log.Error("Failed to grab key");
                                     return null;
                                 }
 
@@ -244,7 +245,7 @@ namespace Alpaca.Internal
                             byte[] key = network.GetPublicEncryptionKey(clientId);
                             if (key == null)
                             {
-                                if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Failed to grab key");
+                                Log.Error("Failed to grab key");
                                 return null;
                             }
 
@@ -271,11 +272,12 @@ namespace Alpaca.Internal
             }
             catch (Exception e)
             {
-                if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogError("Error while wrapping headers");
-                if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError(e.ToString());
+                Log.Error("Error while wrapping headers");
+                Log.Error(e.ToString());
 
                 return null;
             }
         }
     }
+	*/
 }

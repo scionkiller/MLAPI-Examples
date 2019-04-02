@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Networking;
 
 
 namespace Alpaca
@@ -10,44 +11,39 @@ public class ClientNodeSettings : MonoBehaviour
 	public string connectAddress = "127.0.0.1";
 }
 
-public class ClientNode
+// ignore Obsolete warning for UNET
+#pragma warning disable 618
+
+public class ClientNode : CommonNode
 {
-	CommonNodeSettings _commonSettings;
 	ClientNodeSettings _clientSettings;
+	bool _isRunning;
 
 
-	// A synchronized time, represents the time in seconds since the server started. Replicated across all nodes.
-	float _networkTime;
-
-	// NodeId that identifies us
-	NodeId _localNodeId;
-
-	// storage for a single message of max size
-	byte[] _messageBuffer;
+	public bool IsRunning() { return _isRunning; }
+	public bool IsConnectedToServer() { return _localIndex.IsValidClientIndex(); }
+	public string GetConnectionAddress() { return _clientSettings.connectAddress; }
 
 
-
-
-
-	public NodeId GetLocalNodeId() { return _localNodeId; }
-	public float GetNetworkTime() { return _networkTime; }
-	public bool IsConnectedToServer() { return _localNodeId != NodeId.INVALID_NODE_ID; }
-
-
-	public ClientNode( CommonNodeSettings commonSettings, ClientNodeSettings clientSettings )
+	public ClientNode( CommonNodeSettings commonSettings, ClientNodeSettings clientSettings ) : base( commonSettings )
 	{
-		_commonSettings = commonSettings;
 		_clientSettings = clientSettings;
-
-		// network time and node id will be set properly when we connect to the server
-		_networkTime = -1f;
-		_localNodeId = NodeId.INVALID_NODE_ID;
-		_connectedToServer = false;
-
-		_messageBuffer = new byte[_commonSettings.messageBufferSize];
+		_isRunning = false;
 
 		// TODO: cozeroff
 	}
+
+	public override bool Start( out string error )
+	{
+		ConnectionConfig config = InitializeNetwork( out error );
+
+		// TODO: cozeroff topology here
+
+		_isRunning = true;
+		return _isRunning;
+	}
 }
+
+#pragma warning restore 618
 
 } // namespace Alpaca

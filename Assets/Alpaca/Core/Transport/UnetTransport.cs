@@ -1,59 +1,107 @@
-﻿#pragma warning disable 618
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+
 using UnityEngine.Networking;
 
-namespace Alpaca.Transports.UNET
+
+// ignore Obsolete warning for UNET
+#pragma warning disable 618
+
+namespace Alpaca.Transport
 {
-    [Serializable]
-    public class UnetTransport : IUDPTransport
-    {
-        public ChannelType InternalChannel => ChannelType.ReliableFragmentedSequenced;
-        public int serverConnectionId;
-        public int serverHostId;
+
+
+public abstract class UnetTransport
+{
+	
+}
+
+public class ClientTransport : UnetTransport
+{
+
+}
+
+public class ServerTransport : UnetTransport
+{
+	/*
+	// returns true on success, false on failure
+	// on the server, we expect to 
+	public bool Start( string address, int port, out string error)
+	{
+		NetworkTransport.Init();
+		int hostId = NetworkTransport.AddHost( topology );
+		byte errorByte;
+		int connectionId = NetworkTransport.Connect(hostId, address, port, 0, out errorByte );
+		error = StringFromError( errorByte );
+
+		return error == string.Empty;
+	}
+
+	*/
+
+
+
+}
+
+
+} // namespace Alpaca.Transport
+
+#pragma warning restore 618
+
+
+	/*
+		public ChannelType GetInternalChannel() { return ChannelType.ReliableFragmentedSequenced; }
+
         public static readonly List<TransportHost> ServerTransports = new List<TransportHost>()
         {
             new TransportHost()
             {
                 Name = "UDP Socket",
                 Port = 7777,
-                Websockets = false
             }
         };
 
-        public int Connect(string address, int port, object settings, bool websocket, out byte error)
+        
+
+		public void RegisterServerListenSocket( object settings )
         {
-            NetworkTransport.Init();
-            int hostId = NetworkTransport.AddHost((HostTopology)settings);
-            return NetworkTransport.Connect(hostId, address, port, 0, out error);
+            HostTopology topology = new HostTopology((ConnectionConfig)settings, AlpacaNetwork.GetSingleton().config.MaxConnections);
+            for( int i = 0; i < ServerTransports.Count; i++ )
+            {
+                NetworkTransport.AddHost(topology, ServerTransports[i].Port);
+            }
         }
 
-        public void DisconnectClient(uint clientId)
+        public void DisconnectClientFromServer( NodeId id)
         {
-            NetId netId = new NetId(clientId);
-			if (netId.IsServer())
-                return;
-            NetworkTransport.Disconnect(netId.HostId, netId.ConnectionId, out byte error);
+			Debug.Assert( !id.IsServer() );
+            NetworkTransport.Disconnect( id.GetHostId(), id.GetConnectionId(), out byte error);
         }
 
-        public void DisconnectFromServer() => NetworkTransport.Disconnect(serverHostId, serverConnectionId, out byte error);
-
-        public int GetCurrentRTT(uint clientId, out byte error)
+		public void ConnectToServerFromClient( string address, int port, object settings, out byte error )
         {
-            NetId netId = new NetId(clientId);
-			if (netId.IsServer())
+            _serverHostId = NetworkTransport.AddHost( new HostTopology( (ConnectionConfig)settings, 1 ) );
+            _serverConnectionId = NetworkTransport.Connect( _serverHostId, address, port, 0, out error);
+        }
+
+        public void DisconnectServerFromClient()
+		{
+			NetworkTransport.Disconnect( _serverHostId, _serverConnectionId, out byte error);
+		}
+
+        public int GetCurrentRoundTripTime( NodeId id, out byte error)
+        {
+			if( id.IsServer() )
 			{
-				netId.ConnectionId = (ushort)serverConnectionId;
-				netId.HostId = (byte)serverHostId;
+				id.ConnectionId = (ushort)serverConnectionId;
+				id.HostId = (byte)serverHostId;
 			}
-            return NetworkTransport.GetCurrentRTT(netId.HostId, netId.ConnectionId, out error);
+            return NetworkTransport.GetCurrentRTT( id.GetHostId(), id.GetConnectionId(), out error);
         }
 
         public int GetNetworkTimestamp() => NetworkTransport.GetNetworkTimestamp();
 
         public int GetRemoteDelayTimeMS(uint clientId, int remoteTimestamp, out byte error)
         {
-            NetId netId = new NetId(clientId);
 			if (netId.IsServer())
             {
                 netId.ConnectionId = (ushort)serverConnectionId;
@@ -88,10 +136,9 @@ namespace Alpaca.Transports.UNET
             return NetEventType.Nothing;
         }
 
-        public void QueueMessageForSending(uint clientId, byte[] dataBuffer, int dataSize, int channelId, bool skipqueue, out byte error)
+        public void QueueMessageForSending( NodeId id, byte[] dataBuffer, int dataSize, int channelId, bool skipqueue, out byte error)
         {
-            NetId netId = new NetId(clientId);
-			if (netId.IsServer())
+			if( id.IsServer() )
             {
                 netId.ConnectionId = (ushort)serverConnectionId;
                 netId.HostId = (byte)serverHostId;
@@ -103,29 +150,19 @@ namespace Alpaca.Transports.UNET
                 NetworkTransport.QueueMessageForSending(netId.HostId, netId.ConnectionId, channelId, dataBuffer, dataSize, out error);
         }
 
-        public void Shutdown() => NetworkTransport.Shutdown();
+        public void Shutdown()
+		{
+			NetworkTransport.Shutdown();
+		}
 
-        public void SendQueue(uint clientId, out byte error)
+        public void SendQueue( NodeId id, out byte error)
         {
-            NetId netId = new NetId(clientId);
-			if (netId.IsServer())
+			if( id.IsServer() )
             {
                 netId.ConnectionId = (ushort)serverConnectionId;
                 netId.HostId = (byte)serverHostId;
             }
             NetworkTransport.SendQueuedMessages(netId.HostId, netId.ConnectionId, out error);
-        }
-
-        public void RegisterServerListenSocket(object settings)
-        {
-            HostTopology topology = new HostTopology((ConnectionConfig)settings, AlpacaNetwork.GetSingleton().config.MaxConnections);
-            for (int i = 0; i < ServerTransports.Count; i++)
-            {
-                if (ServerTransports[i].Websockets)
-                    NetworkTransport.AddWebsocketHost(topology, ServerTransports[i].Port);
-                else
-                    NetworkTransport.AddHost(topology, ServerTransports[i].Port);
-            }
         }
 
         public int AddChannel(ChannelType type, object settings)
@@ -167,12 +204,5 @@ namespace Alpaca.Transports.UNET
                 SendDelay = 0
             };
         }
-
-        public void Connect(string address, int port, object settings, out byte error)
-        {
-            serverHostId = NetworkTransport.AddHost(new HostTopology((ConnectionConfig)settings, 1));
-            serverConnectionId = NetworkTransport.Connect(serverHostId, address, port, 0, out error);
-        }
     }
-}
-#pragma warning restore 618
+	*/

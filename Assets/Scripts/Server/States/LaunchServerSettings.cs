@@ -51,8 +51,7 @@ public class LaunchServer : ServerState
 	
 	public void OnUpdate()
 	{
-		if(  _network != null
-		  && _network.IsRunning()
+		if(  _network.IsRunning()
 		  && Time.time > _exitTime
 		  )
 		{
@@ -72,7 +71,7 @@ public class LaunchServer : ServerState
 
 	void StartServerAttempt()
 	{
-		_settings.display.text += "Launching server on port: " + _world.GetServerPort();
+		_settings.display.text += "Launching server on port: " + _network.GetConnectionPort();
 
 		string error;
 		if( _network.Start( out error ) )
@@ -81,7 +80,7 @@ public class LaunchServer : ServerState
 		}
 		else
 		{
-			_settings.display.text += "Connection attempt failed with error:\n";
+			_settings.display.text += "Server launch failed with error:\n";
 			_settings.display.text += error + "\n\n";
 		}
 	}

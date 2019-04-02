@@ -138,8 +138,7 @@ namespace Alpaca.Serialization
                 }
                 else 
                 {
-                    if (LogHelper.CurrentLogLevel <= LogLevel.Normal)
-                        LogHelper.LogWarning("BitReader canot find the GameObject sent in the SpawnedObjects list, it may have been destroyed. NetworkId: " + networkId.ToString());
+                    Log.Warn("BitReader canot find the GameObject sent in the SpawnedObjects list, it may have been destroyed. NetworkId: " + networkId.ToString());
                     return null;
                 }
             }
@@ -152,8 +151,7 @@ namespace Alpaca.Serialization
                 }
                 else 
                 {
-                    if (LogHelper.CurrentLogLevel <= LogLevel.Normal)
-                        LogHelper.LogWarning("BitReader canot find the Entity sent in the SpawnedObjects list, it may have been destroyed. NetworkId: " + networkId.ToString());
+                    Log.Warn("BitReader canot find the Entity sent in the SpawnedObjects list, it may have been destroyed. NetworkId: " + networkId.ToString());
                     return null;
                 }
             }
@@ -167,8 +165,7 @@ namespace Alpaca.Serialization
                 }
                 else 
                 {
-                    if (LogHelper.CurrentLogLevel <= LogLevel.Normal)
-                        LogHelper.LogWarning("BitReader canot find the Conduct sent in the SpawnedObjects list, it may have been destroyed. NetworkId: " + networkId.ToString());
+                    Log.Warn("BitReader canot find the Conduct sent in the SpawnedObjects list, it may have been destroyed. NetworkId: " + networkId.ToString());
                     return null;
                 }
             }

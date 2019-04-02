@@ -27,6 +27,5 @@ public class ServerWorld
 	}
 
 	public ServerNode GetServerNode() { return _networkNode; }
-	public int GetServerPort() { return _worldSettings.commonNodeSettings.connectionPort; }
 	public string GetRoomName() { return _settings.roomScene; }
 }

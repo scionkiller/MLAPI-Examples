@@ -50,7 +50,7 @@ namespace Alpaca.Serialization
             if (readerPool.Count == 0)
             {
                 if (pools > 10)
-                    if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("There are more than 10 BitReaders. Have you forgotten do dispose? (More readers hurt performance)");
+                    Log.Warn("There are more than 10 BitReaders. Have you forgotten do dispose? (More readers hurt performance)");
                 BitReaderDeprecated reader = new BitReaderDeprecated(readFrom);
                 reader.disposed = false;
                 pools++;

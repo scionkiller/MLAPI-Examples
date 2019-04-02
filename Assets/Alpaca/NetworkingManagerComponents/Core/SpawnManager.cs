@@ -23,7 +23,7 @@ namespace Alpaca.Components
 
             if( !network.IsServer )
             {
-                if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("You can only change ownership from Server");
+                Log.Warn("You can only change ownership from Server");
                 return;
             }
 
@@ -48,7 +48,7 @@ namespace Alpaca.Components
                     writer.WriteUInt32Packed(netId);
                     writer.WriteUInt32Packed(clientId);
 
-                    InternalMessageHandler.Send(AlpacaConstant.ALPACA_CHANGE_OWNER, "ALPACA_INTERNAL", stream, SecuritySendFlags.None);
+                    InternalMessageHandler.Send(AlpacaConstant.ALPACA_CHANGE_OWNER, "INTERNAL_CHANNEL_RELIABLE", stream, SecuritySendFlags.None);
                 }
             }
         }
@@ -108,7 +108,7 @@ namespace Alpaca.Components
                         {
                             writer.WriteUInt32Packed(networkId);
 
-                            InternalMessageHandler.Send(AlpacaConstant.ALPACA_DESTROY_OBJECT, "ALPACA_INTERNAL", stream, SecuritySendFlags.None);
+                            InternalMessageHandler.Send(AlpacaConstant.ALPACA_DESTROY_OBJECT, "INTERNAL_CHANNEL_RELIABLE", stream, SecuritySendFlags.None);
                         }
                     }
                 }

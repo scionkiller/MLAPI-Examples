@@ -95,7 +95,7 @@ public abstract class SyncVar<T> : SyncVar where T : struct
 	// Variables with different channels will be split into different packets
 	// TODO: cozeroff this is bullshit, make an array of channel definitions in the config with a name there, and use indices here. Or an enum.
 	[UnityEngine.SerializeField]
-	string _channel = "ALPACA_INTERNAL";
+	string _channel = "INTERNAL_CHANNEL_RELIABLE";
 
 	[UnityEngine.SerializeField]
 	T _initialValue = default(T);

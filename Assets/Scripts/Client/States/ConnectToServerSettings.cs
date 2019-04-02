@@ -18,8 +18,6 @@ public class ConnectToServerSettings : ClientStateSettings
 public class ConnectToServer : ClientState
 {
 	static readonly float MINIMUM_DISPLAY_TIME = 2f;
-	static readonly int CONNECTION_RETRIES = 1;
-	static readonly float CONNECTION_WAIT_TIME = 3f;
 
 	ClientWorld _world;
 	ConnectToServerSettings _settings;
@@ -28,8 +26,6 @@ public class ConnectToServer : ClientState
 	ClientNode _network;
 
 	float _exitTime;
-	float _nextConnectionAttemptTime;
-	int _connectionAttempts;
 	bool _connectionSucceeded;
 
 
@@ -49,38 +45,27 @@ public class ConnectToServer : ClientState
 	{
 		_settings.Show();
 		_settings.display.text = "";
+		_connectionSucceeded = false;
 
-        _network.OnIncomingCustomMessage += OnCustomMessage;
+        _network.SetOnCustomMessage( OnCustomMessage );
 
-        _connectionAttempts = 0;
-        _connectionSucceeded = false;
-        StartConnectionAttempt();
+        StartClient();
     }
 
 	public void OnExit()
 	{
 		_settings.Hide();
 
-		_network.OnIncomingCustomMessage -= OnCustomMessage;
+		_network.SetOnCustomMessage( null );
 	}
 	
 	public void OnUpdate()
 	{
-		if( _connectionSucceeded )
+		if(  _connectionSucceeded 
+		  && Time.time > _exitTime
+		  )
 		{
-			if( Time.time > _exitTime )
-			{
-				_transitionState = ClientStateId.LoadClientRoom;
-			}
-		}
-		else
-		{
-			if(  Time.time > _nextConnectionAttemptTime
-			  && _connectionAttempts < CONNECTION_RETRIES
-			  )
-			{
-				StartConnectionAttempt();
-			}
+			_transitionState = ClientStateId.LoadClientRoom;
 		}
 	}
 
@@ -94,14 +79,12 @@ public class ConnectToServer : ClientState
 
 	// PRIVATE
 
-	void StartConnectionAttempt()
+	void StartClient()
 	{
-		++_connectionAttempts;
-		_nextConnectionAttemptTime = Time.time + CONNECTION_WAIT_TIME;
-		_settings.display.text += "Connecting to server at: " + _network.config.ConnectAddress + ":" + _network.config.ConnectPort + " Attempt " + _connectionAttempts + " of " + CONNECTION_RETRIES + "\n";
+		_settings.display.text += "Connecting to server at: " + _network.GetConnectionAddress() + ":" + _network.GetConnectionPort() + "\n";
 
 		string error;
-		if( _network.StartClient( out error ) )
+		if( _network.Start( out error ) )
 		{
 			_settings.display.text += "Waiting for reply...\n\n";
 		}
@@ -112,9 +95,8 @@ public class ConnectToServer : ClientState
 		}
 	}
 
-	void OnCustomMessage( uint clientId, Stream stream )
+	void OnCustomMessage( NodeIndex clientIndex, BitReader reader )
 	{
-		BitReader reader = new BitReader(stream);
 		MessageType message = (MessageType)reader.ReadByte();
 
 		if( message != MessageType.ConfirmClientConnection )

@@ -22,7 +22,7 @@ namespace Alpaca.Serialization
         {
             if (overflowStreams.Count > 0)
             {
-                if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("Retrieving PooledBitStream from overflow pool. Recent burst?");
+                Log.Info("Retrieving PooledBitStream from overflow pool. Recent burst?");
                 WeakReference weakStream;
                 while (!(weakStream = overflowStreams.Dequeue()).IsAlive) ;
                 if (weakStream.IsAlive) return (PooledBitStream)weakStream.Target;
@@ -30,7 +30,7 @@ namespace Alpaca.Serialization
 
             if (streams.Count == 0)
             {
-                if (createdStreams == 254) if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("255 streams have been created. Did you forget to dispose?");
+                if (createdStreams == 254) Log.Warn("255 streams have been created. Did you forget to dispose?");
                 else if (createdStreams < 255) createdStreams++;
                 
                 return new PooledBitStream();
@@ -55,7 +55,7 @@ namespace Alpaca.Serialization
                 //Streams are essentially byte array wrappers. This is valuable memory.
                 //Thus we put this stream as a weak reference incase of another burst
                 //But still leave it to GC
-                if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("Putting PooledBitStream into overflow pool. Did you forget to dispose?");
+                Log.Info("Putting PooledBitStream into overflow pool. Did you forget to dispose?");
                 overflowStreams.Enqueue(new WeakReference(stream));
             }
             else
@@ -82,7 +82,7 @@ namespace Alpaca.Serialization
         {
             if (writers.Count == 0)
             {
-                if (createdWriters == 254) if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("255 writers have been created. Did you forget to dispose?");
+                if (createdWriters == 254) Log.Warn("255 writers have been created. Did you forget to dispose?");
                     else if (createdWriters < 255) createdWriters++;
                 
                 return new PooledBitWriter(stream);
@@ -101,7 +101,7 @@ namespace Alpaca.Serialization
         public static void PutBackInPool(PooledBitWriter writer)
         {
             if (writers.Count < 64) writers.Enqueue(writer);
-            else if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("BitWriterPool already has 64 queued. Throwing to GC. Did you forget to dispose?");
+            else Log.Info("BitWriterPool already has 64 queued. Throwing to GC. Did you forget to dispose?");
         }
     }
 
@@ -122,7 +122,7 @@ namespace Alpaca.Serialization
         {
             if (readers.Count == 0)
             {
-                if (createdReaders == 254) if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("255 readers have been created. Did you forget to dispose?");
+                if (createdReaders == 254) Log.Warn("255 readers have been created. Did you forget to dispose?");
                 else if (createdReaders < 255) createdReaders++;
                 
                 return new PooledBitReader(stream);
@@ -141,7 +141,7 @@ namespace Alpaca.Serialization
         public static void PutBackInPool(PooledBitReader reader)
         {
             if (readers.Count < 64) readers.Enqueue(reader);
-            else if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("BitReaderPool already has 64 queued. Throwing to GC. Did you forget to dispose?");
+            else Log.Info("BitReaderPool already has 64 queued. Throwing to GC. Did you forget to dispose?");
         }
     }
 

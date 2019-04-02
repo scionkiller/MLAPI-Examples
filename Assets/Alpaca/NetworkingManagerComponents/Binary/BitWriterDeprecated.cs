@@ -86,7 +86,7 @@ namespace Alpaca.Serialization
         {
             if (writerPool.Count == 0)
             {
-                if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("There are more than 10 BitWriters. Have you forgotten do dispose? (It will still work with worse performance)");
+                Log.Warn("There are more than 10 BitWriters. Have you forgotten do dispose? (It will still work with worse performance)");
                 return new BitWriterDeprecated() { outsidePool = true };
             }
             else
@@ -99,7 +99,7 @@ namespace Alpaca.Serialization
             else if (b is string || b.GetType().IsArray || IsSupportedType(b.GetType()))
                 collect.Add(b is string ? Encoding.UTF8.GetBytes(b as string) : b as object);
             else
-                if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("The type \"" + b.GetType() + "\" is not supported by the Binary Serializer. It will be ignored");
+                Log.Warn("The type \"" + b.GetType() + "\" is not supported by the Binary Serializer. It will be ignored");
         }
 
         // Just use Push() and PushArray()
@@ -234,7 +234,7 @@ namespace Alpaca.Serialization
         {
             if(buffer == null)
             {
-                if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("no buffer provided");
+                Log.Warn("no buffer provided");
                 return 0;
             }
             long bitCount = 0;
@@ -242,7 +242,7 @@ namespace Alpaca.Serialization
 
             if (buffer.Length < ((bitCount / 8) + (bitCount % 8 == 0 ? 0 : 1)))
             {
-                if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("The buffer size is not large enough");
+                Log.Warn("The buffer size is not large enough");
                 return 0;
             }
             long bitOffset = 0;

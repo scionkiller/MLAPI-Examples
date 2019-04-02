@@ -44,21 +44,20 @@ public class SpawnAvatar : ClientState
 
 		_exitTime = 0f;
 
-		_network.OnAvatarSpawn = OnAvatarSpawn;
+		_network.SetOnAvatarSpawn( OnAvatarSpawn );
 
         using (PooledBitStream stream = PooledBitStream.Get())
         {
             BitWriter writer = new BitWriter(stream);
-            writer.WriteByte((byte)MessageType.SpawnAvatarRequest);
-			writer.WriteUInt32( _network.LocalClientId );
+            writer.WriteByte( (byte)MessageType.SpawnAvatarRequest );
 
-            _network.SendCustomMessage( _network.ServerClientId, stream);
+            _network.SendCustomMessage( NodeIndex.SERVER_NODE_INDEX, stream);
         }
     }
 
     public void OnExit()
     {
-		_network.OnAvatarSpawn = null;
+		_network.SetOnAvatarSpawn( null );
 
         _settings.Hide();
     }

@@ -8,6 +8,7 @@ using TMPro;
 using Alpaca;
 using Alpaca.Serialization;
 
+
 public class HostingSettings : ServerStateSettings
 {
 	public TMP_Text display;
@@ -50,8 +51,8 @@ public class Hosting : ServerState
 	{
 		_settings.Hide();
 
-		_network.OnClientConnectedCallback = null;
-        _network.OnIncomingCustomMessage -= OnCustomMessage;
+		_network.SetOnClientConnect( null );
+        _network.SetOnCustomMessage( null );
     }
 	
 	public void OnUpdate()
@@ -68,7 +69,7 @@ public class Hosting : ServerState
 
 	// PRIVATE
 
-	void OnClientConnected( NodeId clientId )
+	void OnClientConnected( NodeIndex clientIndex )
 	{
 		using( PooledBitStream stream = PooledBitStream.Get() )
 		using( PooledBitWriter writer = PooledBitWriter.Get( stream ) )
@@ -76,18 +77,17 @@ public class Hosting : ServerState
 			writer.WriteByte( (byte)MessageType.ConfirmClientConnection );
 			writer.WriteString( _world.GetRoomName(), true );
 
-			_network.SendCustomMessage( clientId, writer );
+			_network.SendCustomMessage( clientIndex, writer );
 		}
 
 		// TODO: remove
-		Debug.Log( "Sent room name: '" + _world.GetRoomName() + "' to client: " + clientId );
+		Debug.Log( "Sent room name: '" + _world.GetRoomName() + "' to client: " + clientIndex.GetClientIndex() );
 
 	}
 
-    void OnCustomMessage( uint receiverId, BitReader reader )
+    void OnCustomMessage( NodeIndex clientIndex, BitReader reader )
     {
         MessageType message = (MessageType)reader.ReadByte();
-		uint clientId = reader.ReadUInt32();
 
         if( message != MessageType.SpawnAvatarRequest )
         {
@@ -100,12 +100,12 @@ public class Hosting : ServerState
 		float x = 10f * Mathf.Cos( randomTau );
 		float z = 10f * Mathf.Cos( randomTau );
 
-		int prefabIndex = _network.FindPrefabIndex( _settings.avatarPrefab );
-		if( prefabIndex == AlpacaConstant.PREFAB_INDEX_INVALID )
+		EntityPrefabIndex prefabIndex = _network.FindEntityPrefabIndex( _settings.avatarPrefab );
+		if( !prefabIndex.IsValid() )
 		{
 			Debug.LogError( "FATAL ERROR: could not found avatar prefab" );
 		}
-		_network.SpawnEntityServer( clientId, prefabIndex, true, new Vector3( x, 0f, z), Quaternion.identity );
+		_network.SpawnEntityServer( clientIndex, prefabIndex, true, new Vector3( x, 0f, z), Quaternion.identity );
     }
 
 }

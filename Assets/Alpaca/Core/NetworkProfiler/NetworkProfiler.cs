@@ -8,6 +8,7 @@ using Alpaca.Internal;
 
 namespace Alpaca.Profiling
 {
+	/*
     /// <summary>
     /// NetworkProfiler for profiling network traffic
     /// </summary>
@@ -146,4 +147,5 @@ namespace Alpaca.Profiling
             CurrentTick.EndEvent();
         }
     }
+	*/
 }

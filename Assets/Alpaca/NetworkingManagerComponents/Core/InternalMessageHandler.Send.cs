@@ -4,6 +4,7 @@ using Alpaca.Serialization;
 
 namespace Alpaca.Internal
 {
+	/*
     internal static partial class InternalMessageHandler
     {
         internal static void Send(uint clientId, byte messageType, string channelName, BitStream messageStream, SecuritySendFlags flags, bool skipQueue = false)
@@ -16,7 +17,7 @@ namespace Alpaca.Internal
 
             using (BitStream stream = MessageManager.WrapMessage(messageType, clientId, messageStream, flags))
             {
-                NetworkProfiler.StartEvent(TickType.Send, (uint)stream.Length, channelName, AlpacaConstant.MESSAGE_NAMES[messageType]);
+                NetworkProfiler.StartEvent(TickType.Send, (uint)stream.Length, channelName, AlpacaConstant.INTERNAL_MESSAGE_NAME[messageType]);
                 byte error;
                 if (skipQueue)
                     network.config.NetworkTransport.QueueMessageForSending(clientId, stream.GetBuffer(), (int)stream.Length, MessageManager.channels[channelName], true, out error);
@@ -46,7 +47,7 @@ namespace Alpaca.Internal
 
                 using (BitStream stream = MessageManager.WrapMessage(messageType, 0, messageStream, flags))
                 {
-                    NetworkProfiler.StartEvent(TickType.Send, (uint)stream.Length, channelName, AlpacaConstant.MESSAGE_NAMES[messageType]);
+                    NetworkProfiler.StartEvent(TickType.Send, (uint)stream.Length, channelName, AlpacaConstant.INTERNAL_MESSAGE_NAME[messageType]);
                     for (int i = 0; i < network._connectedClients.GetCount(); i++)
                     {
 						Client c = network._connectedClients.GetAt(i);
@@ -83,7 +84,7 @@ namespace Alpaca.Internal
 
                 using (BitStream stream = MessageManager.WrapMessage(messageType, 0, messageStream, flags))
                 {
-                    NetworkProfiler.StartEvent(TickType.Send, (uint)stream.Length, channelName, AlpacaConstant.MESSAGE_NAMES[messageType]);
+                    NetworkProfiler.StartEvent(TickType.Send, (uint)stream.Length, channelName, AlpacaConstant.INTERNAL_MESSAGE_NAME[messageType]);
                     for (int i = 0; i < network._connectedClients.GetCount(); i++)
                     {
 						Client c = network._connectedClients.GetAt(i);
@@ -98,4 +99,5 @@ namespace Alpaca.Internal
             }
         }
     }
+	*/
 }

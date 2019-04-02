@@ -93,12 +93,12 @@ public class AlpacaNetwork
 	{
 		if (!IsServer)
 		{
-			if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogWarning("Only the server can broadcast custom messages");
+			Log.Warn("Only the server can broadcast custom messages");
 			return;
 		}
 		for (int i = 0; i < _connectedClients.GetCount(); ++i)
 		{
-			InternalMessageHandler.Send( _connectedClients.GetAt(i).GetId(), AlpacaConstant.ALPACA_CUSTOM_MESSAGE, string.IsNullOrEmpty(channel) ? "ALPACA_DEFAULT_MESSAGE" : channel, stream, security);
+			InternalMessageHandler.Send( _connectedClients.GetAt(i).GetId(), AlpacaConstant.ALPACA_CUSTOM_MESSAGE, string.IsNullOrEmpty(channel) ? "INTERNAL_CHANNEL_CLIENT_RELIABLE" : channel, stream, security);
 		}
 	}
 
@@ -111,7 +111,7 @@ public class AlpacaNetwork
 	/// <param name="security">The security settings to apply to the message</param>
 	public void SendCustomMessage(uint clientId, BitStream stream, string channel = null, SecuritySendFlags security = SecuritySendFlags.None)
 	{
-		InternalMessageHandler.Send(clientId, AlpacaConstant.ALPACA_CUSTOM_MESSAGE, string.IsNullOrEmpty(channel) ? "ALPACA_DEFAULT_MESSAGE" : channel, stream, security);
+		InternalMessageHandler.Send(clientId, AlpacaConstant.ALPACA_CUSTOM_MESSAGE, string.IsNullOrEmpty(channel) ? "INTERNAL_CHANNEL_CLIENT_RELIABLE" : channel, stream, security);
 	}
 
 	// get the public key we need for encrypting a message to the target client, or server if we are a client
@@ -137,7 +137,7 @@ public class AlpacaNetwork
 	// Returns true on success
 	public bool StartServer( out string errorString )
 	{
-		if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("StartServer()");
+		Log.Info("StartServer()");
 		if (IsServer || IsClient)
 		{
 			errorString = "Cannot start server while an instance is already running";
@@ -165,7 +165,7 @@ public class AlpacaNetwork
 
 	public void StopServer()
 	{
-		if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("StopServer()");
+		Log.Info("StopServer()");
 
 		// Don't know if I have to disconnect the clients. I'm assuming the NetworkTransport does all the cleaning on shutdown.
 		// But this way the clients get a disconnect message from server (so long it does't get lost)
@@ -193,7 +193,7 @@ public class AlpacaNetwork
 	// Returns true on success
 	public bool StartClient( out string errorString )
 	{
-		if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("StartClient()");
+		Log.Info("StartClient()");
 		
 		if (IsServer || IsClient)
 		{
@@ -226,7 +226,7 @@ public class AlpacaNetwork
 
 	public void StopClient()
 	{
-		if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("StopClient()");
+		Log.Info("StopClient()");
 		IsClient = false;
 		config.NetworkTransport.DisconnectFromServer();
 		IsConnectedClient = false;
@@ -257,7 +257,7 @@ public class AlpacaNetwork
 
 	private void Shutdown()
 	{
-		if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("Shutdown()");
+		Log.Info("Shutdown()");
 		NetworkProfiler.Stop();
 		IsListening = false;
 		IsServer = false;
@@ -286,7 +286,7 @@ public class AlpacaNetwork
 					uint clientId = _connectedClients.GetAt(i).GetId();
 					byte error;
 					config.NetworkTransport.SendQueue(clientId, out error);
-					if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("Send Pending Queue: " + clientId);
+					Log.Info("Send Pending Queue: " + clientId);
 				}
 
 				lastSendTickTime = NetworkTime;
@@ -312,7 +312,7 @@ public class AlpacaNetwork
 							NetworkProfiler.StartEvent(TickType.Receive, (uint)receivedSize, MessageManager.reverseChannels[channelId], "TRANSPORT_CONNECT");
 							if (IsServer)
 							{
-								if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("Client Connected");
+								Log.Info("Client Connected");
 #if !DISABLE_CRYPTOGRAPHY
 								if (config.EnableEncryption)
 								{
@@ -361,7 +361,7 @@ public class AlpacaNetwork
 											}
 										}
 										// Send the hail
-										InternalMessageHandler.Send(clientId, AlpacaConstant.ALPACA_CERTIFICATE_HAIL, "ALPACA_INTERNAL", hailStream, SecuritySendFlags.None, true);
+										InternalMessageHandler.Send(clientId, AlpacaConstant.ALPACA_CERTIFICATE_HAIL, "INTERNAL_CHANNEL_RELIABLE", hailStream, SecuritySendFlags.None, true);
 									}
 								}
 								else
@@ -381,20 +381,20 @@ public class AlpacaNetwork
 							}
 							else
 							{
-								if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("Connected");
+								Log.Info("Connected");
 								if (!config.EnableEncryption) SendConnectionRequest();
 								StartCoroutine(ApprovalTimeout(clientId));
 							}
 							NetworkProfiler.EndEvent();
 							break;
 						case NetEventType.Data:
-							if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo($"Incoming Data From {clientId} : {receivedSize} bytes");
+							Log.Info($"Incoming Data From {clientId} : {receivedSize} bytes");
 
 							HandleIncomingData(clientId, data, channelId, receivedSize);
 							break;
 						case NetEventType.Disconnect:
 							NetworkProfiler.StartEvent(TickType.Receive, 0, "NONE", "TRANSPORT_DISCONNECT");
-							if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("Disconnect Event From " + clientId);
+							Log.Info("Disconnect Event From " + clientId);
 
 							if( IsServer )
 							{
@@ -461,7 +461,7 @@ public class AlpacaNetwork
 				}
 			}
 
-			InternalMessageHandler.Send(ServerClientId, AlpacaConstant.ALPACA_CONNECTION_REQUEST, "ALPACA_INTERNAL", stream, SecuritySendFlags.Authenticated | SecuritySendFlags.Encrypted, true);
+			InternalMessageHandler.Send(ServerClientId, AlpacaConstant.ALPACA_CONNECTION_REQUEST, "INTERNAL_CHANNEL_RELIABLE", stream, SecuritySendFlags.Authenticated | SecuritySendFlags.Encrypted, true);
 		}
 	}
 
@@ -477,14 +477,14 @@ public class AlpacaNetwork
 		if( _pendingClients.Get(clientId) != null && _connectedClients.Get(clientId) == null )
 		{
 			// Timeout
-			if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("Client " + clientId + " Handshake Timed Out");
+			Log.Info("Client " + clientId + " Handshake Timed Out");
 			DisconnectClient(clientId);
 		}
 	}
 
 	private void HandleIncomingData(uint clientId, byte[] data, int channelId, int totalSize)
 	{
-		if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("Unwrapping Data Header");
+		Log.Info("Unwrapping Data Header");
 
 		using (BitStream inputStream = new BitStream(data))
 		{
@@ -494,19 +494,19 @@ public class AlpacaNetwork
 			{
 				if (messageStream == null)
 				{
-					if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Message unwrap could not be completed. Was the header corrupt? Crypto error?");
+					Log.Error("Message unwrap could not be completed. Was the header corrupt? Crypto error?");
 					return;
 				}
 				else if (messageType == AlpacaConstant.INVALID)
 				{
-					if (LogHelper.CurrentLogLevel <= LogLevel.Error) LogHelper.LogError("Message unwrap read an invalid messageType");
+					Log.Error("Message unwrap read an invalid messageType");
 					return;
 				}
 
 				uint headerByteSize = (uint)Arithmetic.VarIntSize(messageType);
 				NetworkProfiler.StartEvent(TickType.Receive, (uint)(totalSize - headerByteSize), channelId, messageType);
 
-				if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("Data Header: messageType=" + messageType);
+				Log.Info("Data Header: messageType=" + messageType);
 
 				// Pending client tried to send a network message that was not the connection request before he was accepted.
 				PendingClient p = _pendingClients.Get(clientId);
@@ -517,14 +517,14 @@ public class AlpacaNetwork
 						|| (p.ConnectionState == PendingClient.State.PendingConnection && messageType != AlpacaConstant.ALPACA_CONNECTION_REQUEST       )
 						)
 					{
-						if (LogHelper.CurrentLogLevel <= LogLevel.Normal) LogHelper.LogWarning("Message received from clientId " + clientId + " before it has been accepted");
+						Log.Warn("Message received from clientId " + clientId + " before it has been accepted");
 						return;
 					}
 				}
 
 				#region INTERNAL MESSAGE
 
-				switch (messageType)
+				switch( messageType )
 				{
 					case AlpacaConstant.ALPACA_CERTIFICATE_HAIL:
 						if( IsClient ) { InternalMessageHandler.HandleHailRequest(clientId, messageStream, channelId); }
@@ -565,29 +565,11 @@ public class AlpacaNetwork
 					case AlpacaConstant.ALPACA_NETWORKED_VAR_UPDATE:
 						InternalMessageHandler.HandleNetworkedVarUpdate(clientId, messageStream, channelId);
 						break;
-					case AlpacaConstant.ALPACA_SERVER_RPC:
-						if( IsServer ) { InternalMessageHandler.HandleServerRPC(clientId, messageStream, channelId); }
-						break;
-					case AlpacaConstant.ALPACA_SERVER_RPC_REQUEST:
-						if( IsServer ) { InternalMessageHandler.HandleServerRPCRequest(clientId, messageStream, channelId, security); }
-						break;
-					case AlpacaConstant.ALPACA_SERVER_RPC_RESPONSE:
-						if( IsClient ) { InternalMessageHandler.HandleServerRPCResponse(clientId, messageStream, channelId); }
-						break;
-					case AlpacaConstant.ALPACA_CLIENT_RPC:
-						if( IsClient ) { InternalMessageHandler.HandleClientRPC(clientId, messageStream, channelId); }
-						break;
-					case AlpacaConstant.ALPACA_CLIENT_RPC_REQUEST:
-						if( IsClient ) { InternalMessageHandler.HandleClientRPCRequest(clientId, messageStream, channelId, security); }
-						break;
-					case AlpacaConstant.ALPACA_CLIENT_RPC_RESPONSE:
-						if( IsServer ) { InternalMessageHandler.HandleClientRPCResponse(clientId, messageStream, channelId); }
-						break;
 					case AlpacaConstant.ALPACA_CUSTOM_MESSAGE:
 						InternalMessageHandler.HandleCustomMessage(clientId, messageStream, channelId);
 						break;
 					default:
-						LogHelper.LogError("Read unrecognized messageType " + messageType);
+						Log.Error("Read unrecognized messageType " + messageType);
 						break;
 				}
 
@@ -656,7 +638,7 @@ public class AlpacaNetwork
 						writer.WriteUInt32Packed( e.GetId() );
 						writer.WriteUInt32Packed( e.GetOwnerClientId() );
 
-						InternalMessageHandler.Send( AlpacaConstant.ALPACA_CHANGE_OWNER, "ALPACA_INTERNAL", stream, SecuritySendFlags.None );
+						InternalMessageHandler.Send( AlpacaConstant.ALPACA_CHANGE_OWNER, "INTERNAL_CHANNEL_RELIABLE", stream, SecuritySendFlags.None );
 					}
 				}
 
@@ -671,14 +653,14 @@ public class AlpacaNetwork
 			using( PooledBitWriter writer = PooledBitWriter.Get(stream) )
 			{
 				writer.WriteUInt32Packed( clientId );
-				InternalMessageHandler.Send( AlpacaConstant.ALPACA_CLIENT_DISCONNECT, "ALPACA_INTERNAL", clientId, stream, SecuritySendFlags.None );
+				InternalMessageHandler.Send( AlpacaConstant.ALPACA_CLIENT_DISCONNECT, "INTERNAL_CHANNEL_RELIABLE", clientId, stream, SecuritySendFlags.None );
 			}
 		}
 	}
 
 	private void SyncTime()
 	{
-		if (LogHelper.CurrentLogLevel <= LogLevel.Developer) LogHelper.LogInfo("Syncing Time To Clients");
+		Log.Info("Syncing Time To Clients");
 		using (PooledBitStream stream = PooledBitStream.Get())
 		{
 			using (PooledBitWriter writer = PooledBitWriter.Get(stream))
@@ -686,7 +668,7 @@ public class AlpacaNetwork
 				writer.WriteSinglePacked(NetworkTime);
 				int timestamp = config.NetworkTransport.GetNetworkTimestamp();
 				writer.WriteInt32Packed(timestamp);
-				InternalMessageHandler.Send(AlpacaConstant.ALPACA_TIME_SYNC, "ALPACA_TIME_SYNC", stream, SecuritySendFlags.None);
+				InternalMessageHandler.Send(AlpacaConstant.ALPACA_TIME_SYNC, "INTERNAL_CHANNEL_UNRELIABLE", stream, SecuritySendFlags.None);
 			}
 		}
 	}
@@ -744,7 +726,7 @@ public class AlpacaNetwork
 				pair.Value.WriteNetworkedVarData( writer, clientId);
 			}
 
-			InternalMessageHandler.Send(clientId, AlpacaConstant.ALPACA_CONNECTION_APPROVED, "ALPACA_INTERNAL", stream, SecuritySendFlags.Encrypted | SecuritySendFlags.Authenticated, true);
+			InternalMessageHandler.Send(clientId, AlpacaConstant.ALPACA_CONNECTION_APPROVED, "INTERNAL_CHANNEL_RELIABLE", stream, SecuritySendFlags.Encrypted | SecuritySendFlags.Authenticated, true);
 
 			if( OnClientConnectedCallback != null ) { OnClientConnectedCallback.Invoke(clientId); }
 		}
@@ -764,7 +746,7 @@ public class AlpacaNetwork
 				using (PooledBitWriter writer = PooledBitWriter.Get(stream))
 				{
 					writer.WriteUInt32Packed(clientId);
-					InternalMessageHandler.Send( c.GetId(), AlpacaConstant.ALPACA_ADD_OBJECT, "ALPACA_INTERNAL", stream, SecuritySendFlags.None );
+					InternalMessageHandler.Send( c.GetId(), AlpacaConstant.ALPACA_ADD_OBJECT, "INTERNAL_CHANNEL_RELIABLE", stream, SecuritySendFlags.None );
 				}
 			}
 		}
@@ -798,13 +780,13 @@ public class AlpacaNetwork
 			client = _connectedClients.Get( ownerClientId );
 			if( client == null )
 			{
-				LogHelper.LogError( "Cannot spawn entity with ownerClientId " + ownerClientId + ", client not yet connected!" );
+				Log.Error( "Cannot spawn entity with ownerClientId " + ownerClientId + ", client not yet connected!" );
 				return null;
 			}
 
 			if( isAvatar && client.GetAvatar() != null )
 			{
-				LogHelper.LogError("Cannot spawn avatar entity. Client " + ownerClientId + " already has an avatar" );
+				Log.Error("Cannot spawn avatar entity. Client " + ownerClientId + " already has an avatar" );
 				return null;
 			}
 		}
@@ -816,6 +798,9 @@ public class AlpacaNetwork
 		Entity.Spawn data = new Entity.Spawn( netId, ownerClientId, prefabIndex, isAvatar, position, rotation );
 		Entity entity = Entity.SpawnEntity( this, data );
 
+		// TODO: cozeroff implement this
+		//network.AddEntity(entity.GetId(), entity);
+
 		// send spawn notification to all clients
 		for( int i = 0; i < _connectedClients.GetCount(); ++i )
 		{
@@ -825,25 +810,11 @@ public class AlpacaNetwork
 			{
 				data.WriteTo( writer );
 				// TODO cozeroff: write networked var data here
-				InternalMessageHandler.Send( targetClient.GetId(), AlpacaConstant.ALPACA_ADD_OBJECT, "ALPACA_INTERNAL", stream, SecuritySendFlags.None );
+				InternalMessageHandler.Send( targetClient.GetId(), AlpacaConstant.ALPACA_ADD_OBJECT, "INTERNAL_CHANNEL_RELIABLE", stream, SecuritySendFlags.None );
 			}
 		}
 
 		return entity;
-	}
-
-	public int FindPrefabIndex( Entity prefab )
-	{
-		Debug.Assert( prefab.gameObject.scene.name == null, "Must search for a prefab" );
-		for( int i = 0; i < config.NetworkedPrefabs.Count(); ++i )
-		{
-			if( config.NetworkedPrefabs[i] == prefab )
-			{
-				return i;
-			}
-		}
-
-		return AlpacaConstant.PREFAB_INDEX_INVALID;
 	}
 
 
