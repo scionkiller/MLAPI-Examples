@@ -12,6 +12,7 @@ Assets/AssetStoreTools*
 ExportedObj/
 .consulo/
 .vscode/
+.VSCodeCounter/
 *.csproj
 *.unityproj
 *.sln

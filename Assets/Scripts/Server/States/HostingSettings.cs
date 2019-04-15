@@ -13,7 +13,7 @@ public class HostingSettings : ServerStateSettings
 {
 	public TMP_Text display;
 	// TODO: ensure this is a prefab object only (assets folder not scene)
-    public Entity avatarPrefab;
+	public Entity avatarPrefab;
 }
 
 public class Hosting : ServerState
@@ -45,15 +45,15 @@ public class Hosting : ServerState
 
 		_network.SetOnClientConnect( OnClientConnected );
 		_network.SetOnCustomMessage( OnCustomMessage );
-    }
+	}
 
 	public void OnExit()
 	{
 		_settings.Hide();
 
 		_network.SetOnClientConnect( null );
-        _network.SetOnCustomMessage( null );
-    }
+		_network.SetOnCustomMessage( null );
+	}
 	
 	public void OnUpdate()
 	{
@@ -71,13 +71,12 @@ public class Hosting : ServerState
 
 	void OnClientConnected( NodeIndex clientIndex )
 	{
-		using( PooledBitStream stream = PooledBitStream.Get() )
-		using( PooledBitWriter writer = PooledBitWriter.Get( stream ) )
+		using( BitWriter writer = _network.GetPooledWriter() )
 		{
-			writer.WriteByte( (byte)MessageType.ConfirmClientConnection );
-			writer.WriteString( _world.GetRoomName(), true );
-
-			_network.SendCustomMessage( clientIndex, writer );
+			writer.Normal<byte>( (byte)CustomMessageType.ConfirmClientConnection );
+			// TODO: cozeroff
+			//writer.WriteString( _world.GetRoomName(), true );
+			//_network.SendCustomMessage( clientIndex, writer );
 		}
 
 		// TODO: remove
@@ -85,15 +84,15 @@ public class Hosting : ServerState
 
 	}
 
-    void OnCustomMessage( NodeIndex clientIndex, BitReader reader )
-    {
-        MessageType message = (MessageType)reader.ReadByte();
+	void OnCustomMessage( NodeIndex clientIndex, BitReader reader )
+	{
+		CustomMessageType message = (CustomMessageType)reader.Byte();
 
-        if( message != MessageType.SpawnAvatarRequest )
-        {
-            Debug.LogError( "FATAL ERROR: unexpected network message type: " + message );
-            return;
-        }
+		if( message != CustomMessageType.SpawnAvatarRequest )
+		{
+			Debug.LogError( "FATAL ERROR: unexpected network message type: " + message );
+			return;
+		}
 
 		// TODO: generating a random position on a 10 m circle as a proxy for using an actual spawn point
 		float randomTau = Random.Range( 0, 2f * Mathf.PI );
@@ -105,7 +104,8 @@ public class Hosting : ServerState
 		{
 			Debug.LogError( "FATAL ERROR: could not found avatar prefab" );
 		}
-		_network.SpawnEntityServer( clientIndex, prefabIndex, true, new Vector3( x, 0f, z), Quaternion.identity );
-    }
+		// TODO: cozeroff uncomment
+		//_network.SpawnEntityServer( clientIndex, prefabIndex, true, new Vector3( x, 0f, z), Quaternion.identity );
+	}
 
 }

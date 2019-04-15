@@ -13,7 +13,7 @@ public class ServerWorldSettings
 // eg. authentication token for the user 
 public class ServerWorld
 {
-    WorldSettings _worldSettings;
+	WorldSettings _worldSettings;
 	ServerWorldSettings _settings;
 
 	ServerNode _networkNode;
@@ -21,7 +21,7 @@ public class ServerWorld
 
 	public ServerWorld( WorldSettings worldSettings, ServerWorldSettings serverWorldSettings )
 	{
-        _worldSettings = worldSettings;
+		_worldSettings = worldSettings;
 		_settings = serverWorldSettings;
 		_networkNode = new ServerNode( _worldSettings.commonNodeSettings, _settings.serverNodeSettings );
 	}

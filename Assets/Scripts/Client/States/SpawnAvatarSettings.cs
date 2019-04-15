@@ -11,71 +11,71 @@ namespace OneRoom
 
 public class SpawnAvatarSettings : ClientStateSettings
 {
-    public TMP_Text display;
+	public TMP_Text display;
 }
 
 public class SpawnAvatar : ClientState
 {
-    static readonly float MINIMUM_DISPLAY_TIME = 2f;
+	static readonly float MINIMUM_DISPLAY_TIME = 2f;
 
-    ClientWorld _world;
-    SpawnAvatarSettings _settings;
-    ClientStateId _transitionState;
+	ClientWorld _world;
+	SpawnAvatarSettings _settings;
+	ClientStateId _transitionState;
 
 	ClientNode _network;
-    float _exitTime;
+	float _exitTime;
 
 
-    #region ClientState interface (including FsmState interface)
+	#region ClientState interface (including FsmState interface)
 
-    public void Initialize(ClientWorld world, ClientStateSettings settings)
-    {
-        _world = world;
+	public void Initialize(ClientWorld world, ClientStateSettings settings)
+	{
+		_world = world;
 		_network = _world.GetClientNode();
-        _settings = (SpawnAvatarSettings)settings;
-        _settings.Hide();
-        _transitionState = ClientStateId.NO_TRANSITION;
-    }
+		_settings = (SpawnAvatarSettings)settings;
+		_settings.Hide();
+		_transitionState = ClientStateId.NO_TRANSITION;
+	}
 
-    public void OnEnter()
-    {
-        _settings.Show();
-        _settings.display.text = "Sent spawn request to server...\n";
+	public void OnEnter()
+	{
+		_settings.Show();
+		_settings.display.text = "Sent spawn request to server...\n";
 
 		_exitTime = 0f;
 
 		_network.SetOnAvatarSpawn( OnAvatarSpawn );
 
-        using (PooledBitStream stream = PooledBitStream.Get())
-        {
-            BitWriter writer = new BitWriter(stream);
-            writer.WriteByte( (byte)MessageType.SpawnAvatarRequest );
+		using( BitWriter writer = _network.GetPooledWriter() )
+		{
+			writer.Normal<byte>( (byte)CustomMessageType.SpawnAvatarRequest );
 
-            _network.SendCustomMessage( NodeIndex.SERVER_NODE_INDEX, stream);
-        }
-    }
+			// TODO: cozeroff
+			//_network.SendCustomMessage( NodeIndex.SERVER_NODE_INDEX, stream);
+		}
+	}
 
-    public void OnExit()
-    {
+	public void OnExit()
+	{
 		_network.SetOnAvatarSpawn( null );
 
-        _settings.Hide();
-    }
+		_settings.Hide();
+	}
 
-    public void OnUpdate()
-    {
-        if( _world.GetAvatar() != null && Time.time > _exitTime )
-        {
-            _transitionState = ClientStateId.Playing;
-        }
-    }
+	public void OnUpdate()
+	{
+		if( _world.GetAvatar() != null && Time.time > _exitTime )
+		{
+			_transitionState = ClientStateId.Playing;
+		}
+	}
 
-    public void OnFixedUpdate() { }
+	public void OnFixedUpdate() { }
 
-    public int GetTransitionID() { return (int)_transitionState; }
-    public int GetID() { return (int)ClientStateId.SpawnAvatar; }
+	public int GetTransitionID() { return (int)_transitionState; }
+	public int GetID() { return (int)ClientStateId.SpawnAvatar; }
 
-    #endregion // ClientState interface
+	#endregion // ClientState interface
 
 
 	// PRIVATE

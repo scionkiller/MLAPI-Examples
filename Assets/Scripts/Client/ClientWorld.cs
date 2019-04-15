@@ -13,8 +13,8 @@ public class ClientWorldSettings
 // eg. authentication token for the user 
 public class ClientWorld
 {
-    WorldSettings _worldSettings;
-    ClientWorldSettings _settings;
+	WorldSettings _worldSettings;
+	ClientWorldSettings _settings;
 
 	string _clientRoom;
 	AvatarController _avatar;
@@ -24,7 +24,7 @@ public class ClientWorld
 
 	public ClientWorld( WorldSettings worldSettings, ClientWorldSettings clientWorldSettings )
 	{
-        _worldSettings = worldSettings;
+		_worldSettings = worldSettings;
 		_settings = clientWorldSettings;
 
 		_clientRoom = null;

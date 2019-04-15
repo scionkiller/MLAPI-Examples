@@ -36,8 +36,8 @@ public class TemporaryShellScene : MonoBehaviour
 		_titleStyle.fontSize = 24;
 	}
 
-    void OnGUI()
-    {
+	void OnGUI()
+	{
 		int yOffset = MARGIN;
 
 		GUI.Label( new Rect( MARGIN, yOffset, TITLE_WIDTH, TITLE_HEIGHT ), "Temporary Shell Scene", _titleStyle );
@@ -59,7 +59,7 @@ public class TemporaryShellScene : MonoBehaviour
 			SceneManager.LoadScene( _serverSceneName, LoadSceneMode.Single );
 		}
 		yOffset += BUTTON_HEIGHT + MARGIN;
-    }
+	}
 
 	void ShowLine( string text, ref int yOffset )
 	{

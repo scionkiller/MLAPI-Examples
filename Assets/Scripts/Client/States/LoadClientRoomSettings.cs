@@ -21,9 +21,9 @@ public class LoadClientRoom : ClientState
 	LoadClientRoomSettings _settings;
 	ClientStateId _transitionState;
 
-    ClientNode _network;
+	ClientNode _network;
 
-    float _exitTime;
+	float _exitTime;
 	AsyncOperation _load;
 
 
@@ -83,7 +83,7 @@ public class LoadClientRoom : ClientState
 	public int GetTransitionID() { return (int)_transitionState; }
 	public int GetID() { return (int)ClientStateId.LoadClientRoom; }
 
-    #endregion // ClientState interface
+	#endregion // ClientState interface
 
 }
 

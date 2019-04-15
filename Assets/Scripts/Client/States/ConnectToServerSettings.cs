@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text;
 
 using UnityEngine;
 
@@ -28,6 +29,9 @@ public class ConnectToServer : ClientState
 	float _exitTime;
 	bool _connectionSucceeded;
 
+	char[] _charBuffer;
+	StringBuilder _sb;
+
 
 	#region ClientState interface (including FsmState interface)
 
@@ -39,6 +43,10 @@ public class ConnectToServer : ClientState
 		_transitionState = ClientStateId.NO_TRANSITION;
 		
 		_network = _world.GetClientNode();
+
+		int maxChars = _network.GetMaxMessageLength() / sizeof(char);
+		_charBuffer = new char[maxChars];
+		_sb = new StringBuilder( maxChars );
 	}
 
 	public void OnEnter()
@@ -47,10 +55,10 @@ public class ConnectToServer : ClientState
 		_settings.display.text = "";
 		_connectionSucceeded = false;
 
-        _network.SetOnCustomMessage( OnCustomMessage );
+		_network.SetOnCustomMessage( OnCustomMessage );
 
-        StartClient();
-    }
+		StartClient();
+	}
 
 	public void OnExit()
 	{
@@ -97,17 +105,19 @@ public class ConnectToServer : ClientState
 
 	void OnCustomMessage( NodeIndex clientIndex, BitReader reader )
 	{
-		MessageType message = (MessageType)reader.ReadByte();
+		CustomMessageType message = (CustomMessageType)reader.Byte();
 
-		if( message != MessageType.ConfirmClientConnection )
+		if( message != CustomMessageType.ConfirmClientConnection )
 		{
 			Debug.LogError( "FATAL ERROR: unexpected network message type: " + message );
 			return;
 		}
 
-		string room = reader.ReadString(true).ToString();
-		_world.SetClientRoom( room );
-		_settings.display.text += "Server accepted connection. Room scene is: '" + room + "'\n";
+		int length = reader.ArrayPacked<char>( _charBuffer );
+		_sb.Clear();
+		_sb.Append( _charBuffer, 0, length );
+		_world.SetClientRoom( _sb.ToString() );
+		_settings.display.text += "Server accepted connection. Room scene is: '" + _world.GetClientRoom() + "'\n";
 
 		_connectionSucceeded = true;
 		_exitTime = Time.time + MINIMUM_DISPLAY_TIME;

@@ -1,7 +1,7 @@
 ﻿// used for custom Alpaca messages
-enum MessageType : byte
+enum CustomMessageType : byte
 {
 	  Invalid = 0
 	, ConfirmClientConnection // From Server to Client
-    , SpawnAvatarRequest // From Client to Server
+	, SpawnAvatarRequest // From Client to Server
 }

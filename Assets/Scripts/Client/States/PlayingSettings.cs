@@ -19,7 +19,7 @@ public class Playing : ClientState
 	PlayingSettings _settings;
 	ClientStateId _transitionState;
 
-    PlayerInput _playerInput;
+	PlayerInput _playerInput;
 
 
 	#region ClientState interface (including FsmState interface)
@@ -36,7 +36,7 @@ public class Playing : ClientState
 	{
 		_settings.Show();
 
-        _playerInput = new PlayerInput();
+		_playerInput = new PlayerInput();
 
 		_settings.display.text = "Ready";
 	}
@@ -48,14 +48,14 @@ public class Playing : ClientState
 	
 	public void OnUpdate()
 	{
-        _playerInput.UpdateInput();
-        _world.GetAvatar().UpdateAvatar(_playerInput);
+		_playerInput.UpdateInput();
+		_world.GetAvatar().UpdateAvatar(_playerInput);
 	}
 
 	public void OnFixedUpdate() {
-        _playerInput.UpdateInput();
-        _world.GetAvatar().FixedUpdateAvatar(_playerInput);
-    }
+		_playerInput.UpdateInput();
+		_world.GetAvatar().FixedUpdateAvatar(_playerInput);
+	}
 
 	public int GetTransitionID() { return (int)_transitionState; }
 	public int GetID() { return (int)ClientStateId.Playing; }
