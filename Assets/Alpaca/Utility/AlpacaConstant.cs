@@ -35,10 +35,12 @@ public static class AlpacaConstant
 		, Authenticated = 1 << 1
 	}
 
-	public enum InternalMessage
-	{ CertificateHail
-	, CertificateHailResponse
-	, Greetings
+	// NOTE: The size of this enum is limited to 64 values so that the highest two bits are zero.
+	// See CustomNode.WrapMessage and CustomNode.UnwrapMessage
+	public enum InternalMessage : byte
+	{ CryptoHail
+	, CryptoHailResponse
+	, CryptoAccept
 	, ConnectionRequest
 	, ConnectionApproved
 	, ClientDisconnect

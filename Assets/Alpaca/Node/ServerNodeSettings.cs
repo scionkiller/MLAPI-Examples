@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 using UnityEngine;
 using UnityEngine.Networking;
@@ -66,6 +67,7 @@ public class ServerNode : CommonNode
 
 		public State GetState() { return _state; }
 		public bool IsConnected() { return _state == State.Connected; }
+		public void SetConnected() { _state = State.Connected; }
 
 		public NodeIndex GetIndex() { return _id; }
 		public Entity GetAvatar() { return _playerAvatar; }
@@ -116,6 +118,7 @@ public class ServerNode : CommonNode
 
 
 	ConnectionSet _connection;
+	EntitySet _entity;
 
 	// callbacks
 	System.Action<NodeIndex> _onClientConnect = null;
@@ -211,6 +214,7 @@ public class ServerNode : CommonNode
 			eventType = HandleNetworkEvent();
 		} while 
 		(  (eventType != ReceiveEvent.NoMoreEvents) 
+		&& (eventType != ReceiveEvent.Error)
 		&& (processedEvents < _maxEventCount)
 		);
 		//_profiler.EndTick();
@@ -423,18 +427,11 @@ public class ServerNode : CommonNode
 		BitReader reader = GetPooledReader();
 		DataStream stream = reader.GetStream();
 
-		int receivedSize;
 		int connectionId;
 		ChannelIndex channel;
-		string error;
-		ReceiveEvent e = PollReceive( stream.GetBuffer(), out receivedSize, out connectionId, out channel, out error );
-		stream.SetByteLength( receivedSize );
+		ReceiveEvent e = PollReceive( stream, out connectionId, out channel );
 
-		if( e == ReceiveEvent.Error )
-		{
-			Log.Error( error );
-			return e;
-		}
+		if( e == ReceiveEvent.Error ) { return e; }
 
 		// on the server, the connectionId is one to one with the client index
 		NodeIndex client = new NodeIndex( (uint)connectionId );
@@ -461,7 +458,7 @@ public class ServerNode : CommonNode
 				break;
 
 			case ReceiveEvent.Message:
-				HandleMessage( client, channel, reader );
+				HandleMessage( reader, client, channel );
 				break;
 				
 			case ReceiveEvent.Disconnect:
@@ -524,92 +521,127 @@ public class ServerNode : CommonNode
 		return null;
 	}
 
-	private void HandleMessage( NodeIndex client, ChannelIndex channel, BitReader reader )
+	void HandleMessage( BitReader reader, NodeIndex client, ChannelIndex channel )
 	{
-		Log.Info( $"Incoming message from {client} : {size} bytes" );
+		InternalMessage messageType = UnwrapMessage( reader, client );
+		if( messageType == InternalMessage.INVALID ) { return; }
 
-		using( DataStream inputStream = new DataStream( _messageBuffer, size ) )
-		using( DataStream messageStream = UnwrapMessage( inputStream, client, out InternalMessage messageType, out MessageSecurity security ))
+		//_profiler.StartEvent(TickType.Receive, size, channelId, messageType);
+
+		Log.Info( $"Handling message {AlpacaConstant.GetName(messageType)} from client {client.GetClientIndex()}" );
+
+		ClientConnection connection = _connection.GetAt( client.GetClientIndex() );
+		ClientConnection.State state = connection.GetState();
+
+		if( (state == ClientConnection.State.PendingCryptoHail) && (messageType != InternalMessage.CryptoHailResponse ) )
 		{
-			if( messageStream == null ) { return; }
+			Log.Error( $"Client {client.GetClientIndex()} is pending crypto hail, but client sent message {AlpacaConstant.GetName(messageType)} instead." );
+			return;
+		}
+		
+		if( (state == ClientConnection.State.PendingConnectionRequest) && (messageType != InternalMessage.ConnectionRequest) )
+		{
+			Log.Error( $"Client {client.GetClientIndex()} is pending connection request, but client sent message {AlpacaConstant.GetName(messageType)} instead." );
+			return;
+		}
 
-			//_profiler.StartEvent(TickType.Receive, size, channelId, messageType);
+		switch( messageType )
+		{
+			case InternalMessage.CryptoHailResponse:
+				// TODO: cozeroff
+				//HandleHailResponse(clientId, messageStream, channelId);
+				break;
+			case InternalMessage.ConnectionRequest:
+				HandleConnectionRequest( reader, client );
+				break;
+			case InternalMessage.SyncVarDelta:
+				// TODO: cozeroff
+				//HandleNetworkedVarDelta(clientId, messageStream, channelId);
+				break;
+			case InternalMessage.SyncVarUpdate:
+				// TODO: cozeroff
+				//HandleNetworkedVarUpdate(clientId, messageStream, channelId);
+				break;
+			case InternalMessage.Custom:
+				// TODO: cozeroff
+				//HandleCustomMessage(clientId, messageStream, channelId);
+				break;
+			default:
+				Log.Error( $"Read unrecognized messageType{AlpacaConstant.GetName(messageType)}" );
+				break;
+		}
 
-			Log.Info( "Message type is: " + AlpacaConstant.GetName(messageType) );
+		//_profiler.EndEvent();
+	}
 
-			// TODO: cozeroff message handling
-			/*
+	#region Message Handlers for specific InteralMessage types
 
-			// Pending client tried to send a network message that was not the connection request before he was accepted.
-			PendingClient p = _pendingClients.Get(clientId);
-			if( p != null ) // this will only ever be non-null if we are the server
+	void HandleConnectionRequest( BitReader reader, NodeIndex client )
+	{
+		UInt64 configurationHash = reader.Packed<UInt64>();
+		// TODO: find out why this config comparison fails when built on different machines, and restore this safety check
+		// if(  !netManager.config.CompareConfig(configHash) )
+		// {
+		//	 Log.Warn("NetworkConfiguration mismatch. The configuration between the server and client does not match");
+		//	 netManager.DisconnectClient(clientId);
+		//	 return;
+		// }
+
+		// update ClientConnection state
+		int clientIndex = client.GetClientIndex();
+		ClientConnection connection = _connection.GetAt( clientIndex );
+		connection.SetConnected();
+
+		// send the new client the data it needs, plus the list of currently spawned items
+		using( BitWriter writer = GetPooledWriter() )
+		{
+			writer.WriteUInt32Packed(clientId);
+			writer.WriteSinglePacked(NetworkTime);
+			writer.WriteInt32Packed(config.NetworkTransport.GetNetworkTimestamp());
+
+			int amountOfObjectsToSend = _entity.GetCount();
+			writer.WriteInt32Packed(amountOfObjectsToSend);
+			foreach (KeyValuePair<uint, Entity> pair in SpawnManager.SpawnedObjects)
 			{
 				// TODO: cozeroff
-				if(  (p.ConnectionState == PendingClient.State.PendingHail       && messageType != AlpacaConstant.ALPACA_CERTIFICATE_HAIL_RESPONSE)
-					|| (p.ConnectionState == PendingClient.State.PendingConnection && messageType != AlpacaConstant.ALPACA_CONNECTION_REQUEST       )
-					)
-				{
-					Log.Warn("Message received from clientId " + clientId + " before it has been accepted");
-					return;
-				}
+				writer.WriteBool(pair.Value.IsAvatar());
+				writer.WriteUInt32Packed(pair.Value.GetId());
+				writer.WriteUInt32Packed(pair.Value.GetOwnerClientId());
+				writer.WriteUInt64Packed(pair.Value.NetworkedPrefabHash);
+				writer.WriteBool(pair.Value.gameObject.activeInHierarchy);
+
+				writer.WriteSinglePacked(pair.Value.transform.position.x);
+				writer.WriteSinglePacked(pair.Value.transform.position.y);
+				writer.WriteSinglePacked(pair.Value.transform.position.z);
+
+				writer.WriteSinglePacked(pair.Value.transform.rotation.eulerAngles.x);
+				writer.WriteSinglePacked(pair.Value.transform.rotation.eulerAngles.y);
+				writer.WriteSinglePacked(pair.Value.transform.rotation.eulerAngles.z);
+
+				pair.Value.WriteNetworkedVarData( writer, clientId);
 			}
 
-			switch( messageType )
-			{
-				case AlpacaConstant.ALPACA_CERTIFICATE_HAIL:
-					if( IsClient ) { InternalMessageHandler.HandleHailRequest(clientId, messageStream, channelId); }
-					break;
-				case AlpacaConstant.ALPACA_CERTIFICATE_HAIL_RESPONSE:
-					if( IsServer ) { InternalMessageHandler.HandleHailResponse(clientId, messageStream, channelId); }
-					break;
-				case AlpacaConstant.ALPACA_GREETINGS:
-					if( IsClient ) { InternalMessageHandler.HandleGreetings(clientId, messageStream, channelId); }
-					break;
-				case AlpacaConstant.ALPACA_CONNECTION_REQUEST:
-					if( IsServer ) { InternalMessageHandler.HandleConnectionRequest(clientId, messageStream, channelId); }
-					break;
-				case AlpacaConstant.ALPACA_CONNECTION_APPROVED:
-					if( IsClient ) { InternalMessageHandler.HandleConnectionApprovedClient(clientId, messageStream, channelId); }
-					break;
-				case AlpacaConstant.ALPACA_CLIENT_DISCONNECT:
-					if( IsClient ) { InternalMessageHandler.HandleClientDisconnectClient(clientId, messageStream, channelId); }
-					break;
-				case AlpacaConstant.ALPACA_ADD_OBJECT:
-					if( IsClient ) { InternalMessageHandler.HandleAddObjectClient(clientId, messageStream, channelId); }
-					break;
-				case AlpacaConstant.ALPACA_ADD_OBJECTS:
-					if( IsClient ) { InternalMessageHandler.HandleAddObjectsClient(clientId, messageStream, channelId); }
-					break;
-				case AlpacaConstant.ALPACA_DESTROY_OBJECT:
-					if( IsClient ) { InternalMessageHandler.HandleDestroyObject(clientId, messageStream, channelId); }
-					break;
-				case AlpacaConstant.ALPACA_CHANGE_OWNER:
-					if( IsClient ) { InternalMessageHandler.HandleChangeOwner(clientId, messageStream, channelId); }
-					break;
-				case AlpacaConstant.ALPACA_TIME_SYNC:
-					if( IsClient ) { InternalMessageHandler.HandleTimeSync(clientId, messageStream, channelId); }
-					break;
-				case AlpacaConstant.ALPACA_NETWORKED_VAR_DELTA:
-					InternalMessageHandler.HandleNetworkedVarDelta(clientId, messageStream, channelId);
-					break;
-				case AlpacaConstant.ALPACA_NETWORKED_VAR_UPDATE:
-					InternalMessageHandler.HandleNetworkedVarUpdate(clientId, messageStream, channelId);
-					break;
-				case AlpacaConstant.ALPACA_CUSTOM_MESSAGE:
-					InternalMessageHandler.HandleCustomMessage(clientId, messageStream, channelId);
-					break;
-				default:
-					Log.Error("Read unrecognized messageType " + messageType);
-					break;
-			}
-
-			*/
-			// TODO: cozeroff end Message handling
-
-			//_profiler.EndEvent();
+			Send(clientId, AlpacaConstant.ALPACA_CONNECTION_APPROVED, "INTERNAL_CHANNEL_RELIABLE", stream, SecuritySendFlags.Encrypted | SecuritySendFlags.Authenticated, true);
 		}
-	}
-}
 
+		// Inform old clients of the new player
+		for( int i = 0; i < _connection.GetCount(); ++i )
+		{
+			if( i == clientIndex ) { continue; } // skip the new client
+
+			ClientConnection other = _connection.GetAt(i);
+			using( BitWriter writer = GetPooledWriter() )
+			{
+				writer.WriteUInt32Packed(clientId);
+				Send( client, AlpacaConstant.ALPACA_ADD_OBJECT, "INTERNAL_CHANNEL_RELIABLE", stream, SecuritySendFlags.None );
+			}
+		}
+
+		// callback
+		if( _onClientConnect != null ) { _onClientConnect.Invoke( client ); }
+	}
+
+	#endregion // Message Handlers
+}
 
 } // namespace Alpaca

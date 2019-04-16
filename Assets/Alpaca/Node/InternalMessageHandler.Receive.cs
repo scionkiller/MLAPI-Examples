@@ -176,24 +176,6 @@ namespace Alpaca.Internal
 			AlpacaNetwork.GetSingleton().SendConnectionRequest();
 		}
 
-		internal static void HandleConnectionRequest(uint clientId, Stream stream, int channelId)
-		{
-			AlpacaNetwork network = AlpacaNetwork.GetSingleton();
-
-			using( PooledBitReader reader = PooledBitReader.Get(stream) )
-			{
-				ulong configHash = reader.ReadUInt64Packed();
-				// TODO: find out why this config comparison fails when built on different machines, and restore this safety check
-				// if(  !netManager.config.CompareConfig(configHash) )
-				// {
-				//	 Log.Warn("NetworkConfiguration mismatch. The configuration between the server and client does not match");
-				//	 netManager.DisconnectClient(clientId);
-				//	 return;
-				// }
-
-				 network.HandleApproval(clientId, true);
-			}
-		}
 
 		internal static void HandleConnectionApprovedClient(uint clientId, Stream stream, int channelId)
 		{

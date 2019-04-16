@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 using Alpaca.Serialization;
+using InternalMessage = Alpaca.AlpacaConstant.InternalMessage;
 using InternalChannel = Alpaca.AlpacaConstant.InternalChannel;
 using HashSize = Alpaca.AlpacaConstant.HashSize;
 
@@ -210,26 +211,27 @@ public abstract class CommonNode
 	// polls the underlying UNET transport for packets. Note that we return the connectionId without
 	// converting it into a NodeIndex because the interpretation depends on whether or not the node
 	// executing this function is a ServerNode or a ClientNode
-	protected ReceiveEvent PollReceive( out int receivedSize, out int connectionId, out ChannelIndex channel, out string error )
+	protected ReceiveEvent PollReceive( DataStream stream, out int connectionId, out ChannelIndex channel )
 	{
 		int hostId;    // this will always be the same port, we don't care about this
 		int channelId; // corresponds to ChannelIndex
+		int receivedSize;
 		byte errorByte;
 
-		NetworkEventType unetEvent = NetworkTransport.Receive( out hostId, out connectionId, out channelId, _messageBuffer, _messageBuffer.Length, out receivedSize, out errorByte );
-	
+		NetworkEventType unetEvent = NetworkTransport.Receive( out hostId, out connectionId, out channelId, stream.GetBuffer(), stream.GetByteCapacity(), out receivedSize, out errorByte );
+		stream.SetByteLength( receivedSize );
+
 		NetworkError unetError = (NetworkError)errorByte;
 		if(  unetError != NetworkError.Ok
 		  && unetError != NetworkError.Timeout
 		  )
 		{
 			// polling failed
-			error = StringFromError( errorByte );
+			Log.Error( StringFromError( errorByte ) );
 			channel = new ChannelIndex();
 			return ReceiveEvent.Error;
 		}
 
-		error = string.Empty;
 		channel = _channel[channelId].GetIndex();
 
 		// translate UNET NetworkEventType to EventType
@@ -251,10 +253,76 @@ public abstract class CommonNode
 					return ReceiveEvent.NoMoreEvents;
 				case NetworkEventType.BroadcastEvent:
 				default:
-					error = Log.PrefixMessage( "Received Broadcast or unknown message type from UNET transport layer" );
+					Log.Error( "Received Broadcast or unknown message type from UNET transport layer" );
 					return ReceiveEvent.Error;
 			}
 		}
+	}
+
+	// Extracts body of message, which could include decrypting and/or authentication.
+	protected InternalMessage UnwrapMessage( BitReader reader, NodeIndex client )
+	{
+		int inputLength = reader.GetLength();
+		Log.Info( $"Unwrapping incoming message from {client} : {inputLength} bytes" );
+
+		if( inputLength < 1 )
+		{
+			Log.Error( $"The incoming message from {client} was too small" );
+			return InternalMessage.INVALID;
+		}
+
+		// the first byte of the wrapped message is either:
+		// 1. a byte indicating the message type, which always has two leading zeros (see InternalMessage)
+		// 2. two bits indicating encryption and authentication, where at least one bit is on, followed by 6 discarded bits
+
+		bool isEncrypted     = reader.Normal<bool>();
+		bool isAuthenticated = reader.Normal<bool>();
+				
+		if( !isEncrypted && !isAuthenticated )
+		{
+			// no encryption or authentication case, reset read head so we can read byte of message type
+			DataStream s = reader.GetStream();
+			s.SetBitPosition( s.GetBitPosition() - 2 );
+		}
+		else
+		{
+			// encryption case, align the read head (ignoring the next 6 bits)
+			reader.AlignToByte();
+
+			if( !_commonSettings.enableEncryption )
+			{
+				Log.Error( "Got a encrypted and/or authenticated message but encryption was not enabled" );
+				return InternalMessage.INVALID;
+			}
+
+			if( isAuthenticated )
+			{
+				if( !CheckAuthentication( reader, client ) )
+				{
+					return InternalMessage.INVALID;
+				}
+			}
+
+			if( isEncrypted )
+			{
+				if( !PerformDecryption( reader, client ) )
+				{
+					return InternalMessage.INVALID;
+				}
+			}
+		}
+
+		// At this point, the reader should be in a state where the next byte
+		// is the InternalMessage type, and the message body follows it
+
+		byte messageByte = reader.Normal<byte>();
+		if( messageByte >= (byte)InternalMessage.COUNT )
+		{
+			Log.Error( $"Unknown InternalMessage type {messageByte} encountered while unwrapping message." );
+			return InternalMessage.INVALID;
+		}
+		
+		return (InternalMessage)messageByte;
 	}
 
 	protected UInt64 ComputeSettingsHash()
@@ -288,6 +356,20 @@ public abstract class CommonNode
 		}
 	}
 
+	protected void Send( NodeIndex destination, InternalMessage message, ChannelIndex channel, BitWriter writer )
+	{
+		if( !WrapMessage( destination, writer ) )
+		{
+			//_profiler.StartEvent(TickType.Send, (uint)stream.Length, channelName, AlpacaConstant.INTERNAL_MESSAGE_NAME[messageType]);
+			byte error;
+			if (skipQueue)
+				network.config.NetworkTransport.QueueMessageForSending(clientId, stream.GetBuffer(), (int)stream.Length, MessageManager.channels[channelName], true, out error);
+			else
+				network.config.NetworkTransport.QueueMessageForSending(clientId, stream.GetBuffer(), (int)stream.Length, MessageManager.channels[channelName], false, out error);
+			//_profiler.EndEvent();
+		}
+	}
+
 
 	// PROTECTED STATIC
 
@@ -302,6 +384,107 @@ public abstract class CommonNode
 		{
 			return "[uNet] Transport error: " + error.ToString();
 		}
+	}
+
+
+	// PRIVATE
+
+	/*
+	internal static readonly Dictionary<string, int> channels = new Dictionary<string, int>();
+	internal static readonly Dictionary<int, string> reverseChannels = new Dictionary<int, string>();
+
+	private static readonly byte[] IV_BUFFER = new byte[16];
+	private static readonly byte[] HMAC_BUFFER = new byte[32];
+	private static readonly byte[] HMAC_PLACEHOLDER = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	*/
+
+	bool CheckAuthentication( BitReader reader, NodeIndex client )
+	{
+		/*
+		long hmacStartPos = inputStream.Position;
+		int readHmacLength = inputStream.Read(HMAC_BUFFER, 0, HMAC_BUFFER.Length);
+		if (readHmacLength != HMAC_BUFFER.Length)
+		{
+			Log.Error("HMAC length was invalid");
+			return false;
+		}
+
+		// Now we have read the HMAC, we need to set the hmac in the input to 0s to perform the HMAC.
+		inputStream.Position = hmacStartPos;
+		inputStream.Write(HMAC_PLACEHOLDER, 0, HMAC_PLACEHOLDER.Length);
+
+		byte[] key = network.GetPublicEncryptionKey(clientId);
+		if( key == null )
+		{
+			Log.Error("Failed to grab key");
+			return false;
+		}
+
+		using (HMACSHA256 hmac = new HMACSHA256(key))
+		{
+			byte[] computedHmac = hmac.ComputeHash(inputStream.GetBuffer(), 0, (int)inputStream.Length);
+			if (!CryptographyHelper.ConstTimeArrayEqual(computedHmac, HMAC_BUFFER))
+			{
+				Log.Error("Received HMAC did not match the computed HMAC");
+				return false;
+			}
+		}
+		*/
+
+		return true;
+	}
+
+	bool PerformDecryption( BitReader reader, NodeIndex client )
+	{
+		/*
+		int ivRead = inputStream.Read(IV_BUFFER, 0, IV_BUFFER.Length);
+
+		if (ivRead != IV_BUFFER.Length)
+		{
+			Log.Error("Invalid IV size");
+			messageType = AlpacaConstant.INVALID;
+			return null;
+		}
+
+		PooledBitStream outputStream = PooledBitStream.Get();
+
+		using (RijndaelManaged rijndael = new RijndaelManaged())
+		{
+			rijndael.IV = IV_BUFFER;
+			rijndael.Padding = PaddingMode.PKCS7;
+
+			byte[] key = network.GetPublicEncryptionKey(clientId);
+			if (key == null)
+			{
+				Log.Error("Failed to grab key");
+				messageType = AlpacaConstant.INVALID;
+				return null;
+			}
+
+			rijndael.Key = key;
+
+			using (CryptoStream cryptoStream = new CryptoStream(outputStream, rijndael.CreateDecryptor(), CryptoStreamMode.Write))
+			{
+				cryptoStream.Write(inputStream.GetBuffer(), (int)inputStream.Position, (int)(inputStream.Length - inputStream.Position));
+			}
+
+			outputStream.Position = 0;
+
+			if (outputStream.Length == 0)
+			{
+				Log.Error("The incomming message was too small");
+				messageType = AlpacaConstant.INVALID;
+				return null;
+			}
+
+			int msgType = outputStream.ReadByte();
+			messageType = msgType == -1 ? AlpacaConstant.INVALID : (byte)msgType;
+		}
+
+		return outputStream;
+		*/
+
+		return true;
 	}
 }
 

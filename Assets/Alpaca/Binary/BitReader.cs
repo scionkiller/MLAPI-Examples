@@ -68,6 +68,7 @@ public class BitReader: IPoolable<BitReader>
 	}
 
 	public DataStream GetStream() { return _source; }
+	public Int32 GetLength() { return _source.GetByteLength(); }
 
 	// array interface: all functions return actual number of elements in use after call
 	// TODO: longer-term, implement a nice FixedArray<T> and use that instead

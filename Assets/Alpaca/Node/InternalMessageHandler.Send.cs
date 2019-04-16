@@ -6,26 +6,6 @@ namespace Alpaca.Internal
 	/*
 	internal static partial class InternalMessageHandler
 	{
-		internal static void Send(uint clientId, byte messageType, string channelName, BitStream messageStream, SecuritySendFlags flags, bool skipQueue = false)
-		{
-			AlpacaNetwork network = AlpacaNetwork.GetSingleton();
-
-			messageStream.PadStream();
-
-			if (AlpacaNetwork.GetSingleton().IsServer && clientId == AlpacaNetwork.GetSingleton().ServerClientId) return;
-
-			using (BitStream stream = MessageManager.WrapMessage(messageType, clientId, messageStream, flags))
-			{
-				NetworkProfiler.StartEvent(TickType.Send, (uint)stream.Length, channelName, AlpacaConstant.INTERNAL_MESSAGE_NAME[messageType]);
-				byte error;
-				if (skipQueue)
-					network.config.NetworkTransport.QueueMessageForSending(clientId, stream.GetBuffer(), (int)stream.Length, MessageManager.channels[channelName], true, out error);
-				else
-					network.config.NetworkTransport.QueueMessageForSending(clientId, stream.GetBuffer(), (int)stream.Length, MessageManager.channels[channelName], false, out error);
-				NetworkProfiler.EndEvent();
-			}
-		}
-
 		internal static void Send(byte messageType, string channelName, BitStream messageStream, SecuritySendFlags flags)
 		{
 			AlpacaNetwork network = AlpacaNetwork.GetSingleton();
