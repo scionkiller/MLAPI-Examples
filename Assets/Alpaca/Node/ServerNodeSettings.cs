@@ -574,7 +574,7 @@ public class ServerNode : CommonNode
 		//_profiler.EndEvent();
 	}
 
-	#region Message Handlers for specific InteralMessage types
+	#region Message Handlers for specific InternalMessage types
 
 	void HandleConnectionRequest( BitReader reader, NodeIndex client )
 	{
@@ -625,14 +625,16 @@ public class ServerNode : CommonNode
 		}
 
 		// Inform old clients of the new player
-		for( int i = 0; i < _connection.GetCount(); ++i )
-		{
-			if( i == clientIndex ) { continue; } // skip the new client
 
-			ClientConnection other = _connection.GetAt(i);
-			using( BitWriter writer = GetPooledWriter() )
+		using( BitWriter writer = GetPooledWriter() )
+		{
+			writer.Packed<Int32>(clientIndex);
+
+			for( int i = 0; i < _connection.GetCount(); ++i )
 			{
-				writer.WriteUInt32Packed(clientId);
+				if( i == clientIndex ) { continue; } // skip the new client
+
+				ClientConnection other = _connection.GetAt(i);
 				Send( client, AlpacaConstant.ALPACA_ADD_OBJECT, "INTERNAL_CHANNEL_RELIABLE", stream, SecuritySendFlags.None );
 			}
 		}
@@ -641,7 +643,7 @@ public class ServerNode : CommonNode
 		if( _onClientConnect != null ) { _onClientConnect.Invoke( client ); }
 	}
 
-	#endregion // Message Handlers
+	#endregion // InternalMessage Handlers
 }
 
 } // namespace Alpaca

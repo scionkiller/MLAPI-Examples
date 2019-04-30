@@ -158,11 +158,10 @@ public struct NodeIndex : IBitSerializable
 	public int GetClientIndex()
 	{
 		Debug.Assert( IsValidClientIndex() );
-		Debug.Assert( !IsServer() );
 		return ((int)_indexPlusOne) - 1;
 	}
 	public bool IsServer() { return _indexPlusOne == SERVER_SENTINEL_VALUE; }
-	public bool IsValidClientIndex() { return _indexPlusOne > 0; }
+	public bool IsValidClientIndex() { return _indexPlusOne > 0 && !IsServer(); }
 
 	public void Read ( BitReader reader ) { _indexPlusOne = reader.Packed<UInt32>(); }
 	public void Write( BitWriter writer ) { writer.Packed<UInt32>( _indexPlusOne ); }

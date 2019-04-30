@@ -325,6 +325,96 @@ public abstract class CommonNode
 		return (InternalMessage)messageByte;
 	}
 
+	protected bool WrapMessage( InternalMessage message, BitWriter writer, byte[] publicKey )
+	{
+		try
+		{
+			bool encrypted = ((flags & SecuritySendFlags.Encrypted) == SecuritySendFlags.Encrypted) && AlpacaNetwork.GetSingleton().config.EnableEncryption;
+			bool authenticated = (flags & SecuritySendFlags.Authenticated) == SecuritySendFlags.Authenticated && AlpacaNetwork.GetSingleton().config.EnableEncryption;
+
+			PooledBitStream outStream = PooledBitStream.Get();
+
+			using (PooledBitWriter outWriter = PooledBitWriter.Get(outStream))
+			{
+				outWriter.WriteBit(encrypted);
+				outWriter.WriteBit(authenticated);
+				
+				if (authenticated || encrypted)
+				{
+					AlpacaNetwork network = AlpacaNetwork.GetSingleton();
+
+					outWriter.WritePadBits();
+					long hmacWritePos = outStream.Position;
+
+					if (authenticated) outStream.Write(HMAC_PLACEHOLDER, 0, HMAC_PLACEHOLDER.Length);
+
+					if (encrypted)
+					{
+						using (RijndaelManaged rijndael = new RijndaelManaged())
+						{
+							rijndael.GenerateIV();
+							rijndael.Padding = PaddingMode.PKCS7;
+
+							byte[] key = network.GetPublicEncryptionKey(clientId);
+							if (key == null)
+							{
+								Log.Error("Failed to grab key");
+								return null;
+							}
+
+							rijndael.Key = key;
+
+							outStream.Write(rijndael.IV);
+
+							using (CryptoStream encryptionStream = new CryptoStream(outStream, rijndael.CreateEncryptor(), CryptoStreamMode.Write))
+							{
+								encryptionStream.WriteByte(messageType);
+								encryptionStream.Write(messageBody.GetBuffer(), 0, (int)messageBody.Length);
+							}
+						}
+					}
+					else
+					{
+						outStream.WriteByte(messageType);
+						outStream.Write(messageBody.GetBuffer(), 0, (int)messageBody.Length);
+					}
+
+					if (authenticated)
+					{
+						byte[] key = network.GetPublicEncryptionKey(clientId);
+						if (key == null)
+						{
+							Log.Error("Failed to grab key");
+							return null;
+						}
+
+						using (HMACSHA256 hmac = new HMACSHA256(key))
+						{
+							byte[] computedHmac = hmac.ComputeHash(outStream.GetBuffer(), 0, (int)outStream.Length);
+
+							outStream.Position = hmacWritePos;
+							outStream.Write(computedHmac, 0, computedHmac.Length);
+						}
+					}
+				}
+				else
+				{
+					outWriter.WriteBits(messageType, 6);
+					outStream.Write(messageBody.GetBuffer(), 0, (int)messageBody.Length);
+				}
+			}
+
+			return outStream;
+		}
+		catch (Exception e)
+		{
+			Log.Error("Error while wrapping headers");
+			Log.Error(e.ToString());
+
+			return null;
+		}
+	}
+
 	protected UInt64 ComputeSettingsHash()
 	{
 		using( BitWriter writer = GetPooledWriter() )
@@ -356,17 +446,29 @@ public abstract class CommonNode
 		}
 	}
 
-	protected void Send( NodeIndex destination, InternalMessage message, ChannelIndex channel, BitWriter writer )
+	protected void Send( int connectionId, byte[] publicKey, InternalMessage message, ChannelIndex channel, BitWriter writer, bool sendImmediately )
 	{
-		if( !WrapMessage( destination, writer ) )
+		if( WrapMessage( message, writer, publicKey ) )
 		{
 			//_profiler.StartEvent(TickType.Send, (uint)stream.Length, channelName, AlpacaConstant.INTERNAL_MESSAGE_NAME[messageType]);
-			byte error;
-			if (skipQueue)
-				network.config.NetworkTransport.QueueMessageForSending(clientId, stream.GetBuffer(), (int)stream.Length, MessageManager.channels[channelName], true, out error);
+			byte errorAsByte;
+			byte[] stream = writer.GetStream();
+			if( sendImmediately )
+			{
+				NetworkTransport.Send(netId.HostId, netId.ConnectionId, channelId, dataBuffer, dataSize, out error);
+			}
 			else
-				network.config.NetworkTransport.QueueMessageForSending(clientId, stream.GetBuffer(), (int)stream.Length, MessageManager.channels[channelName], false, out error);
+			{
+				NetworkTransport.QueueMessageForSending(netId.HostId, netId.ConnectionId, channelId, dataBuffer, dataSize, out error);
+			}
+
+			QueueMessageForSending( connectionId, stream.GetBuffer(), stream.GetByteLength(), AlpacaConstant.GetName(message), sendImmediately, out errorAsByte);
 			//_profiler.EndEvent();
+
+			if( (NetworkError)errorAsByte != NetworkError.Ok )
+			{
+				Log.Error( $"Sending message failed with error{StringFromError(errorAsByte)}" );
+			}
 		}
 	}
 

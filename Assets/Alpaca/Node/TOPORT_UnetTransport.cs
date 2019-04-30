@@ -47,20 +47,6 @@
 			return NetworkTransport.GetRemoteDelayTimeMS(netId.HostId, netId.ConnectionId, remoteTimestamp, out error);
 		}
 
-		public void QueueMessageForSending( NodeId id, byte[] dataBuffer, int dataSize, int channelId, bool skipqueue, out byte error)
-		{
-			if( id.IsServer() )
-			{
-				netId.ConnectionId = (ushort)serverConnectionId;
-				netId.HostId = (byte)serverHostId;
-			}
-
-			if (skipqueue)
-				NetworkTransport.Send(netId.HostId, netId.ConnectionId, channelId, dataBuffer, dataSize, out error);
-			else
-				NetworkTransport.QueueMessageForSending(netId.HostId, netId.ConnectionId, channelId, dataBuffer, dataSize, out error);
-		}
-
 		public void Shutdown()
 		{
 			NetworkTransport.Shutdown();

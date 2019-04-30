@@ -67,6 +67,9 @@ namespace Alpaca.Serialization
 			source.Write( this );
 		}
 
+		public DataStream GetStream() { return _sink; }
+		public Int32 GetLength() { return _sink.GetByteLength(); }
+
 		public UInt64 GetStableHash64() { return _sink.GetStableHash64(); }
 
 		// array interface
