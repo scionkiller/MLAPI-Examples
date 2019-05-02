@@ -10,58 +10,49 @@ namespace Alpaca
 {
 	// All objects shared over the network must have this MonoBehaviour.
 	// It must be at the root of the GameObject in question and should have
-	// all child Conducts set in the _Conducts list.
+	// all child Conducts set in the _conduct list.
 	[AddComponentMenu("Alpaca/Entity")]
 	public sealed class Entity : MonoBehaviour
 	{
-		// simple struct used to contain data for spawning and to send it over the network
-		// for explanations of members see main class below it
-		public struct Spawn
+		public struct Data
 		{
+			// unique across the network
 			public EntityIndex id;
 			public NodeIndex owner;
-			public EntityPrefabIndex prefabIndex;
-			public bool isAvatar;
+			public EntityPrefabIndex prefabId;
+		}
 
+		// Contains all data for spawning entities and sending them over the network
+		public struct Spawn : IBitSerializable
+		{
+			public Data data;
 			public Vector3 position;
 			public Quaternion rotation;
 
-
-			public Spawn
-				( EntityIndex idArg
-				, NodeIndex ownerArg
-				, EntityPrefabIndex prefabIndexArg
-				, bool isAvatarArg
-				, Vector3 positionArg
-				, Quaternion rotationArg
-				)
+			public Spawn( Data dataArg, Vector3 positionArg, Quaternion rotationArg )
 			{
-				id = idArg;
-				owner = ownerArg;
-				prefabIndex = prefabIndexArg;
-				isAvatar = isAvatarArg;
+				data = dataArg;
 				position = positionArg;
 				rotation = rotationArg;
 			}
 
-			public void ReadFrom( BitReader reader )
+			public void Read( BitReader reader )
 			{
-				reader.Read<EntityIndex      >( ref id          );
-				reader.Read<NodeIndex        >( ref owner       );
-				reader.Read<EntityPrefabIndex>( ref prefabIndex );
-				isAvatar = reader.Packed<bool>();
+				reader.Read <EntityIndex      >( ref data.id       );
+				reader.Read <NodeIndex        >( ref data.owner    );
+				reader.Read <EntityPrefabIndex>( ref data.prefabId );
 				position = reader.Packed<Vector3>();
 				rotation = reader.Packed<Quaternion>();
 			}
 
-			public void WriteTo( BitWriter writer )
+			public void Write( BitWriter writer )
 			{
-				id.Write( writer );
-				owner.Write( writer );
-				prefabIndex.Write( writer );
-				writer.Packed<bool>(isAvatar);
-				writer.Packed<Vector3>(position);
-				writer.Packed<Quaternion>(rotation);
+				writer.Write( ref data.id );
+				writer.Write<EntityIndex      >( ref data.id       );
+				writer.Write<NodeIndex        >( ref data.owner    );
+				writer.Write<EntityPrefabIndex>( ref data.prefabId );
+				writer.Packed<Vector3>( position );
+				writer.Packed<Quaternion>( rotation );
 			}
 		}
 
@@ -69,20 +60,28 @@ namespace Alpaca
 		[SerializeField]
 		Conduct[] _conduct = null;
 
-		EntityIndex _id;                 // unique across the network
-		EntityPrefabIndex _prefabIndex; 
-		bool _isAvatar;                  // Does this object represent the client in the world? The server cannot own player objects.      
+		Data _data;                  
+
+
+		// PUBLIC
+
+		public int GetConductCount() { return _conduct.Length; }
+		public Conduct GetConductAt( int conductIndex ) { return _conduct[conductIndex]; }
+
+		public EntityIndex GetIndex() { return _data.id; }
+
+		public Spawn MakeSpawn() { return new Spawn( _data, transform.position, transform.rotation ); }
 
 
 		// STATIC 
 
-		public static Entity SpawnEntity( List<Entity> entityPrefab, Spawn data, NodeIndex localNodeIndex )
+		public static Entity SpawnEntity( List<Entity> entityPrefab, Spawn spawn, NodeIndex localNodeIndex )
 		{
-			Entity prefab = entityPrefab[data.prefabIndex.GetIndex()];
-			Entity entity = GameObject.Instantiate<Entity>(prefab, data.position, data.rotation);
+			Entity prefab = entityPrefab[spawn.data.prefabId.GetIndex()];
+			Entity entity = GameObject.Instantiate<Entity>(prefab, spawn.position, spawn.rotation);
 			Debug.Assert(entity != null);
 
-			entity.InitializeEntity( data, localNodeIndex );
+			entity.InitializeEntity( spawn, localNodeIndex );
 
 			return entity;
 		}
@@ -90,22 +89,14 @@ namespace Alpaca
 
 		// PRIVATE
 
-		void InitializeEntity( Spawn data, NodeIndex localNodeIndex )
+		void InitializeEntity( Spawn spawn, NodeIndex localNodeIndex )
 		{
-			_id = data.id;
-			_prefabIndex = data.prefabIndex;
-			_isAvatar = data.isAvatar;
+			_data = spawn.data;
 
 			foreach( Conduct b in _conduct )
 			{
-				b.InitializeConduct( data.owner, localNodeIndex );
+				b.InitializeConduct( spawn.data.owner, localNodeIndex );
 			}
 		}
-
-		int GetConductCount() { return _conduct.Length; }
-		Conduct GetConductAt( int conductIndex ) { return _conduct[conductIndex]; }
-
-		public EntityIndex GetIndex() { return _id; }
-		public bool IsAvatar() { return _isAvatar; }
 	}
 }

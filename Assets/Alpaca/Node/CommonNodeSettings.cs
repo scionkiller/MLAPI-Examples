@@ -4,12 +4,18 @@ using UInt64 = System.UInt64;
 using Serializable = System.SerializableAttribute;
 
 using UnityEngine;
-using UnityEngine.Networking;
+using uNet = UnityEngine.Networking.NetworkTransport;
+using uNetError = UnityEngine.Networking.NetworkError;
+using uNetQos = UnityEngine.Networking.QosType;
+using uNetConfigConnection = UnityEngine.Networking.ConnectionConfig;
+using uNetConfig = UnityEngine.Networking.GlobalConfig;
+using uNetEvent = UnityEngine.Networking.NetworkEventType;
 
 using Alpaca.Serialization;
 using InternalMessage = Alpaca.AlpacaConstant.InternalMessage;
 using InternalChannel = Alpaca.AlpacaConstant.InternalChannel;
-using HashSize = Alpaca.AlpacaConstant.HashSize;
+using MessageSecurity = Alpaca.AlpacaConstant.MessageSecurity;
+using HashSize        = Alpaca.AlpacaConstant.HashSize;
 
 
 namespace Alpaca
@@ -32,7 +38,7 @@ namespace Alpaca
 public class CustomChannelSettings
 {
 	public string name;
-	public QosType type;
+	public uNetQos type;
 }
 
 // POD class, read-only
@@ -40,17 +46,17 @@ public class Channel
 {
 	ChannelIndex _index;
 	string _name;
-	QosType _type;
+	uNetQos _quality;
 
 	public ChannelIndex GetIndex() { return _index; }
 	public string GetName() { return _name; }
-	public QosType GetQosType() { return _type; }
+	public uNetQos GetQualityOfService() { return _quality; }
 
-	public Channel( ChannelIndex index, string name, QosType type )
+	public Channel( ChannelIndex index, string name, uNetQos type )
 	{
 		_index = index;
 		_name = name;
-		_type = type;
+		_quality = type;
 	}
 }
 
@@ -158,15 +164,15 @@ public abstract class CommonNode
 
 	// Initializes the network transport and builds the _channel array.
 	// Returns null on failure, and sets error string with description.
-	protected ConnectionConfig InitializeNetwork( out string error )
+	protected uNetConfigConnection InitializeNetwork( out string error )
 	{
 		_maxEventCount = _commonSettings.maxEventCount > 0 ? _commonSettings.maxEventCount : UInt32.MaxValue;
 
-		GlobalConfig gConfig = new GlobalConfig(); // default settings
+		uNetConfig gConfig = new uNetConfig(); // default settings
 		gConfig.MaxPacketSize = _commonSettings.messageBufferSize;
-		NetworkTransport.Init();
+		uNet.Init();
 
-		ConnectionConfig config = new ConnectionConfig();
+		uNetConfigConnection config = new uNetConfigConnection();
 		config.SendDelay = 0;
 
 		int channelCount = AlpacaConstant.InternalChannelCount + _commonSettings.customChannel.Length;
@@ -176,7 +182,7 @@ public abstract class CommonNode
 		for( int i = 0; i < AlpacaConstant.InternalChannelCount; ++i )
 		{
 			string name = AlpacaConstant.INTERNAL_CHANNEL_NAME[i];
-			QosType qos = AlpacaConstant.INTERNAL_CHANNEL_TYPE[i];
+			uNetQos qos = AlpacaConstant.INTERNAL_CHANNEL_TYPE[i];
 
 			int index = config.AddChannel( qos );
 			if( index != i )
@@ -218,12 +224,12 @@ public abstract class CommonNode
 		int receivedSize;
 		byte errorByte;
 
-		NetworkEventType unetEvent = NetworkTransport.Receive( out hostId, out connectionId, out channelId, stream.GetBuffer(), stream.GetByteCapacity(), out receivedSize, out errorByte );
+		uNetEvent unetEvent = uNet.Receive( out hostId, out connectionId, out channelId, stream.GetBuffer(), stream.GetByteCapacity(), out receivedSize, out errorByte );
 		stream.SetByteLength( receivedSize );
 
-		NetworkError unetError = (NetworkError)errorByte;
-		if(  unetError != NetworkError.Ok
-		  && unetError != NetworkError.Timeout
+		uNetError error = (uNetError)errorByte;
+		if(  error != uNetError.Ok
+		  && error != uNetError.Timeout
 		  )
 		{
 			// polling failed
@@ -234,8 +240,8 @@ public abstract class CommonNode
 
 		channel = _channel[channelId].GetIndex();
 
-		// translate UNET NetworkEventType to EventType
-		if( unetError == NetworkError.Timeout )
+		// translate UNET uNetEvent to EventType
+		if( error == uNetError.Timeout )
 		{
 			return ReceiveEvent.Disconnect;
 		}
@@ -243,15 +249,15 @@ public abstract class CommonNode
 		{
 			switch( unetEvent )
 			{
-				case NetworkEventType.DataEvent:
+				case uNetEvent.DataEvent:
 					return ReceiveEvent.Message;
-				case NetworkEventType.ConnectEvent:
+				case uNetEvent.ConnectEvent:
 					return ReceiveEvent.Connect;
-				case NetworkEventType.DisconnectEvent:
+				case uNetEvent.DisconnectEvent:
 					return ReceiveEvent.Disconnect;
-				case NetworkEventType.Nothing:				
+				case uNetEvent.Nothing:				
 					return ReceiveEvent.NoMoreEvents;
-				case NetworkEventType.BroadcastEvent:
+				case uNetEvent.BroadcastEvent:
 				default:
 					Log.Error( "Received Broadcast or unknown message type from UNET transport layer" );
 					return ReceiveEvent.Error;
@@ -262,33 +268,33 @@ public abstract class CommonNode
 	// Extracts body of message, which could include decrypting and/or authentication.
 	protected InternalMessage UnwrapMessage( BitReader reader, NodeIndex client )
 	{
-		int inputLength = reader.GetLength();
-		Log.Info( $"Unwrapping incoming message from {client} : {inputLength} bytes" );
+		DataStream readerStream = reader.GetStream();
+		int byteLength = readerStream.GetByteLength();
+		Log.Info( $"Unwrapping incoming message from {client} : {byteLength} bytes" );
 
-		if( inputLength < 1 )
+		if( byteLength < 1 )
 		{
 			Log.Error( $"The incoming message from {client} was too small" );
 			return InternalMessage.INVALID;
 		}
 
-		// the first byte of the wrapped message is either:
-		// 1. a byte indicating the message type, which always has two leading zeros (see InternalMessage)
-		// 2. two bits indicating encryption and authentication, where at least one bit is on, followed by 6 discarded bits
-
+		// The last byte of the wrapped message is:
+		// 2 bits indicating encryption and authentication, followed by
+		// 6 bits containing the packed message type byte.
+		// TODO: Security: This means the message type is outside encryption,
+		//       which enables an attacker to get some info. Does this matter enough?
+		int messageBodyStart = readerStream.GetBytePosition();
+		readerStream.SetBytePosition( byteLength - 1 );
+		bool isAuthenticated = reader.Normal<bool>(); 
 		bool isEncrypted     = reader.Normal<bool>();
-		bool isAuthenticated = reader.Normal<bool>();
-				
-		if( !isEncrypted && !isAuthenticated )
+		// reset the read head so that we can read the message byte
+		readerStream.SetBytePosition( byteLength - 1 ); 
+		byte messageByte = reader.Normal<byte>();
+		InternalMessage message = (InternalMessage)(messageByte | AlpacaConstant.InternalMessageMask);
+		readerStream.SetBytePosition( messageBodyStart );
+	
+		if( isEncrypted || isAuthenticated )
 		{
-			// no encryption or authentication case, reset read head so we can read byte of message type
-			DataStream s = reader.GetStream();
-			s.SetBitPosition( s.GetBitPosition() - 2 );
-		}
-		else
-		{
-			// encryption case, align the read head (ignoring the next 6 bits)
-			reader.AlignToByte();
-
 			if( !_commonSettings.enableEncryption )
 			{
 				Log.Error( "Got a encrypted and/or authenticated message but encryption was not enabled" );
@@ -311,108 +317,39 @@ public abstract class CommonNode
 				}
 			}
 		}
-
-		// At this point, the reader should be in a state where the next byte
-		// is the InternalMessage type, and the message body follows it
-
-		byte messageByte = reader.Normal<byte>();
-		if( messageByte >= (byte)InternalMessage.COUNT )
-		{
-			Log.Error( $"Unknown InternalMessage type {messageByte} encountered while unwrapping message." );
-			return InternalMessage.INVALID;
-		}
 		
-		return (InternalMessage)messageByte;
+		return message;
 	}
 
-	protected bool WrapMessage( InternalMessage message, BitWriter writer, byte[] publicKey )
+	protected bool WrapMessage( InternalMessage message, MessageSecurity security, BitWriter writer, byte[] key, out string error )
 	{
-		try
+		if( !_commonSettings.enableEncryption && security != MessageSecurity.None )
 		{
-			bool encrypted = ((flags & SecuritySendFlags.Encrypted) == SecuritySendFlags.Encrypted) && AlpacaNetwork.GetSingleton().config.EnableEncryption;
-			bool authenticated = (flags & SecuritySendFlags.Authenticated) == SecuritySendFlags.Authenticated && AlpacaNetwork.GetSingleton().config.EnableEncryption;
-
-			PooledBitStream outStream = PooledBitStream.Get();
-
-			using (PooledBitWriter outWriter = PooledBitWriter.Get(outStream))
-			{
-				outWriter.WriteBit(encrypted);
-				outWriter.WriteBit(authenticated);
-				
-				if (authenticated || encrypted)
-				{
-					AlpacaNetwork network = AlpacaNetwork.GetSingleton();
-
-					outWriter.WritePadBits();
-					long hmacWritePos = outStream.Position;
-
-					if (authenticated) outStream.Write(HMAC_PLACEHOLDER, 0, HMAC_PLACEHOLDER.Length);
-
-					if (encrypted)
-					{
-						using (RijndaelManaged rijndael = new RijndaelManaged())
-						{
-							rijndael.GenerateIV();
-							rijndael.Padding = PaddingMode.PKCS7;
-
-							byte[] key = network.GetPublicEncryptionKey(clientId);
-							if (key == null)
-							{
-								Log.Error("Failed to grab key");
-								return null;
-							}
-
-							rijndael.Key = key;
-
-							outStream.Write(rijndael.IV);
-
-							using (CryptoStream encryptionStream = new CryptoStream(outStream, rijndael.CreateEncryptor(), CryptoStreamMode.Write))
-							{
-								encryptionStream.WriteByte(messageType);
-								encryptionStream.Write(messageBody.GetBuffer(), 0, (int)messageBody.Length);
-							}
-						}
-					}
-					else
-					{
-						outStream.WriteByte(messageType);
-						outStream.Write(messageBody.GetBuffer(), 0, (int)messageBody.Length);
-					}
-
-					if (authenticated)
-					{
-						byte[] key = network.GetPublicEncryptionKey(clientId);
-						if (key == null)
-						{
-							Log.Error("Failed to grab key");
-							return null;
-						}
-
-						using (HMACSHA256 hmac = new HMACSHA256(key))
-						{
-							byte[] computedHmac = hmac.ComputeHash(outStream.GetBuffer(), 0, (int)outStream.Length);
-
-							outStream.Position = hmacWritePos;
-							outStream.Write(computedHmac, 0, computedHmac.Length);
-						}
-					}
-				}
-				else
-				{
-					outWriter.WriteBits(messageType, 6);
-					outStream.Write(messageBody.GetBuffer(), 0, (int)messageBody.Length);
-				}
-			}
-
-			return outStream;
+			error = "Attempted to send encrypted and/or authenticated message but encryption was not enabled";
+			return false;
 		}
-		catch (Exception e)
+
+		bool authenticated = ((security & MessageSecurity.Authenticated) != 0);
+		bool encrypted     = ((security & MessageSecurity.Encrypted    ) != 0);
+		
+		if( authenticated || encrypted )
 		{
-			Log.Error("Error while wrapping headers");
-			Log.Error(e.ToString());
-
-			return null;
+			Debug.Assert( false );
+			// TODO: handle encryption and authentication here
+			error = "WrapMessage: tried to apply encryption, but it was not enabled.";
+			return false;
 		}
+
+		DataStream writerStream = writer.GetStream();
+		int lastBytePos = writerStream.GetBytePosition();
+		writer.Normal<byte>( (byte)message );
+		// reset write head to write authentication and encryption bits
+		writerStream.SetBytePosition( lastBytePos );
+		writer.Normal(authenticated);
+		writer.Normal(encrypted);
+		writer.AlignToByte();
+		error = null;
+		return true;
 	}
 
 	protected UInt64 ComputeSettingsHash()
@@ -446,30 +383,34 @@ public abstract class CommonNode
 		}
 	}
 
-	protected void Send( int connectionId, byte[] publicKey, InternalMessage message, ChannelIndex channel, BitWriter writer, bool sendImmediately )
+	protected bool Send( int connectionId, byte[] key, InternalMessage message, ChannelIndex channel, BitWriter writer, bool sendImmediately, out string error )
 	{
-		if( WrapMessage( message, writer, publicKey ) )
+		MessageSecurity security = AlpacaConstant.GetSecurity( channel );
+		if( !WrapMessage( message, security, writer, key, out error ) )
 		{
-			//_profiler.StartEvent(TickType.Send, (uint)stream.Length, channelName, AlpacaConstant.INTERNAL_MESSAGE_NAME[messageType]);
-			byte errorAsByte;
-			byte[] stream = writer.GetStream();
-			if( sendImmediately )
-			{
-				NetworkTransport.Send(netId.HostId, netId.ConnectionId, channelId, dataBuffer, dataSize, out error);
-			}
-			else
-			{
-				NetworkTransport.QueueMessageForSending(netId.HostId, netId.ConnectionId, channelId, dataBuffer, dataSize, out error);
-			}
-
-			QueueMessageForSending( connectionId, stream.GetBuffer(), stream.GetByteLength(), AlpacaConstant.GetName(message), sendImmediately, out errorAsByte);
-			//_profiler.EndEvent();
-
-			if( (NetworkError)errorAsByte != NetworkError.Ok )
-			{
-				Log.Error( $"Sending message failed with error{StringFromError(errorAsByte)}" );
-			}
+			return false;
 		}
+
+		//_profiler.StartEvent(TickType.Send, (uint)stream.Length, channelName, AlpacaConstant.INTERNAL_MESSAGE_NAME[messageType]);
+		DataStream s = writer.GetStream();		
+		byte errorAsByte;
+		if( sendImmediately )
+		{
+			uNet.Send                  ( 0, connectionId, channel.GetIndex(), s.GetBuffer(), s.GetByteLength(), out errorAsByte);
+		}
+		else
+		{
+			uNet.QueueMessageForSending( 0, connectionId, channel.GetIndex(), s.GetBuffer(), s.GetByteLength(), out errorAsByte);
+		}
+		//_profiler.EndEvent();
+
+		if( (uNetError)errorAsByte != uNetError.Ok )
+		{
+			error = $"Send {AlpacaConstant.GetName(message)} to node {connectionId} failed with error{StringFromError(errorAsByte)}";
+			return false;
+		}
+
+		return true;
 	}
 
 
@@ -477,8 +418,8 @@ public abstract class CommonNode
 
 	protected static string StringFromError( byte uNetErrorByte )
 	{
-		NetworkError error = (NetworkError)uNetErrorByte;
-		if( error == NetworkError.Ok )
+		uNetError error = (uNetError)uNetErrorByte;
+		if( error == uNetError.Ok )
 		{
 			return string.Empty;
 		}

@@ -31,48 +31,57 @@ public static class AlpacaConstant
 	public enum MessageSecurity
 	{
 		  None = 0
-		, Encrypted     = 1 << 0
-		, Authenticated = 1 << 1
+		, Authenticated = 1 << 0
+		, Encrypted     = 1 << 1
 	}
 
 	// NOTE: The size of this enum is limited to 64 values so that the highest two bits are zero.
 	// See CustomNode.WrapMessage and CustomNode.UnwrapMessage
 	public enum InternalMessage : byte
-	{ CryptoHail
-	, CryptoHailResponse
-	, CryptoAccept
-	, ConnectionRequest
-	, ConnectionApproved
-	, ClientDisconnect
-	, AddEntity
-	, AddEntityArray
-	, DestroyEntity
-	, ChangeOwner
-	, TimeSync
-	, SyncVarDelta
-	, SyncVarUpdate
-	, Custom
+	{ 
+	  // These messages can only be sent to/from prospective (not yet connected) clients
+	  ConnectionRequest     // sent from a prospective client to the server
+	, ConnectionChallenge   // if using encryption, sent from the server to challenge a prospective client
+	, ConnectionResponse    // if using encryption, sent from a prospective client to the server 
+	, ConnectionApproved    // sent from the server to prospective client, indicating that it is connected
+
+	  // These messages can only be sent to/from already connected clients
+	, ConnectionDisconnect  // sent from a client to the server to disconnect
+	, SiblingConnected      // sent from the server to other clients that there is a new client
+	, SiblingDisconnected   // sent from the server to other clients that a client disconnected or timed out
+	, EntityCreate          // sent from the server to all clients that 1 or more entities were created
+	, EntityDestroy         // sent from the server to all clients that 1 or more entities were destroyed
+	, ConductRequest        // sent from the client to the server to request ownership of a conduct
+	, ConductRelease        // sent from the client to the server to release ownership of a conduct
+	, ConductChange         // sent from the server to all clients that 1 or more conducts changed owners
+	, TimeSync              // sent from the server to a client to sync time
+	, SyncVarServer         // sent from a client that owns a SyncVar to the server to notify a change
+	, SyncVarClient         // sent from the server to all non-owner clients to notify a change
+	, CustomServer          // custom message sent from client to server
+	, CustomClient          // custom message sent from server to client
 	, INVALID
 	, COUNT = INVALID
 	}
 
 	public const int InternalMessageCount = (int)InternalMessage.COUNT;
+	public const int InternalMessageMask = 0xFF >> 2;
 	
 	public static readonly string[] INTERNAL_MESSAGE_NAME = 
-	{ "INTERNAL_MESSAGE_CERTIFICATE_HAIL"
-	, "INTERNAL_MESSAGE_CERTIFICATE_HAIL_RESPONSE"
-	, "INTERNAL_MESSAGE_GREETINGS"
-	, "INTERNAL_MESSAGE_CONNECTION_REQUEST"
-	, "INTERNAL_MESSAGE_CONNECTION_APPROVED"
-	, "INTERNAL_MESSAGE_CLIENT_DISCONNECT"
-	, "INTERNAL_MESSAGE_ADD_ENTITY"
-	, "INTERNAL_MESSAGE_ADD_ENTITY_ARRAY"
-	, "INTERNAL_MESSAGE_DESTROY_ENTITY"
-	, "INTERNAL_MESSAGE_CHANGE_OWNER"
-	, "INTERNAL_MESSAGE_TIME_SYNC"
-	, "INTERNAL_MESSAGE_SYNC_VAR_DELTA"
-	, "INTERNAL_MESSAGE_SYNC_VAR_UPDATE"
-	, "INTERNAL_MESSAGE_CUSTOM"
+	{ "MESSAGE_CERTIFICATE_HAIL"
+	, "MESSAGE_CERTIFICATE_HAIL_RESPONSE"
+	, "MESSAGE_GREETINGS"
+	, "MESSAGE_CONNECTION_REQUEST"
+	, "MESSAGE_CONNECTION_APPROVED"
+	, "MESSAGE_CLIENT_CONNECT"
+	, "MESSAGE_CLIENT_DISCONNECT"
+	, "MESSAGE_ADD_ENTITY"
+	, "MESSAGE_ADD_ENTITY_ARRAY"
+	, "MESSAGE_DESTROY_ENTITY"
+	, "MESSAGE_CHANGE_OWNER"
+	, "MESSAGE_TIME_SYNC"
+	, "MESSAGE_SYNC_VAR_DELTA"
+	, "MESSAGE_SYNC_VAR_UPDATE"
+	, "MESSAGE_CUSTOM"
 	};
 
 	public static string GetName( InternalMessage message )
@@ -84,7 +93,7 @@ public static class AlpacaConstant
 	{
 		// for internal messages needing reliable delivery
 		// example: connection/disconnection/add object/delete object
-			Reliable
+		  Reliable
 		// for internal messages that don't need reliable delivery
 		// example: time synchronization
 		, Unreliable
@@ -96,16 +105,24 @@ public static class AlpacaConstant
 	public const int InternalChannelCount = (int)InternalChannel.COUNT;
 
 	public static readonly string[] INTERNAL_CHANNEL_NAME =
-	{ "INTERNAL_CHANNEL_RELIABLE"
-	, "INTERNAL_CHANNEL_UNRELIABLE"
-	, "INTERNAL_CHANNEL_CLIENT_RELIABLE"
+	{ "CHANNEL_RELIABLE"
+	, "CHANNEL_UNRELIABLE"
+	, "CHANNEL_CLIENT_RELIABLE"
 	};
 
 	public static readonly QosType[] INTERNAL_CHANNEL_TYPE =
 	{ QosType.ReliableFragmentedSequenced
-	, QosType.Reliable
 	, QosType.Unreliable
+	, QosType.Reliable
 	};
+
+	public static readonly MessageSecurity[] INTERNAL_CHANNEL_SECURITY =
+	{ MessageSecurity.None
+	, MessageSecurity.None
+	, MessageSecurity.None
+	};
+
+	public static MessageSecurity GetSecurity( ChannelIndex index ) { return INTERNAL_CHANNEL_SECURITY[(int)index.GetIndex()]; }
 }
 
 public class EntitySet : ArraySet< EntityIndex, Entity >

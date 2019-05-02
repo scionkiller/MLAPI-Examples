@@ -3,7 +3,7 @@ using System.IO;
 using Alpaca.Profiling;
 using Alpaca.Serialization;
 using UnityEngine;
-using BitStream = Alpaca.Serialization.BitStream;
+using DataStream = Alpaca.Serialization.DataStream;
 
 namespace UnityEditor
 {
@@ -42,7 +42,7 @@ namespace UnityEditor
 
 			public byte[] ToBytes()
 			{
-				BitStream stream = new BitStream();
+				DataStream stream = new DataStream();
 				BitWriter writer = new BitWriter(stream);
 				writer.WriteUInt16Packed((ushort)ticks.Length);
 
@@ -57,7 +57,7 @@ namespace UnityEditor
 			public static ProfilerContainer FromBytes(byte[] bytes)
 			{
 				ProfilerContainer container = new ProfilerContainer();
-				BitStream stream = new BitStream(bytes);
+				DataStream stream = new DataStream(bytes);
 				BitReader reader = new BitReader(stream);
 				ushort count = reader.ReadUInt16Packed();
 				container.ticks = new ProfilerTick[count];

@@ -35,8 +35,6 @@
 			return NetworkTransport.GetCurrentRTT( id.GetHostId(), id.GetConnectionId(), out error);
 		}
 
-		public int GetNetworkTimestamp() => NetworkTransport.GetNetworkTimestamp();
-
 		public int GetRemoteDelayTimeMS(uint clientId, int remoteTimestamp, out byte error)
 		{
 			if (netId.IsServer())
