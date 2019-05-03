@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
+  m_IndirectSpecularColor: {r: 0.3731193, g: 0.38073996, b: 0.3587269, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -54,7 +54,7 @@ LightmapSettings:
     m_EnableBakedLightmaps: 1
     m_EnableRealtimeLightmaps: 1
   m_LightmapEditorSettings:
-    serializedVersion: 10
+    serializedVersion: 12
     m_Resolution: 2
     m_BakeResolution: 40
     m_AtlasSize: 1024
@@ -62,6 +62,7 @@ LightmapSettings:
     m_AOMaxDistance: 1
     m_CompAOExponent: 1
     m_CompAOExponentDirect: 0
+    m_ExtractAmbientOcclusion: 0
     m_Padding: 2
     m_LightmapParameters: {fileID: 0}
     m_LightmapsBakeMode: 1
@@ -76,10 +77,16 @@ LightmapSettings:
     m_PVRDirectSampleCount: 32
     m_PVRSampleCount: 500
     m_PVRBounces: 2
+    m_PVREnvironmentSampleCount: 500
+    m_PVREnvironmentReferencePointCount: 2048
+    m_PVRFilteringMode: 2
+    m_PVRDenoiserTypeDirect: 0
+    m_PVRDenoiserTypeIndirect: 0
+    m_PVRDenoiserTypeAO: 0
     m_PVRFilterTypeDirect: 0
     m_PVRFilterTypeIndirect: 0
     m_PVRFilterTypeAO: 0
-    m_PVRFilteringMode: 1
+    m_PVREnvironmentMIS: 0
     m_PVRCulling: 1
     m_PVRFilteringGaussRadiusDirect: 1
     m_PVRFilteringGaussRadiusIndirect: 5
@@ -88,6 +95,7 @@ LightmapSettings:
     m_PVRFilteringAtrousPositionSigmaIndirect: 2
     m_PVRFilteringAtrousPositionSigmaAO: 1
     m_ShowResolutionOverlay: 1
+    m_ExportTrainingData: 0
   m_LightingDataAsset: {fileID: 0}
   m_UseShadowmask: 1
 --- !u!196 &4
@@ -139,44 +147,21 @@ MonoBehaviour:
   m_GameObject: {fileID: 1913377021}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 94cb302faeaa13449a6ebdac914afc63, type: 3}
+  m_Script: {fileID: 11500000, guid: 9c90788d194692f43bec5e1aa034bb5f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  LogLevel: 1
-  config:
-    ProtocolVersion: 0
-    Transport: 0
-    RelayAddress: 127.0.0.1
-    RelayPort: 8888
-    RelayEnabled: 1
-    Channels: []
-    RegisteredScenes: []
-    NetworkedPrefabs:
-    - prefab: {fileID: 8670392759175092509, guid: 6731371154a7f144e92f5caefa6bac8b,
-        type: 3}
-    - prefab: {fileID: 1595020433191848, guid: 03a297f61fe3ef344989473054d7a493, type: 3}
-    - prefab: {fileID: 1631893145635948, guid: 02e37f97df7ed8d459e06fd7c4e9e5df, type: 3}
-    - prefab: {fileID: 174430, guid: 3a6a0da35d32db04bb4d3dcc8a474320, type: 3}
-    MessageBufferSize: 1024
-    ReceiveTickrate: 64
-    MaxReceiveEventsPerTickRate: 500
-    SendTickrate: 64
-    EventTickrate: 64
-    MaxConnections: 100
-    ConnectPort: 7777
-    ConnectAddress: 10.10.1.106
-    ClientConnectionBufferTimeout: 10
-    ConnectionApproval: 0
-    ConnectionData: 
-    SecondsHistory: 5
-    EnableTimeResync: 0
-    ForceSamePrefabs: 1
-    RpcHashSize: 0
-    PrefabHashSize: 0
-    LoadSceneTimeOut: 120
-    EnableEncryption: 0
-    SignKeyExchange: 0
-    ServerBase64PfxCertificate: 
+  customChannel: []
+  entity: []
+  messageBufferSize: 1024
+  maxEventCount: 500
+  lagCompensationHistory: 5
+  stringHashSize: 0
+  enableTimeResync: 0
+  logLevel: 0
+  connectionPort: 7777
+  enableEncryption: 0
+  signKeyExchange: 0
+  serverBase64PfxCertificate: 
 --- !u!114 &1913377023
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -189,8 +174,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e045ce823e1bd2646a40ec132d4e7bc9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  networkVersion: 1
-  network: {fileID: 1913377022}
+  commonNodeSettings: {fileID: 1913377022}
 --- !u!4 &1913377024
 Transform:
   m_ObjectHideFlags: 0

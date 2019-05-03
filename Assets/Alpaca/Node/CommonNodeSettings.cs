@@ -4,12 +4,7 @@ using UInt64 = System.UInt64;
 using Serializable = System.SerializableAttribute;
 
 using UnityEngine;
-using uNet = UnityEngine.Networking.NetworkTransport;
-using uNetError = UnityEngine.Networking.NetworkError;
-using uNetQos = UnityEngine.Networking.QosType;
-using uNetConfigConnection = UnityEngine.Networking.ConnectionConfig;
-using uNetConfig = UnityEngine.Networking.GlobalConfig;
-using uNetEvent = UnityEngine.Networking.NetworkEventType;
+using UnityEngine.Networking;
 
 using Alpaca.Serialization;
 using InternalMessage = Alpaca.AlpacaConstant.InternalMessage;
@@ -38,7 +33,7 @@ namespace Alpaca
 public class CustomChannelSettings
 {
 	public string name;
-	public uNetQos type;
+	public QosType type;
 }
 
 // POD class, read-only
@@ -46,13 +41,13 @@ public class Channel
 {
 	ChannelIndex _index;
 	string _name;
-	uNetQos _quality;
+	QosType _quality;
 
 	public ChannelIndex GetIndex() { return _index; }
 	public string GetName() { return _name; }
-	public uNetQos GetQualityOfService() { return _quality; }
+	public QosType GetQualityOfService() { return _quality; }
 
-	public Channel( ChannelIndex index, string name, uNetQos type )
+	public Channel( ChannelIndex index, string name, QosType type )
 	{
 		_index = index;
 		_name = name;
@@ -101,7 +96,7 @@ public class CommonNodeSettings : MonoBehaviour
 	public string serverBase64PfxCertificate;
 }
 
-// ignore Obsolete warning for uNet
+// ignore Obsolete warning for NetworkTransport
 #pragma warning disable 618
 
 public abstract class CommonNode
@@ -164,15 +159,15 @@ public abstract class CommonNode
 
 	// Initializes the network transport and builds the _channel array.
 	// Returns null on failure, and sets error string with description.
-	protected uNetConfigConnection InitializeNetwork( out string error )
+	protected ConnectionConfig InitializeNetwork( out string error )
 	{
 		_maxEventCount = _commonSettings.maxEventCount > 0 ? _commonSettings.maxEventCount : UInt32.MaxValue;
 
-		uNetConfig gConfig = new uNetConfig(); // default settings
+		GlobalConfig gConfig = new GlobalConfig(); // default settings
 		gConfig.MaxPacketSize = _commonSettings.messageBufferSize;
-		uNet.Init();
+		NetworkTransport.Init();
 
-		uNetConfigConnection config = new uNetConfigConnection();
+		ConnectionConfig config = new ConnectionConfig();
 		config.SendDelay = 0;
 
 		int channelCount = AlpacaConstant.InternalChannelCount + _commonSettings.customChannel.Length;
@@ -182,7 +177,7 @@ public abstract class CommonNode
 		for( int i = 0; i < AlpacaConstant.InternalChannelCount; ++i )
 		{
 			string name = AlpacaConstant.INTERNAL_CHANNEL_NAME[i];
-			uNetQos qos = AlpacaConstant.INTERNAL_CHANNEL_TYPE[i];
+			QosType qos = AlpacaConstant.INTERNAL_CHANNEL_TYPE[i];
 
 			int index = config.AddChannel( qos );
 			if( index != i )
@@ -224,12 +219,12 @@ public abstract class CommonNode
 		int receivedSize;
 		byte errorByte;
 
-		uNetEvent unetEvent = uNet.Receive( out hostId, out connectionId, out channelId, stream.GetBuffer(), stream.GetByteCapacity(), out receivedSize, out errorByte );
+		NetworkEventType unetEvent = NetworkTransport.Receive( out hostId, out connectionId, out channelId, stream.GetBuffer(), stream.GetByteCapacity(), out receivedSize, out errorByte );
 		stream.SetByteLength( receivedSize );
 
-		uNetError error = (uNetError)errorByte;
-		if(  error != uNetError.Ok
-		  && error != uNetError.Timeout
+		NetworkError error = (NetworkError)errorByte;
+		if(  error != NetworkError.Ok
+		  && error != NetworkError.Timeout
 		  )
 		{
 			// polling failed
@@ -240,8 +235,8 @@ public abstract class CommonNode
 
 		channel = _channel[channelId].GetIndex();
 
-		// translate UNET uNetEvent to EventType
-		if( error == uNetError.Timeout )
+		// translate UNET NetworkEventType to EventType
+		if( error == NetworkError.Timeout )
 		{
 			return ReceiveEvent.Disconnect;
 		}
@@ -249,15 +244,15 @@ public abstract class CommonNode
 		{
 			switch( unetEvent )
 			{
-				case uNetEvent.DataEvent:
+				case NetworkEventType.DataEvent:
 					return ReceiveEvent.Message;
-				case uNetEvent.ConnectEvent:
+				case NetworkEventType.ConnectEvent:
 					return ReceiveEvent.Connect;
-				case uNetEvent.DisconnectEvent:
+				case NetworkEventType.DisconnectEvent:
 					return ReceiveEvent.Disconnect;
-				case uNetEvent.Nothing:				
+				case NetworkEventType.Nothing:				
 					return ReceiveEvent.NoMoreEvents;
-				case uNetEvent.BroadcastEvent:
+				case NetworkEventType.BroadcastEvent:
 				default:
 					Log.Error( "Received Broadcast or unknown message type from UNET transport layer" );
 					return ReceiveEvent.Error;
@@ -396,15 +391,15 @@ public abstract class CommonNode
 		byte errorAsByte;
 		if( sendImmediately )
 		{
-			uNet.Send                  ( 0, connectionId, channel.GetIndex(), s.GetBuffer(), s.GetByteLength(), out errorAsByte);
+			NetworkTransport.Send                  ( 0, connectionId, channel.GetIndex(), s.GetBuffer(), s.GetByteLength(), out errorAsByte);
 		}
 		else
 		{
-			uNet.QueueMessageForSending( 0, connectionId, channel.GetIndex(), s.GetBuffer(), s.GetByteLength(), out errorAsByte);
+			NetworkTransport.QueueMessageForSending( 0, connectionId, channel.GetIndex(), s.GetBuffer(), s.GetByteLength(), out errorAsByte);
 		}
 		//_profiler.EndEvent();
 
-		if( (uNetError)errorAsByte != uNetError.Ok )
+		if( (NetworkError)errorAsByte != NetworkError.Ok )
 		{
 			error = $"Send {AlpacaConstant.GetName(message)} to node {connectionId} failed with error{StringFromError(errorAsByte)}";
 			return false;
@@ -416,16 +411,16 @@ public abstract class CommonNode
 
 	// PROTECTED STATIC
 
-	protected static string StringFromError( byte uNetErrorByte )
+	protected static string StringFromError( byte NetworkErrorByte )
 	{
-		uNetError error = (uNetError)uNetErrorByte;
-		if( error == uNetError.Ok )
+		NetworkError error = (NetworkError)NetworkErrorByte;
+		if( error == NetworkError.Ok )
 		{
 			return string.Empty;
 		}
 		else
 		{
-			return "[uNet] Transport error: " + error.ToString();
+			return "[NetworkTransport] Transport error: " + error.ToString();
 		}
 	}
 

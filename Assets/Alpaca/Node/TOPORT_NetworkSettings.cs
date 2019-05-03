@@ -1,30 +1,4 @@
 ﻿/*
-
-
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.IO;
-using System.Security.Cryptography.X509Certificates;
-
-using UnityEngine;
-using UnityEngine.Networking;
-using UnityEngine.SceneManagement;
-
-using Alpaca.Cryptography;
-using Alpaca.Data;
-using Alpaca.Internal;
-using Alpaca.Profiling;
-using Alpaca.Serialization;
-using Alpaca.Transports;
-using BitStream = Alpaca.Serialization.BitStream;
-
-
-
-
-
 public class AlpacaNetwork
 {
 	/// <summary>
@@ -71,17 +45,6 @@ public class AlpacaNetwork
 
 
 
-
-
-
-
-
-
-	internal void InvokeOnIncomingCustomMessage(uint clientId, Stream stream)
-	{
-		if (OnIncomingCustomMessage != null) OnIncomingCustomMessage(clientId, stream);
-	}
-
 	/// <summary>
 	/// Sends custom message to all clients
 	/// </summary>
@@ -111,26 +74,6 @@ public class AlpacaNetwork
 	public void SendCustomMessage(uint clientId, BitStream stream, string channel = null, SecuritySendFlags security = SecuritySendFlags.None)
 	{
 		InternalMessageHandler.Send(clientId, AlpacaConstant.ALPACA_CUSTOM_MESSAGE, string.IsNullOrEmpty(channel) ? "INTERNAL_CHANNEL_CLIENT_RELIABLE" : channel, stream, security);
-	}
-
-	// get the public key we need for encrypting a message to the target client, or server if we are a client
-	public byte[] GetPublicEncryptionKey( uint clientId )
-	{
-		if( IsServer )
-		{
-			Client c = _connectedClients.Get( clientId );
-			if( c != null ) { return c.AesKey; }
-			
-			PendingClient p = _pendingClients.Get( clientId );
-			if( p != null ) { return p.AesKey; }
-
-			return null;
-		}
-		else
-		{
-			return clientAesKey;
-		}
-		return null;
 	}
 
 	public void StopServer()
@@ -201,28 +144,6 @@ public class AlpacaNetwork
 		config.NetworkTransport.DisconnectFromServer();
 		IsConnectedClient = false;
 		Shutdown();
-	}
-
-	private void OnEnable()
-	{
-		if( _singleton != null )
-		{
-			Debug.LogError( "Error: AlpacaNetwork already exists." );
-		}
-		else
-		{
-			_singleton = this;
-			Application.runInBackground = true;
-		}
-	}
-	
-	private void OnDestroy()
-	{
-		if( _singleton != null && _singleton == this)
-		{
-			_singleton = null;
-			Shutdown();  
-		}
 	}
 
 	private void Shutdown()
@@ -404,7 +325,8 @@ public class AlpacaNetwork
 		}
 
 		// Generate unique network id
-		uint netId = GetEntityId();
+		uint netId = entityIdCounter;
+		++entityIdCounter;
 
 		// spawn
 		Entity.Spawn data = new Entity.Spawn( netId, ownerClientId, prefabIndex, isAvatar, position, rotation );
@@ -428,18 +350,7 @@ public class AlpacaNetwork
 
 		return entity;
 	}
-
-
-	// PRIVATE
-
-
-	uint GetEntityId()
-	{
-		return ++entityIdCounter;
-	}
 }
 
 } // namespace Alpaca
-
-
 */

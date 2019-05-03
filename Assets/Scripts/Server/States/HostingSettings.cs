@@ -57,6 +57,8 @@ public class Hosting : ServerState
 	
 	public void OnUpdate()
 	{
+		// TODO: other stuff here
+		_network.UpdateServer();
 	}
 
 	public void OnFixedUpdate() {}
@@ -77,11 +79,9 @@ public class Hosting : ServerState
 			// TODO: cozeroff
 			//writer.WriteString( _world.GetRoomName(), true );
 			//_network.SendCustomMessage( clientIndex, writer );
+			// TODO: remove
+			Debug.Log( "Sent room name: '" + _world.GetRoomName() + "' to client: " + clientIndex.GetClientIndex() );
 		}
-
-		// TODO: remove
-		Debug.Log( "Sent room name: '" + _world.GetRoomName() + "' to client: " + clientIndex.GetClientIndex() );
-
 	}
 
 	void OnCustomMessage( NodeIndex clientIndex, BitReader reader )
@@ -102,10 +102,9 @@ public class Hosting : ServerState
 		EntityPrefabIndex prefabIndex = _network.FindEntityPrefabIndex( _settings.avatarPrefab );
 		if( !prefabIndex.IsValid() )
 		{
-			Debug.LogError( "FATAL ERROR: could not found avatar prefab" );
+			Debug.LogError( "FATAL ERROR: could not find avatar prefab" );
 		}
 		// TODO: cozeroff uncomment
 		//_network.SpawnEntityServer( clientIndex, prefabIndex, true, new Vector3( x, 0f, z), Quaternion.identity );
 	}
-
 }

@@ -55,18 +55,6 @@ public class ServerNode : CommonNode
 			_ownedEntity = new EntitySet( AlpacaConstant.CLIENT_OWNER_LIMIT );
 		}
 
-		/* TODO: cozeroff review this, this specific ctor probably never called
-		public ClientConnection( NodeIndex id, Entity playerAvatar, byte[] sharedSecretKey )
-		{
-			_id = id;
-			_playerAvatar = playerAvatar;
-
-			_ownedEntity = new EntitySet( AlpacaConstant.CLIENT_OWNER_LIMIT );
-			_ownedEntity.Add( _playerAvatar.GetIndex(), _playerAvatar );
-
-			_sharedSecretKey = sharedSecretKey;
-		}*/
-
 		public NodeIndex GetId() { return _id; } 
 		public State GetState() { return _state; }
 		public bool IsConnected() { return _state == State.Connected; }
@@ -438,55 +426,58 @@ public class ServerNode : CommonNode
 
 	ReceiveEvent HandleNetworkEvent()
 	{
-		BitReader reader = GetPooledReader();
-		DataStream stream = reader.GetStream();
-
-		int connectionId;
-		ChannelIndex channel;
-		ReceiveEvent e = PollReceive( stream, out connectionId, out channel );
-
-		if( e == ReceiveEvent.Error ) { return e; }
-
-		// on the server, the connectionId is one to one with the client index
-		NodeIndex client = new NodeIndex( (uint)connectionId );
-
-		switch( e )
+		ReceiveEvent e;
+		using( BitReader reader = GetPooledReader() )
 		{
-			case ReceiveEvent.Connect:
-				//_profiler.RecordEvent(TickType.Receive, (uint)receivedSize, MessageManager.reverseChannels[channelId], "TRANSPORT_CONNECT");
-				Log.Info( "Client sent initial connection packet" );
-				if( _commonSettings.enableEncryption )
-				{
-					// This client is required to complete the crypto-hail exchange.
-					EllipticDiffieHellman keyExchange = SendCryptoHail();
+			DataStream stream = reader.GetStream();
 
-					ClientConnection c = new ClientConnection( client, ClientConnection.State.PendingConnectionResponse, keyExchange );
-					_connection.Add( c.GetIndex(), c );
-				}
-				else
-				{
-					ClientConnection c = new ClientConnection( client, ClientConnection.State.PendingConnectionRequest, null );		
-				}
-				// TODO: cozeroff NO, NO, NO, check for timeouts of clients manually
-				//StartCoroutine(ApprovalTimeout(clientId));
-				break;
+			int connectionId;
+			ChannelIndex channel;
+			e = PollReceive( stream, out connectionId, out channel );
 
-			case ReceiveEvent.Message:
-				HandleMessage( reader, client, channel );
-				break;
-				
-			case ReceiveEvent.Disconnect:
-				//_profiler.RecordEvent(TickType.Receive, 0, "NONE", "TRANSPORT_DISCONNECT");
-				Log.Info( "Disconnect Event From " + client.GetClientIndex() );
+			if( e == ReceiveEvent.Error ) { return e; }
 
-				// TODO: cozeroff
-				//OnClientDisconnectServer( client );
+			// on the server, the connectionId is one to one with the client index
+			NodeIndex client = new NodeIndex( (uint)connectionId );
 
-				if( _onClientDisconnect != null )
-				{
-					_onClientDisconnect.Invoke( client );
-				}
-				break;
+			switch( e )
+			{
+				case ReceiveEvent.Connect:
+					//_profiler.RecordEvent(TickType.Receive, (uint)receivedSize, MessageManager.reverseChannels[channelId], "TRANSPORT_CONNECT");
+					Log.Info( "Client sent initial connection packet" );
+					if( _commonSettings.enableEncryption )
+					{
+						// This client is required to complete the crypto-hail exchange.
+						EllipticDiffieHellman keyExchange = SendCryptoHail();
+
+						ClientConnection c = new ClientConnection( client, ClientConnection.State.PendingConnectionResponse, keyExchange );
+						_connection.Add( c.GetIndex(), c );
+					}
+					else
+					{
+						ClientConnection c = new ClientConnection( client, ClientConnection.State.PendingConnectionRequest, null );		
+					}
+					// TODO: cozeroff NO, NO, NO, check for timeouts of clients manually
+					//StartCoroutine(ApprovalTimeout(clientId));
+					break;
+
+				case ReceiveEvent.Message:
+					HandleMessage( reader, client, channel );
+					break;
+					
+				case ReceiveEvent.Disconnect:
+					//_profiler.RecordEvent(TickType.Receive, 0, "NONE", "TRANSPORT_DISCONNECT");
+					Log.Info( "Disconnect Event From " + client.GetClientIndex() );
+
+					// TODO: cozeroff
+					//OnClientDisconnectServer( client );
+
+					if( _onClientDisconnect != null )
+					{
+						_onClientDisconnect.Invoke( client );
+					}
+					break;
+			}
 		}
 
 		return e;
