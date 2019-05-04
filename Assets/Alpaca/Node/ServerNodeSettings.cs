@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using Action = System.Action;
 
 using UnityEngine;
 using UnityEngine.Networking;
 
-using Alpaca.Serialization;
 using Alpaca.Cryptography;
+using Alpaca.Serialization;
 using InternalMessage = Alpaca.AlpacaConstant.InternalMessage;
 using InternalChannel = Alpaca.AlpacaConstant.InternalChannel;
 using MessageSecurity = Alpaca.AlpacaConstant.MessageSecurity;
@@ -94,34 +92,29 @@ public class ServerNode : CommonNode
 	ServerNodeSettings _serverSettings;
 	bool _isRunning;
 
+	ConnectionSet _connection;
+	EntitySet _entity;
+
 	// simple counters used to make sure that EntityId and ConductIds are kept unique
 	uint _entityCounter;
 	uint _conductCounter;
 
-
-
-
 	// TODO: cozeroff
 	private float eventOvershootCounter;
 	private float lastTimeSyncTime;
-
-
-
-
-	ConnectionSet _connection;
-	EntitySet _entity;
+	// END TODO
 
 	// callbacks
 	Action<NodeIndex> _onClientConnect = null;
 	Action<NodeIndex> _onClientDisconnect = null;
 	Action<BitReader, NodeIndex> _onMessageCustomServer = null;
 	
+
 	public void SetOnClientConnect      ( Action<NodeIndex> callback            ) { _onClientConnect       = callback; }
 	public void SetOnClientDisconnect   ( Action<NodeIndex> callback            ) { _onClientDisconnect    = callback; }
 	public void SetOnMessageCustomServer( Action<BitReader, NodeIndex> callback ) { _onMessageCustomServer = callback; }
 
 	public bool IsRunning() { return _isRunning; }
-
 
 	public ServerNode( CommonNodeSettings commonSettings, ServerNodeSettings serverSettings ) : base( commonSettings )
 	{
@@ -141,9 +134,6 @@ public class ServerNode : CommonNode
 		/* 
 		eventOvershootCounter = 0f;
 		
-		ResponseMessageManager.Clear();
-		SpawnManager.SpawnedObjects.Clear();
-		SpawnManager.SpawnedObjectsList.Clear();
 
 		try
 		{
@@ -227,175 +217,172 @@ public class ServerNode : CommonNode
 	/*
 	private void Update()
 	{
-		if(IsListening)
+		if((NetworkTime - lastSendTickTime >= (1f / config.SendTickrate)) || config.SendTickrate <= 0)
 		{
-			if((NetworkTime - lastSendTickTime >= (1f / config.SendTickrate)) || config.SendTickrate <= 0)
+			foreach( Entity obj in _networkedObjects )
 			{
-				foreach( Entity obj in _networkedObjects )
-				{
-					obj.NetworkedVarUpdate();
-				}
-
-				for( int i = 0; i < _connectedClients.GetCount(); ++i )
-				{
-					uint clientId = _connectedClients.GetAt(i).GetId();
-					byte error;
-					config.NetworkTransport.SendQueue(clientId, out error);
-					Log.Info("Send Pending Queue: " + clientId);
-				}
-
-				lastSendTickTime = NetworkTime;
+				obj.NetworkedVarUpdate();
 			}
-			if((NetworkTime - lastReceiveTickTime >= (1f / config.ReceiveTickrate)) || config.ReceiveTickrate <= 0)
+
+			for( int i = 0; i < _connectedClients.GetCount(); ++i )
 			{
-				NetworkProfiler.StartTick(TickType.Receive);
-				NetEventType eventType;
-				int processedEvents = 0;
-				do
+				uint clientId = _connectedClients.GetAt(i).GetId();
+				byte error;
+				config.NetworkTransport.SendQueue(clientId, out error);
+				Log.Info("Send Pending Queue: " + clientId);
+			}
+
+			lastSendTickTime = NetworkTime;
+		}
+		if((NetworkTime - lastReceiveTickTime >= (1f / config.ReceiveTickrate)) || config.ReceiveTickrate <= 0)
+		{
+			NetworkProfiler.StartTick(TickType.Receive);
+			NetEventType eventType;
+			int processedEvents = 0;
+			do
+			{
+				processedEvents++;
+				uint clientId;
+				int channelId;
+				int receivedSize;
+				byte error;
+				byte[] data = messageBuffer;
+				eventType = config.NetworkTransport.PollReceive(out clientId, out channelId, ref data, data.Length, out receivedSize, out error);
+
+				switch (eventType)
 				{
-					processedEvents++;
-					uint clientId;
-					int channelId;
-					int receivedSize;
-					byte error;
-					byte[] data = messageBuffer;
-					eventType = config.NetworkTransport.PollReceive(out clientId, out channelId, ref data, data.Length, out receivedSize, out error);
-
-					switch (eventType)
-					{
-						case NetEventType.Connect:
-							NetworkProfiler.StartEvent(TickType.Receive, (uint)receivedSize, MessageManager.reverseChannels[channelId], "TRANSPORT_CONNECT");
-							if (IsServer)
+					case NetEventType.Connect:
+						NetworkProfiler.StartEvent(TickType.Receive, (uint)receivedSize, MessageManager.reverseChannels[channelId], "TRANSPORT_CONNECT");
+						if (IsServer)
+						{
+							Log.Info("Client Connected");
+							if (config.EnableEncryption)
 							{
-								Log.Info("Client Connected");
-								if (config.EnableEncryption)
+								// This client is required to complete the crypto-hail exchange.
+								using (PooledBitStream hailStream = PooledBitStream.Get())
 								{
-									// This client is required to complete the crypto-hail exchange.
-									using (PooledBitStream hailStream = PooledBitStream.Get())
+									using (PooledBitWriter hailWriter = PooledBitWriter.Get(hailStream))
 									{
-										using (PooledBitWriter hailWriter = PooledBitWriter.Get(hailStream))
+										if (config.SignKeyExchange)
 										{
-											if (config.SignKeyExchange)
+											// Write certificate
+											hailWriter.WriteByteArray(config.ServerX509CertificateBytes);
+										}
+
+										// Write key exchange public part
+										// TODO: cozeroff
+										EllipticDiffieHellman diffieHellman = new EllipticDiffieHellman(EllipticDiffieHellman.DEFAULT_CURVE, EllipticDiffieHellman.DEFAULT_GENERATOR, EllipticDiffieHellman.DEFAULT_ORDER);
+										byte[] diffieHellmanPublicPart = diffieHellman.GetPublicKey();
+										hailWriter.WriteByteArray(diffieHellmanPublicPart);
+										_pendingClients.Add(clientId, new PendingClient()
+										{
+											ClientId = clientId,
+											ConnectionState = PendingClient.State.PendingHail,
+											KeyExchange = diffieHellman
+										});
+										
+
+										if (config.SignKeyExchange)
+										{
+											// Write public part signature (signed by certificate private)
+											X509Certificate2 certificate = config.ServerX509Certificate;
+											if (!certificate.HasPrivateKey) throw new CryptographicException("[Alpaca] No private key was found in server certificate. Unable to sign key exchange");
+											RSACryptoServiceProvider rsa = certificate.PrivateKey as RSACryptoServiceProvider;
+
+											if (rsa != null)
 											{
-												// Write certificate
-												hailWriter.WriteByteArray(config.ServerX509CertificateBytes);
+												using (SHA256Managed sha = new SHA256Managed())4
+												{
+													hailWriter.WriteByteArray(rsa.SignData(diffieHellmanPublicPart, sha));
+												}
 											}
-
-											// Write key exchange public part
-											// TODO: cozeroff
-											EllipticDiffieHellman diffieHellman = new EllipticDiffieHellman(EllipticDiffieHellman.DEFAULT_CURVE, EllipticDiffieHellman.DEFAULT_GENERATOR, EllipticDiffieHellman.DEFAULT_ORDER);
-											byte[] diffieHellmanPublicPart = diffieHellman.GetPublicKey();
-											hailWriter.WriteByteArray(diffieHellmanPublicPart);
-											_pendingClients.Add(clientId, new PendingClient()
+											else
 											{
-												ClientId = clientId,
-												ConnectionState = PendingClient.State.PendingHail,
-												KeyExchange = diffieHellman
-											});
-											
-
-											if (config.SignKeyExchange)
-											{
-												// Write public part signature (signed by certificate private)
-												X509Certificate2 certificate = config.ServerX509Certificate;
-												if (!certificate.HasPrivateKey) throw new CryptographicException("[Alpaca] No private key was found in server certificate. Unable to sign key exchange");
-												RSACryptoServiceProvider rsa = certificate.PrivateKey as RSACryptoServiceProvider;
-
-												if (rsa != null)
-												{
-													using (SHA256Managed sha = new SHA256Managed())4
-													{
-														hailWriter.WriteByteArray(rsa.SignData(diffieHellmanPublicPart, sha));
-													}
-												}
-												else
-												{
-													throw new CryptographicException("[Alpaca] Only RSA certificates are supported. No valid RSA key was found");
-												}
+												throw new CryptographicException("[Alpaca] Only RSA certificates are supported. No valid RSA key was found");
 											}
 										}
-										// Send the hail
-										InternalMessageHandler.Send(clientId, AlpacaConstant.ALPACA_CERTIFICATE_HAIL, "INTERNAL_CHANNEL_RELIABLE", hailStream, SecuritySendFlags.None, true);
 									}
+									// Send the hail
+									InternalMessageHandler.Send(clientId, AlpacaConstant.ALPACA_CERTIFICATE_HAIL, "INTERNAL_CHANNEL_RELIABLE", hailStream, SecuritySendFlags.None, true);
 								}
-								else
+							}
+							else
+							{
+								// TODO: cozeroff
+								_pendingClients.Add(clientId, new PendingClient()
 								{
-									// TODO: cozeroff
-									_pendingClients.Add(clientId, new PendingClient()
-									{
-										ClientId = clientId,
-										ConnectionState = PendingClient.State.PendingConnection
-									});
-									
-								}
-								StartCoroutine(ApprovalTimeout(clientId));
+									ClientId = clientId,
+									ConnectionState = PendingClient.State.PendingConnection
+								});
+								
 							}
-							else
-							{
-								Log.Info("Connected");
-								if (!config.EnableEncryption) SendConnectionRequest();
-								StartCoroutine(ApprovalTimeout(clientId));
-							}
-							NetworkProfiler.EndEvent();
-							break;
-						case NetEventType.Data:
-							Log.Info($"Incoming Data From {clientId} : {receivedSize} bytes");
+							StartCoroutine(ApprovalTimeout(clientId));
+						}
+						else
+						{
+							Log.Info("Connected");
+							if (!config.EnableEncryption) SendConnectionRequest();
+							StartCoroutine(ApprovalTimeout(clientId));
+						}
+						NetworkProfiler.EndEvent();
+						break;
+					case NetEventType.Data:
+						Log.Info($"Incoming Data From {clientId} : {receivedSize} bytes");
 
-							HandleIncomingData(clientId, data, channelId, receivedSize);
-							break;
-						case NetEventType.Disconnect:
-							NetworkProfiler.StartEvent(TickType.Receive, 0, "NONE", "TRANSPORT_DISCONNECT");
-							Log.Info("Disconnect Event From " + clientId);
+						HandleIncomingData(clientId, data, channelId, receivedSize);
+						break;
+					case NetEventType.Disconnect:
+						NetworkProfiler.StartEvent(TickType.Receive, 0, "NONE", "TRANSPORT_DISCONNECT");
+						Log.Info("Disconnect Event From " + clientId);
 
-							if( IsServer )
-							{
-								OnClientDisconnectServer(clientId);
-							}
-							else
-							{
-								IsConnectedClient = false;
-								StopClient();
-							}
+						if( IsServer )
+						{
+							OnClientDisconnectServer(clientId);
+						}
+						else
+						{
+							IsConnectedClient = false;
+							StopClient();
+						}
 
-							if (OnClientDisconnectCallback != null)
-								OnClientDisconnectCallback.Invoke(clientId);
-							NetworkProfiler.EndEvent();
-							break;
-					}
-					// Only do another iteration if: there are no more messages AND (there is no limit to max events or we have processed less than the maximum)
-				} while (IsListening && (eventType != NetEventType.Nothing && (config.MaxReceiveEventsPerTickRate <= 0 || processedEvents < config.MaxReceiveEventsPerTickRate)));
-				lastReceiveTickTime = NetworkTime;
-				NetworkProfiler.EndTick();
-			}
-
-			if (IsServer && ((NetworkTime - lastEventTickTime >= (1f / config.EventTickrate))))
-			{
-				NetworkProfiler.StartTick(TickType.Event);
-				eventOvershootCounter += ((NetworkTime - lastEventTickTime) - (1f / config.EventTickrate));
-				LagCompensationManager.AddFrames();
-				ResponseMessageManager.CheckTimeouts();
-				lastEventTickTime = NetworkTime;
-				NetworkProfiler.EndTick();
-			}
-			else if (IsServer && eventOvershootCounter >= ((1f / config.EventTickrate)))
-			{
-				NetworkProfiler.StartTick(TickType.Event);
-				//We run this one to compensate for previous update overshoots.
-				eventOvershootCounter -= (1f / config.EventTickrate);
-				LagCompensationManager.AddFrames();
-				NetworkProfiler.EndTick();
-			}
-
-			if (IsServer && config.EnableTimeResync && NetworkTime - lastTimeSyncTime >= 30)
-			{
-				NetworkProfiler.StartTick(TickType.Event);
-				SyncTime();
-				lastTimeSyncTime = NetworkTime;
-				NetworkProfiler.EndTick();
-			}
-
-			NetworkTime += Time.unscaledDeltaTime;
+						if (OnClientDisconnectCallback != null)
+							OnClientDisconnectCallback.Invoke(clientId);
+						NetworkProfiler.EndEvent();
+						break;
+				}
+				// Only do another iteration if: there are no more messages AND (there is no limit to max events or we have processed less than the maximum)
+			} while (IsListening && (eventType != NetEventType.Nothing && (config.MaxReceiveEventsPerTickRate <= 0 || processedEvents < config.MaxReceiveEventsPerTickRate)));
+			lastReceiveTickTime = NetworkTime;
+			NetworkProfiler.EndTick();
 		}
+
+		if (IsServer && ((NetworkTime - lastEventTickTime >= (1f / config.EventTickrate))))
+		{
+			NetworkProfiler.StartTick(TickType.Event);
+			eventOvershootCounter += ((NetworkTime - lastEventTickTime) - (1f / config.EventTickrate));
+			LagCompensationManager.AddFrames();
+			ResponseMessageManager.CheckTimeouts();
+			lastEventTickTime = NetworkTime;
+			NetworkProfiler.EndTick();
+		}
+		else if (IsServer && eventOvershootCounter >= ((1f / config.EventTickrate)))
+		{
+			NetworkProfiler.StartTick(TickType.Event);
+			//We run this one to compensate for previous update overshoots.
+			eventOvershootCounter -= (1f / config.EventTickrate);
+			LagCompensationManager.AddFrames();
+			NetworkProfiler.EndTick();
+		}
+
+		if (IsServer && config.EnableTimeResync && NetworkTime - lastTimeSyncTime >= 30)
+		{
+			NetworkProfiler.StartTick(TickType.Event);
+			SyncTime();
+			lastTimeSyncTime = NetworkTime;
+			NetworkProfiler.EndTick();
+		}
+
+		NetworkTime += Time.unscaledDeltaTime;
 	}
 	*/
 
