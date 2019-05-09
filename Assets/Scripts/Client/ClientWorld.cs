@@ -27,18 +27,17 @@ public class ClientWorld
 		_worldSettings = worldSettings;
 		_settings = clientWorldSettings;
 
+		_networkNode = new ClientNode( _worldSettings.commonNodeSettings, _settings.clientNodeSettings );
+
 		_clientRoom = null;
 		_avatar = null;
-
-		_networkNode = null;
 	}
 
-	public void StartClientNode() { _networkNode = new ClientNode( _worldSettings.commonNodeSettings, _settings.clientNodeSettings ); }
 	public ClientNode GetClientNode() { return _networkNode; }
 
 	public string GetClientRoom() { return _clientRoom; }
 	public void SetClientRoom( string room ) { _clientRoom = room; }
 
-	public void SetAvatar( AvatarController avatar ) { _avatar = avatar; }
 	public AvatarController GetAvatar() { return _avatar; }
+	public void SetAvatar( AvatarController avatar ) { _avatar = avatar; }
 }

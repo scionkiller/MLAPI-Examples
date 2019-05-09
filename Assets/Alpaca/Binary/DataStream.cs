@@ -83,7 +83,7 @@ namespace Alpaca.Serialization
 
 		public void ByteAlignRead()
 		{
-			_bitPosition = Div8Ceil( _bitPosition );
+			_bitPosition = Div8Ceil( _bitPosition ) >> 3;
 			Debug.Assert( GetBytePosition() <= GetByteLength() );
 		}
 
@@ -102,7 +102,7 @@ namespace Alpaca.Serialization
 			Int32 mask = (Int32)(0xFFFFFFFF >> (32 - (_bitPosition & 0x7)));
 			Int32 i = GetBytePosition();
 			_buffer[i] = (byte)(_buffer[i] & mask);
-			_bitPosition = Div8Ceil( _bitPosition );
+			_bitPosition = Div8Ceil( _bitPosition ) << 3;
 			_bitLength = Math.Max( _bitLength, _bitPosition );
 		}
 

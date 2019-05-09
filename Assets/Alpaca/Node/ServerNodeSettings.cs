@@ -28,22 +28,22 @@ public class ServerNode : CommonNode
 
 	private class ClientConnection
 	{
-		public enum State
+		public enum Status
 		{
-			  PendingConnectionRequest    // doing the crypto handshake
-			, PendingConnectionResponse   // waiting for internal connection message
+			  PendingConnectionChallengeResponse  // doing the crypto handshake
+			, PendingConnectionRequest            // waiting for internal connection message   
 			, Connected
 		}
 
 		NodeIndex _id;
-		State _state;
+		Status _state;
 		EllipticDiffieHellman _keyExchange;
 		byte[] _sharedSecretKey; // AES-256
 		Entity _playerAvatar;
 		EntitySet _ownedEntity;
 
 
-		public ClientConnection( NodeIndex id, State state, EllipticDiffieHellman keyExchange )
+		public ClientConnection( NodeIndex id, Status state, EllipticDiffieHellman keyExchange )
 		{
 			_id = id;
 			_state = state;
@@ -54,9 +54,9 @@ public class ServerNode : CommonNode
 		}
 
 		public NodeIndex GetId() { return _id; } 
-		public State GetState() { return _state; }
-		public bool IsConnected() { return _state == State.Connected; }
-		public void SetConnected() { _state = State.Connected; }
+		public Status GetState() { return _state; }
+		public bool IsConnected() { return _state == Status.Connected; }
+		public void SetConnected() { _state = Status.Connected; }
 
 		public NodeIndex GetIndex() { return _id; }
 		public Entity GetAvatar() { return _playerAvatar; }
@@ -163,7 +163,7 @@ public class ServerNode : CommonNode
 		}
 
 		HostTopology topology = new HostTopology( config, _serverSettings.maxConnections );
-		int portId = NetworkTransport.AddHost( topology, GetConnectionPort() );
+		int portId = NetworkTransport.AddHost( topology, GetServerPort() );
 
 		_isRunning = true;
 		return true;
@@ -422,7 +422,7 @@ public class ServerNode : CommonNode
 			ChannelIndex channel;
 			e = PollReceive( stream, out connectionId, out channel );
 
-			if( e == ReceiveEvent.Error ) { return e; }
+			if( e == ReceiveEvent.Error || e == ReceiveEvent.NoMoreEvents ) { return e; }
 
 			// on the server, the connectionId is one to one with the client index
 			NodeIndex client = new NodeIndex( (uint)connectionId );
@@ -431,19 +431,20 @@ public class ServerNode : CommonNode
 			{
 				case ReceiveEvent.Connect:
 					//_profiler.RecordEvent(TickType.Receive, (uint)receivedSize, MessageManager.reverseChannels[channelId], "TRANSPORT_CONNECT");
-					Log.Info( "Client sent initial connection packet" );
+					Log.Info( $"Client {client.GetClientIndex()} sent initial connection packet" );
+					ClientConnection c;
 					if( _commonSettings.enableEncryption )
 					{
 						// This client is required to complete the crypto-hail exchange.
 						EllipticDiffieHellman keyExchange = SendCryptoHail();
 
-						ClientConnection c = new ClientConnection( client, ClientConnection.State.PendingConnectionResponse, keyExchange );
-						_connection.Add( c.GetIndex(), c );
+						c = new ClientConnection( client, ClientConnection.Status.PendingConnectionChallengeResponse, keyExchange );
 					}
 					else
 					{
-						ClientConnection c = new ClientConnection( client, ClientConnection.State.PendingConnectionRequest, null );		
+						c = new ClientConnection( client, ClientConnection.Status.PendingConnectionRequest, null );		
 					}
+					_connection.Add( c.GetIndex(), c );
 					// TODO: cozeroff NO, NO, NO, check for timeouts of clients manually
 					//StartCoroutine(ApprovalTimeout(clientId));
 					break;
@@ -522,18 +523,18 @@ public class ServerNode : CommonNode
 
 		Log.Info( $"Handling message {AlpacaConstant.GetName(messageType)} from client {client.GetClientIndex()}" );
 
-		ClientConnection connection = _connection.GetAt( client.GetClientIndex() );
-		ClientConnection.State state = connection.GetState();
+		ClientConnection connection = _connection.GetAt( client.GetClientIndex() - 1 );
+		ClientConnection.Status state = connection.GetState();
 		
-		if( (state == ClientConnection.State.PendingConnectionRequest) && (messageType != InternalMessage.ConnectionRequest) )
+		if( (state == ClientConnection.Status.PendingConnectionChallengeResponse) && (messageType != InternalMessage.ConnectionResponse ) )
 		{
-			Log.Error( $"Client {client.GetClientIndex()} is pending connection request, but client sent message {AlpacaConstant.GetName(messageType)} instead." );
+			Log.Error( $"Client {client.GetClientIndex()} is pending connection response, but client sent message {AlpacaConstant.GetName(messageType)} instead." );
 			return;
 		}
 
-		if( (state == ClientConnection.State.PendingConnectionResponse) && (messageType != InternalMessage.ConnectionResponse ) )
+		if( (state == ClientConnection.Status.PendingConnectionRequest) && (messageType != InternalMessage.ConnectionRequest) )
 		{
-			Log.Error( $"Client {client.GetClientIndex()} is pending connection response, but client sent message {AlpacaConstant.GetName(messageType)} instead." );
+			Log.Error( $"Client {client.GetClientIndex()} is pending connection request, but client sent message {AlpacaConstant.GetName(messageType)} instead." );
 			return;
 		}
 
@@ -544,6 +545,7 @@ public class ServerNode : CommonNode
 				break;
 			case InternalMessage.ConnectionResponse:
 				// TODO: cozeroff crypto implementation
+				Log.Error( "Crypto not implemented yet!" );
 				break;
 			case InternalMessage.CustomServer:
 				OnMessageCustomServer( reader, client );
@@ -562,7 +564,7 @@ public class ServerNode : CommonNode
 	{
 		// update ClientConnection state
 		int clientIndex = clientNode.GetClientIndex();
-		ClientConnection connection = _connection.GetAt( clientIndex );
+		ClientConnection connection = _connection.GetAt( clientIndex - 1 );
 		connection.SetConnected();
 
 		// send the new client the data it needs, plus spawn instructions for all current entities
@@ -596,7 +598,7 @@ public class ServerNode : CommonNode
 
 			for( int i = 0; i < _connection.GetCount(); ++i )
 			{
-				if( i == clientIndex ) { continue; } // skip the new client
+				if( i == (clientIndex - 1) ) { continue; } // skip the new client
 
 				ClientConnection sibling = _connection.GetAt(i);
 				string error;
@@ -608,7 +610,7 @@ public class ServerNode : CommonNode
 		}
 
 		// callback
-		if( _onClientConnect != null ) { _onClientConnect.Invoke( clientNode ); }
+		//if( _onClientConnect != null ) { _onClientConnect.Invoke( clientNode ); }
 	}
 
 	void OnMessageCustomServer( BitReader reader, NodeIndex clientNode )

@@ -116,7 +116,7 @@ public class BitReader: IPoolable<BitReader>
 
 	// internal workhorse reading functions, for use by TypeSerializer
 
-	public bool   Bit    () { return    _source.ReadByte() != 0; }
+	public bool   Bit    () { return          _source.ReadBit(); }
 	public byte   Byte   () { return (byte  )_source.ReadByte(); }
 	public UInt32 ByteU32() { return (UInt32)_source.ReadByte(); }
 	public UInt64 ByteU64() { return (UInt64)_source.ReadByte(); }

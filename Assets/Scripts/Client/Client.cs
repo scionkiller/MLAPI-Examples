@@ -84,8 +84,6 @@ public class Client : MonoBehaviour
 					s.Initialize(_world, _loadRoomSceneSettings);
 					_fsm.AddState(s);
 
-					// TODO: other prep states here
-
 					s = new SpawnAvatar();
 					s.Initialize(_world, _spawnAvatarSettings);
 					_fsm.AddState(s);

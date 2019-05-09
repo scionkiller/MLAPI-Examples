@@ -71,7 +71,7 @@ public class LaunchServer : ServerState
 
 	void StartServerAttempt()
 	{
-		_settings.display.text += "Launching server on port: " + _network.GetConnectionPort();
+		_settings.display.text += "Launching server on port: " + _network.GetServerPort() + "\n";
 
 		string error;
 		if( _network.Start( out error ) )

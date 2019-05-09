@@ -83,7 +83,7 @@ public class CommonNodeSettings : MonoBehaviour
 	public LogLevel logLevel = LogLevel.Warning;
 
 	// the port that the server will open to listen for connections, and that the client will attempt to connect to
-	public int connectionPort = 7777;
+	public int serverPort = 7777;
 
 
 	// TODO: cozeroff figure this out again
@@ -128,7 +128,7 @@ public abstract class CommonNode
 
 	public float GetNetworkTime() { return _networkTime; }
 	public NodeIndex GetLocalNodeIndex() { return _localIndex; }
-	public int GetConnectionPort() { return _commonSettings.connectionPort; }
+	public int GetServerPort() { return _commonSettings.serverPort; }
 	public int GetMaxMessageLength() { return _commonSettings.messageBufferSize; }
 	public BitReader GetPooledReader() { return _readerPool.Get(); }
 	public BitWriter GetPooledWriter() { return _writerPool.Get(); }
@@ -144,6 +144,8 @@ public abstract class CommonNode
 	protected CommonNode( CommonNodeSettings commonSettings )
 	{
 		_commonSettings = commonSettings;
+
+		Log.s_logLevel = _commonSettings.logLevel;
 
 		// network time and _localIndex must be setup by child classes
 		// these are just default invalid values.
@@ -285,7 +287,7 @@ public abstract class CommonNode
 		// reset the read head so that we can read the message byte
 		readerStream.SetBytePosition( byteLength - 1 ); 
 		byte messageByte = reader.Normal<byte>();
-		InternalMessage message = (InternalMessage)(messageByte | AlpacaConstant.InternalMessageMask);
+		InternalMessage message = (InternalMessage)(messageByte & AlpacaConstant.InternalMessageMask);
 		readerStream.SetBytePosition( messageBodyStart );
 	
 		if( isEncrypted || isAuthenticated )

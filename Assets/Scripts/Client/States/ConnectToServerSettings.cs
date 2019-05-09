@@ -69,6 +69,8 @@ public class ConnectToServer : ClientState
 	
 	public void OnUpdate()
 	{
+		_network.UpdateClient();
+
 		if(  _connectionSucceeded 
 		  && Time.time > _exitTime
 		  )
@@ -89,7 +91,7 @@ public class ConnectToServer : ClientState
 
 	void StartClient()
 	{
-		_settings.display.text += "Connecting to server at: " + _network.GetConnectionAddress() + ":" + _network.GetConnectionPort() + "\n";
+		_settings.display.text += "Connecting to server at: " + _network.GetConnectionAddress() + ":" + _network.GetServerPort() + "\n";
 
 		string error;
 		if( _network.Start( out error ) )

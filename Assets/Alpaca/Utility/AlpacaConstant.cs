@@ -20,7 +20,7 @@ public static class AlpacaConstant
 	// Note that it might end up packed down smaller when sent over the network.
 	public enum HashSize : int
 	{
-		TwoBytes = 0
+		  TwoBytes = 0
 		, FourBytes
 		, EightBytes
 		, COUNT
@@ -67,21 +67,24 @@ public static class AlpacaConstant
 	public const int InternalMessageMask = 0xFF >> 2;
 	
 	public static readonly string[] INTERNAL_MESSAGE_NAME = 
-	{ "MESSAGE_CERTIFICATE_HAIL"
-	, "MESSAGE_CERTIFICATE_HAIL_RESPONSE"
-	, "MESSAGE_GREETINGS"
-	, "MESSAGE_CONNECTION_REQUEST"
-	, "MESSAGE_CONNECTION_APPROVED"
-	, "MESSAGE_CLIENT_CONNECT"
-	, "MESSAGE_CLIENT_DISCONNECT"
-	, "MESSAGE_ADD_ENTITY"
-	, "MESSAGE_ADD_ENTITY_ARRAY"
-	, "MESSAGE_DESTROY_ENTITY"
-	, "MESSAGE_CHANGE_OWNER"
-	, "MESSAGE_TIME_SYNC"
-	, "MESSAGE_SYNC_VAR_DELTA"
-	, "MESSAGE_SYNC_VAR_UPDATE"
-	, "MESSAGE_CUSTOM"
+	{ "Message_ConnectionRequest"
+	, "Message_ConnectionChallenge"
+	, "Message_ConnectionResponse"
+	, "Message_ConnectionApproved"
+	, "Message_ConnectionDisconnect"
+	, "Message_SiblingConnected"
+	, "Message_SiblingDisconnected"
+	, "Message_EntityCreate"
+	, "Message_EntityDestroy"
+	, "Message_ConductRequest"
+	, "Message_ConductRelease"
+	, "Message_ConductChange"
+	, "Message_TimeSync"
+	, "Message_SyncVarServer"
+	, "Message_SyncVarClient"
+	, "Message_CustomServer"
+	, "Message_CustomClient"
+	, "Message_INVALID"
 	};
 
 	public static string GetName( InternalMessage message )
@@ -105,9 +108,9 @@ public static class AlpacaConstant
 	public const int InternalChannelCount = (int)InternalChannel.COUNT;
 
 	public static readonly string[] INTERNAL_CHANNEL_NAME =
-	{ "CHANNEL_RELIABLE"
-	, "CHANNEL_UNRELIABLE"
-	, "CHANNEL_CLIENT_RELIABLE"
+	{ "Channel_Reliable"
+	, "Channel_Unreliable"
+	, "Channel_ClientReliable"
 	};
 
 	public static readonly QosType[] INTERNAL_CHANNEL_TYPE =
@@ -222,6 +225,5 @@ public struct EntityIndex : IBitSerializable
 	public void Read ( BitReader reader ) { _indexPlusOne = reader.Packed<UInt32>(); }
 	public void Write( BitWriter writer ) { writer.Packed<UInt32>( _indexPlusOne ); }
 }
-
 
 } // namespace Alpaca
