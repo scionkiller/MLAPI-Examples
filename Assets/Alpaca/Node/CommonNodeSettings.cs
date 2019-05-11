@@ -16,16 +16,16 @@ using HashSize        = Alpaca.AlpacaConstant.HashSize;
 namespace Alpaca
 {
 
-	// returned by PollReceive
-	public enum ReceiveEvent
-	{
-		  Error
-		, Message
-		, Connect
-		, Disconnect
-		, NoMoreEvents
-		, IgnoreThisEvent
-	}
+// returned by PollReceive
+public enum ReceiveEvent
+{
+	  Error
+	, Message
+	, Connect
+	, Disconnect
+	, NoMoreEvents
+	, IgnoreThisEvent
+}
 
 
 
@@ -287,7 +287,7 @@ public abstract class CommonNode
 		// reset the read head so that we can read the message byte
 		readerStream.SetBytePosition( byteLength - 1 ); 
 		byte messageByte = reader.Normal<byte>();
-		InternalMessage message = (InternalMessage)(messageByte & AlpacaConstant.InternalMessageMask);
+		InternalMessage message = (InternalMessage)((int)messageByte >> 2);
 		readerStream.SetBytePosition( messageBodyStart );
 	
 		if( isEncrypted || isAuthenticated )
@@ -339,12 +339,14 @@ public abstract class CommonNode
 
 		DataStream writerStream = writer.GetStream();
 		int lastBytePos = writerStream.GetBytePosition();
-		writer.Normal<byte>( (byte)message );
+		
+		
 		// reset write head to write authentication and encryption bits
-		writerStream.SetBytePosition( lastBytePos );
 		writer.Normal(authenticated);
 		writer.Normal(encrypted);
-		writer.AlignToByte();
+		writerStream.SetBytePosition( lastBytePos );
+		byte messageByte = (byte)(((int)message) << 2);
+		writer.Normal<byte>( messageByte );
 		error = null;
 		return true;
 	}

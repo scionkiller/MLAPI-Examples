@@ -2,6 +2,7 @@
 enum CustomMessageType : byte
 {
 	  Invalid = 0
-	, ConfirmClientConnection // From Server to Client
-	, SpawnAvatarRequest // From Client to Server
+	, RoomNameRequest    // Client to Server
+	, RoomNameResponse   // Server to Client
+	, SpawnAvatarRequest // Client to Server
 }

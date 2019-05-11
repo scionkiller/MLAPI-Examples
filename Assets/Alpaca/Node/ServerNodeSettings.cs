@@ -214,178 +214,6 @@ public class ServerNode : CommonNode
 		_networkTime += Time.unscaledDeltaTime;
 	}
 
-	/*
-	private void Update()
-	{
-		if((NetworkTime - lastSendTickTime >= (1f / config.SendTickrate)) || config.SendTickrate <= 0)
-		{
-			foreach( Entity obj in _networkedObjects )
-			{
-				obj.NetworkedVarUpdate();
-			}
-
-			for( int i = 0; i < _connectedClients.GetCount(); ++i )
-			{
-				uint clientId = _connectedClients.GetAt(i).GetId();
-				byte error;
-				config.NetworkTransport.SendQueue(clientId, out error);
-				Log.Info("Send Pending Queue: " + clientId);
-			}
-
-			lastSendTickTime = NetworkTime;
-		}
-		if((NetworkTime - lastReceiveTickTime >= (1f / config.ReceiveTickrate)) || config.ReceiveTickrate <= 0)
-		{
-			NetworkProfiler.StartTick(TickType.Receive);
-			NetEventType eventType;
-			int processedEvents = 0;
-			do
-			{
-				processedEvents++;
-				uint clientId;
-				int channelId;
-				int receivedSize;
-				byte error;
-				byte[] data = messageBuffer;
-				eventType = config.NetworkTransport.PollReceive(out clientId, out channelId, ref data, data.Length, out receivedSize, out error);
-
-				switch (eventType)
-				{
-					case NetEventType.Connect:
-						NetworkProfiler.StartEvent(TickType.Receive, (uint)receivedSize, MessageManager.reverseChannels[channelId], "TRANSPORT_CONNECT");
-						if (IsServer)
-						{
-							Log.Info("Client Connected");
-							if (config.EnableEncryption)
-							{
-								// This client is required to complete the crypto-hail exchange.
-								using (PooledBitStream hailStream = PooledBitStream.Get())
-								{
-									using (PooledBitWriter hailWriter = PooledBitWriter.Get(hailStream))
-									{
-										if (config.SignKeyExchange)
-										{
-											// Write certificate
-											hailWriter.WriteByteArray(config.ServerX509CertificateBytes);
-										}
-
-										// Write key exchange public part
-										// TODO: cozeroff
-										EllipticDiffieHellman diffieHellman = new EllipticDiffieHellman(EllipticDiffieHellman.DEFAULT_CURVE, EllipticDiffieHellman.DEFAULT_GENERATOR, EllipticDiffieHellman.DEFAULT_ORDER);
-										byte[] diffieHellmanPublicPart = diffieHellman.GetPublicKey();
-										hailWriter.WriteByteArray(diffieHellmanPublicPart);
-										_pendingClients.Add(clientId, new PendingClient()
-										{
-											ClientId = clientId,
-											ConnectionState = PendingClient.State.PendingHail,
-											KeyExchange = diffieHellman
-										});
-										
-
-										if (config.SignKeyExchange)
-										{
-											// Write public part signature (signed by certificate private)
-											X509Certificate2 certificate = config.ServerX509Certificate;
-											if (!certificate.HasPrivateKey) throw new CryptographicException("[Alpaca] No private key was found in server certificate. Unable to sign key exchange");
-											RSACryptoServiceProvider rsa = certificate.PrivateKey as RSACryptoServiceProvider;
-
-											if (rsa != null)
-											{
-												using (SHA256Managed sha = new SHA256Managed())4
-												{
-													hailWriter.WriteByteArray(rsa.SignData(diffieHellmanPublicPart, sha));
-												}
-											}
-											else
-											{
-												throw new CryptographicException("[Alpaca] Only RSA certificates are supported. No valid RSA key was found");
-											}
-										}
-									}
-									// Send the hail
-									InternalMessageHandler.Send(clientId, AlpacaConstant.ALPACA_CERTIFICATE_HAIL, "INTERNAL_CHANNEL_RELIABLE", hailStream, SecuritySendFlags.None, true);
-								}
-							}
-							else
-							{
-								// TODO: cozeroff
-								_pendingClients.Add(clientId, new PendingClient()
-								{
-									ClientId = clientId,
-									ConnectionState = PendingClient.State.PendingConnection
-								});
-								
-							}
-							StartCoroutine(ApprovalTimeout(clientId));
-						}
-						else
-						{
-							Log.Info("Connected");
-							if (!config.EnableEncryption) SendConnectionRequest();
-							StartCoroutine(ApprovalTimeout(clientId));
-						}
-						NetworkProfiler.EndEvent();
-						break;
-					case NetEventType.Data:
-						Log.Info($"Incoming Data From {clientId} : {receivedSize} bytes");
-
-						HandleIncomingData(clientId, data, channelId, receivedSize);
-						break;
-					case NetEventType.Disconnect:
-						NetworkProfiler.StartEvent(TickType.Receive, 0, "NONE", "TRANSPORT_DISCONNECT");
-						Log.Info("Disconnect Event From " + clientId);
-
-						if( IsServer )
-						{
-							OnClientDisconnectServer(clientId);
-						}
-						else
-						{
-							IsConnectedClient = false;
-							StopClient();
-						}
-
-						if (OnClientDisconnectCallback != null)
-							OnClientDisconnectCallback.Invoke(clientId);
-						NetworkProfiler.EndEvent();
-						break;
-				}
-				// Only do another iteration if: there are no more messages AND (there is no limit to max events or we have processed less than the maximum)
-			} while (IsListening && (eventType != NetEventType.Nothing && (config.MaxReceiveEventsPerTickRate <= 0 || processedEvents < config.MaxReceiveEventsPerTickRate)));
-			lastReceiveTickTime = NetworkTime;
-			NetworkProfiler.EndTick();
-		}
-
-		if (IsServer && ((NetworkTime - lastEventTickTime >= (1f / config.EventTickrate))))
-		{
-			NetworkProfiler.StartTick(TickType.Event);
-			eventOvershootCounter += ((NetworkTime - lastEventTickTime) - (1f / config.EventTickrate));
-			LagCompensationManager.AddFrames();
-			ResponseMessageManager.CheckTimeouts();
-			lastEventTickTime = NetworkTime;
-			NetworkProfiler.EndTick();
-		}
-		else if (IsServer && eventOvershootCounter >= ((1f / config.EventTickrate)))
-		{
-			NetworkProfiler.StartTick(TickType.Event);
-			//We run this one to compensate for previous update overshoots.
-			eventOvershootCounter -= (1f / config.EventTickrate);
-			LagCompensationManager.AddFrames();
-			NetworkProfiler.EndTick();
-		}
-
-		if (IsServer && config.EnableTimeResync && NetworkTime - lastTimeSyncTime >= 30)
-		{
-			NetworkProfiler.StartTick(TickType.Event);
-			SyncTime();
-			lastTimeSyncTime = NetworkTime;
-			NetworkProfiler.EndTick();
-		}
-
-		NetworkTime += Time.unscaledDeltaTime;
-	}
-	*/
-
 	public EntityPrefabIndex FindEntityPrefabIndex( Entity prefab )
 	{
 		for( uint i = 0; i < _commonSettings.entity.Length; ++i )
@@ -399,16 +227,32 @@ public class ServerNode : CommonNode
 		return new EntityPrefabIndex();
 	}
 
+	// sends a custom message to the server via the default channel
+	public bool SendCustomClient( NodeIndex client, BitWriter writer, bool sendImmediately, out string error )
+	{
+		return Send( client, InternalMessage.CustomClient, ChannelIndex.CreateInternal( InternalChannel.ClientReliable ), writer, sendImmediately, out error );
+	}
+
+	// sends a custom message to the server
+	public bool SendCustomClient( NodeIndex client, uint customChannel, BitWriter writer, bool sendImmediately, out string error )
+	{
+		return Send( client, InternalMessage.CustomClient, ChannelIndex.CreateCustom( customChannel ), writer, sendImmediately, out error );
+	}
+
 
 	// PRIVATE
 
-	bool Send( NodeIndex client, InternalMessage message, InternalChannel channel, BitWriter writer, bool sendImmediately, out string error )
+	bool SendInternal( NodeIndex client, InternalMessage message, InternalChannel channel, BitWriter writer, bool sendImmediately, out string error )
 	{
-		int clientIndex = client.GetClientIndex();
-		ChannelIndex channelIndex = ChannelIndex.CreateInternal(channel);
-		byte[] key = _connection[client].GetSharedSecretKey();
+		return Send( client, message, ChannelIndex.CreateInternal(channel), writer, sendImmediately, out error );
+	}
+
+	bool Send( NodeIndex client, InternalMessage message, ChannelIndex channel, BitWriter writer, bool sendImmediately, out string error )
+	{
+		int clientIndex = client.GetClientIndex();	
+		byte[] key = _connection.GetAt(clientIndex-1).GetSharedSecretKey();
 		// for the server, connectionId == clientIndex
-		return base.Send( clientIndex, key, message, channelIndex, writer, sendImmediately, out error );
+		return base.Send( clientIndex, key, message, channel, writer, sendImmediately, out error );
 	}
 
 	ReceiveEvent HandleNetworkEvent()
@@ -474,42 +318,6 @@ public class ServerNode : CommonNode
 	EllipticDiffieHellman SendCryptoHail()
 	{
 		// TODO: cozeroff
-		// using( PooledBitStream hailStream = PooledBitStream.Get() )
-		// using( PooledBitWriter hailWriter = PooledBitWriter.Get(hailStream) )
-		// {
-		// 	if (config.SignKeyExchange)
-		// 	{
-		// 		// Write certificate
-		// 		hailWriter.WriteByteArray(config.ServerX509CertificateBytes);
-		// 	}
-
-		// 	// Write key exchange public part
-		// 	EllipticDiffieHellman diffieHellman = new EllipticDiffieHellman(EllipticDiffieHellman.DEFAULT_CURVE, EllipticDiffieHellman.DEFAULT_GENERATOR, EllipticDiffieHellman.DEFAULT_ORDER);
-		// 	byte[] diffieHellmanPublicPart = diffieHellman.GetPublicKey();
-		// 	hailWriter.WriteByteArray(diffieHellmanPublicPart);
-
-		// 	if (config.SignKeyExchange)
-		// 	{
-		// 		// Write public part signature (signed by certificate private)
-		// 		X509Certificate2 certificate = config.ServerX509Certificate;
-		// 		if (!certificate.HasPrivateKey) throw new CryptographicException("[Alpaca] No private key was found in server certificate. Unable to sign key exchange");
-		// 		RSACryptoServiceProvider rsa = certificate.PrivateKey as RSACryptoServiceProvider;
-
-		// 		if (rsa != null)
-		// 		{
-		// 			using (SHA256Managed sha = new SHA256Managed())4
-		// 			{
-		// 				hailWriter.WriteByteArray(rsa.SignData(diffieHellmanPublicPart, sha));
-		// 			}
-		// 		}
-		// 		else
-		// 		{
-		// 			throw new CryptographicException("[Alpaca] Only RSA certificates are supported. No valid RSA key was found");
-		// 		}
-		// 	}
-		// }
-
-		// InternalMessageHandler.Send(clientId, AlpacaConstant.ALPACA_CERTIFICATE_HAIL, "INTERNAL_CHANNEL_RELIABLE", hailStream, SecuritySendFlags.None, true);
 
 		return null;
 	}
@@ -585,9 +393,9 @@ public class ServerNode : CommonNode
 			}
 
 			string error;
-			if( !Send( clientNode, InternalMessage.ConnectionApproved, InternalChannel.Reliable, writer, true, out error ) )
+			if( !SendInternal( clientNode, InternalMessage.ConnectionApproved, InternalChannel.Reliable, writer, true, out error ) )
 			{
-				Log.Error( $"OnMessageConnectionRequest failed to send connection data to new client {clientIndex}.\n{error}" );
+				Log.Error( $"OnMessageConnectionRequest failed to send connection approval data to new client {clientIndex}.\n{error}" );
 			}
 		}
 
@@ -602,7 +410,7 @@ public class ServerNode : CommonNode
 
 				ClientConnection sibling = _connection.GetAt(i);
 				string error;
-				if( !Send( sibling.GetId(), InternalMessage.SiblingConnected, InternalChannel.Reliable, writer, false, out error ) )
+				if( !SendInternal( sibling.GetId(), InternalMessage.SiblingConnected, InternalChannel.Reliable, writer, false, out error ) )
 				{
 					Log.Error( $"OnMessageConnectionRequest failed to send SiblingConnected message to all other clients.\n{error}" );
 				}

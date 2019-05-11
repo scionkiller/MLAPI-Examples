@@ -160,14 +160,30 @@ public class ClientNode : CommonNode
 		_networkTime += Time.unscaledDeltaTime;
 	}
 
+	// sends a custom message to the server via the default channel
+	public bool SendCustomServer( BitWriter writer, bool sendImmediately, out string error )
+	{
+		return Send( InternalMessage.CustomServer, ChannelIndex.CreateInternal( InternalChannel.ClientReliable ), writer, sendImmediately, out error );
+	}
+
+	// sends a custom message to the server
+	public bool SendCustomServer( uint customChannel, BitWriter writer, bool sendImmediately, out string error )
+	{
+		return Send( InternalMessage.CustomServer, ChannelIndex.CreateCustom( customChannel ), writer, sendImmediately, out error );
+	}
 
 	// PRIVATE
 
-	bool Send( InternalMessage message, InternalChannel channel, BitWriter writer, bool sendImmediately, out string error )
+	// sends an internal message to the server (Alpaca layer)
+	bool SendInternal( InternalMessage message, InternalChannel channel, BitWriter writer, bool sendImmediately, out string error )
 	{
-		ChannelIndex channelIndex = ChannelIndex.CreateInternal(channel);
+		return Send( message, ChannelIndex.CreateInternal(channel), writer, sendImmediately, out error );
+	}
+
+	bool Send( InternalMessage message, ChannelIndex channel, BitWriter writer, bool sendImmediately, out string error )
+	{
 		// for the client, connectionId == 1 always (server)
-		return base.Send( 1, _serverKey, message, channelIndex, writer, sendImmediately, out error );
+		return base.Send( 1, _serverKey, message, channel, writer, sendImmediately, out error );
 	}
 
 	void SendConnectionRequest()
@@ -176,7 +192,7 @@ public class ClientNode : CommonNode
 		using( BitWriter writer = GetPooledWriter() )
 		{
 			string error;
-			if( !Send( InternalMessage.ConnectionRequest, InternalChannel.Reliable, writer, true, out error ) )
+			if( !SendInternal( InternalMessage.ConnectionRequest, InternalChannel.Reliable, writer, true, out error ) )
 			{
 				Log.Error( $"Failed to send ConnectionRequest to server.\n{error}" );
 			}
@@ -224,8 +240,8 @@ public class ClientNode : CommonNode
 					break;
 					
 				case ReceiveEvent.Disconnect:
-					// clear our local index, indicating that connection was lost
 					_localIndex = new NodeIndex();
+					_status = Status.Disconnected;
 					// call disconnect callback if any, otherwise log error
 					if( _onDisconnect != null )
 					{
@@ -233,7 +249,7 @@ public class ClientNode : CommonNode
 					}
 					else
 					{
-						Log.Error( "Disconnected from server " );
+						Log.Error( "Disconnected from server" );
 					}
 					break;
 			}

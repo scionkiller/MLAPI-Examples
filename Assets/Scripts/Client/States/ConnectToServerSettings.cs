@@ -27,7 +27,8 @@ public class ConnectToServer : ClientState
 	ClientNode _network;
 
 	float _exitTime;
-	bool _connectionSucceeded;
+	bool _sentRoomNameRequest;
+	bool _roomNameSet;
 
 	char[] _charBuffer;
 	StringBuilder _sb;
@@ -53,7 +54,8 @@ public class ConnectToServer : ClientState
 	{
 		_settings.Show();
 		_settings.display.text = "";
-		_connectionSucceeded = false;
+		_sentRoomNameRequest = false;
+		_roomNameSet = false;
 
 		_network.SetOnCustomMessage( OnCustomMessage );
 
@@ -71,7 +73,12 @@ public class ConnectToServer : ClientState
 	{
 		_network.UpdateClient();
 
-		if(  _connectionSucceeded 
+		if( _network.IsConnectedToServer() && !_sentRoomNameRequest )
+		{
+			SendRoomNameRequest();
+		}
+
+		if(  _roomNameSet 
 		  && Time.time > _exitTime
 		  )
 		{
@@ -100,8 +107,25 @@ public class ConnectToServer : ClientState
 		}
 		else
 		{
-			_settings.display.text += "Connection attempt failed with error:\n";
-			_settings.display.text += error + "\n\n";
+			_settings.display.text += $"Connection attempt failed with error:\n{error}\n\n";
+		}
+	}
+
+	void SendRoomNameRequest()
+	{
+		_settings.display.text += "Successfully connected to server, sending request for room name.\n";
+		using( BitWriter writer = _network.GetPooledWriter() )
+		{
+			writer.Normal<byte>( (byte)CustomMessageType.RoomNameRequest );
+			string error;
+			if( !_network.SendCustomServer( writer, false, out error ) )
+			{
+				_settings.display.text += $"Failed to send room request: \n{error}\n\n";
+			}
+			else
+			{
+				_sentRoomNameRequest = true;
+			}
 		}
 	}
 
@@ -109,9 +133,9 @@ public class ConnectToServer : ClientState
 	{
 		CustomMessageType message = (CustomMessageType)reader.Byte();
 
-		if( message != CustomMessageType.ConfirmClientConnection )
+		if( message != CustomMessageType.RoomNameResponse )
 		{
-			Debug.LogError( "FATAL ERROR: unexpected network message type: " + message );
+			_settings.display.text += $"Unexpected custom message type: {message}\n";
 			return;
 		}
 
@@ -119,9 +143,9 @@ public class ConnectToServer : ClientState
 		_sb.Clear();
 		_sb.Append( _charBuffer, 0, length );
 		_world.SetClientRoom( _sb.ToString() );
-		_settings.display.text += "Server accepted connection. Room scene is: '" + _world.GetClientRoom() + "'\n";
+		_settings.display.text += "Got room scene from server: '" + _world.GetClientRoom() + "'\n";
 
-		_connectionSucceeded = true;
+		_roomNameSet = true;
 		_exitTime = Time.time + MINIMUM_DISPLAY_TIME;
 	}
 }

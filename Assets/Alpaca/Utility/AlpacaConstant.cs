@@ -64,7 +64,6 @@ public static class AlpacaConstant
 	}
 
 	public const int InternalMessageCount = (int)InternalMessage.COUNT;
-	public const int InternalMessageMask = 0xFF >> 2;
 	
 	public static readonly string[] INTERNAL_MESSAGE_NAME = 
 	{ "Message_ConnectionRequest"

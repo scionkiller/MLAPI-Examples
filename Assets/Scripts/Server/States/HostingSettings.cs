@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text;
 
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -24,6 +25,9 @@ public class Hosting : ServerState
 
 	ServerNode _network;
 
+	char[] _charBuffer;
+	StringBuilder _sb;
+
 
 	#region ServerState interface (including FsmState interface)
 
@@ -35,6 +39,10 @@ public class Hosting : ServerState
 		_settings = (HostingSettings)settings;
 		_settings.Hide();
 		_transitionState = ServerStateId.NO_TRANSITION;
+
+		int maxChars = _network.GetMaxMessageLength() / sizeof(char);
+		_charBuffer = new char[maxChars];
+		_sb = new StringBuilder( maxChars );
 	}
 
 	public void OnEnter()
@@ -43,7 +51,6 @@ public class Hosting : ServerState
 
 		_settings.display.text = "Ready";
 
-		_network.SetOnClientConnect( OnClientConnected );
 		_network.SetOnCustomMessage( OnCustomMessage );
 	}
 
@@ -51,7 +58,6 @@ public class Hosting : ServerState
 	{
 		_settings.Hide();
 
-		_network.SetOnClientConnect( null );
 		_network.SetOnCustomMessage( null );
 	}
 	
@@ -71,29 +77,50 @@ public class Hosting : ServerState
 
 	// PRIVATE
 
-	void OnClientConnected( NodeIndex clientIndex )
-	{
-		using( BitWriter writer = _network.GetPooledWriter() )
-		{
-			writer.Normal<byte>( (byte)CustomMessageType.ConfirmClientConnection );
-			// TODO: cozeroff
-			//writer.WriteString( _world.GetRoomName(), true );
-			//_network.SendCustomMessage( clientIndex, writer );
-			// TODO: remove
-			Debug.Log( "Sent room name: '" + _world.GetRoomName() + "' to client: " + clientIndex.GetClientIndex() );
-		}
-	}
-
 	void OnCustomMessage( NodeIndex clientIndex, BitReader reader )
 	{
 		CustomMessageType message = (CustomMessageType)reader.Byte();
 
-		if( message != CustomMessageType.SpawnAvatarRequest )
+		switch( message )
 		{
-			Debug.LogError( "FATAL ERROR: unexpected network message type: " + message );
+			case CustomMessageType.RoomNameRequest:
+				SendRoomNameResponse( clientIndex );
+				break;
+			case CustomMessageType.SpawnAvatarRequest:
+				SpawnEntity( clientIndex );
+				break;
+			default:
+				Log.Error( "FATAL ERROR: unexpected network message type: " + message );
 			return;
 		}
+	}
 
+	void SendRoomNameResponse( NodeIndex clientIndex )
+	{
+		using( BitWriter writer = _network.GetPooledWriter() )
+		{
+			writer.Normal<byte>( (byte)CustomMessageType.RoomNameResponse );
+			
+			_sb.Clear();
+			_sb.Append( _world.GetRoomName() );
+			int length = _sb.Length;
+			_sb.CopyTo( 0, _charBuffer, 0, length );
+			writer.ArrayPacked<char>( _charBuffer, length );
+			
+			string error;
+			if( !_network.SendCustomClient( clientIndex, writer, false, out error ) )
+			{
+				Log.Error( $"Failed to send RoomNameResponse to client {clientIndex.GetClientIndex()}, error:\n{error}\n" );
+			}
+			else
+			{
+				Log.Info( $"Sent room name: {_world.GetRoomName()} to client: {clientIndex.GetClientIndex()}" );
+			}
+		}
+	}
+
+	void SpawnEntity( NodeIndex clientIndex )
+	{
 		// TODO: generating a random position on a 10 m circle as a proxy for using an actual spawn point
 		float randomTau = Random.Range( 0, 2f * Mathf.PI );
 		float x = 10f * Mathf.Cos( randomTau );
