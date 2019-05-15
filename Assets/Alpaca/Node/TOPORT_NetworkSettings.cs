@@ -301,55 +301,6 @@ public class AlpacaNetwork
 				return 0;
 		}
 	}
-
-	// Server only
-	public Entity SpawnEntityServer( uint ownerClientId, int prefabIndex, bool isAvatar, Vector3 position, Quaternion rotation )
-	{
-		Debug.Assert( IsServer );
-
-		Client client = null;
-		if( ownerClientId != ServerClientId )
-		{
-			client = _connectedClients.Get( ownerClientId );
-			if( client == null )
-			{
-				Log.Error( "Cannot spawn entity with ownerClientId " + ownerClientId + ", client not yet connected!" );
-				return null;
-			}
-
-			if( isAvatar && client.GetAvatar() != null )
-			{
-				Log.Error("Cannot spawn avatar entity. Client " + ownerClientId + " already has an avatar" );
-				return null;
-			}
-		}
-
-		// Generate unique network id
-		uint netId = entityIdCounter;
-		++entityIdCounter;
-
-		// spawn
-		Entity.Spawn data = new Entity.Spawn( netId, ownerClientId, prefabIndex, isAvatar, position, rotation );
-		Entity entity = Entity.SpawnEntity( this, data );
-
-		// TODO: cozeroff implement this
-		//network.AddEntity(entity.GetId(), entity);
-
-		// send spawn notification to all clients
-		for( int i = 0; i < _connectedClients.GetCount(); ++i )
-		{
-			Client targetClient = _connectedClients.GetAt(i);
-			using( PooledBitStream stream = PooledBitStream.Get() )
-			using( PooledBitWriter writer = PooledBitWriter.Get(stream) )
-			{
-				data.WriteTo( writer );
-				// TODO cozeroff: write networked var data here
-				InternalMessageHandler.Send( targetClient.GetId(), AlpacaConstant.ALPACA_ADD_OBJECT, "INTERNAL_CHANNEL_RELIABLE", stream, SecuritySendFlags.None );
-			}
-		}
-
-		return entity;
-	}
 }
 
 } // namespace Alpaca

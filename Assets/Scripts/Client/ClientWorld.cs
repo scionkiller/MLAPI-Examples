@@ -40,4 +40,7 @@ public class ClientWorld
 
 	public AvatarController GetAvatar() { return _avatar; }
 	public void SetAvatar( AvatarController avatar ) { _avatar = avatar; }
+
+	// how long to remain in a state after it is completed so that the user can see debug info
+	public float GetMinimumDisplayTime() { return _worldSettings.minimumDisplayTime; }
 }

@@ -12,8 +12,6 @@ public class LaunchServerSettings : ServerStateSettings
 
 public class LaunchServer : ServerState
 {
-	static readonly float MINIMUM_DISPLAY_TIME = 2f;
-
 	ServerWorld _world;
 	LaunchServerSettings _settings;
 	ServerStateId _transitionState;
@@ -39,7 +37,7 @@ public class LaunchServer : ServerState
 	public void OnEnter()
 	{
 		_settings.Show();
-		_exitTime = Time.time + MINIMUM_DISPLAY_TIME;
+		_exitTime = Time.time + _world.GetMinimumDisplayTime();
 
 		StartServerAttempt();
 	}

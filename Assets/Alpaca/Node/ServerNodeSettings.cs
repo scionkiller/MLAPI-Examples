@@ -107,12 +107,12 @@ public class ServerNode : CommonNode
 	// callbacks
 	Action<NodeIndex> _onClientConnect = null;
 	Action<NodeIndex> _onClientDisconnect = null;
-	Action<BitReader, NodeIndex> _onMessageCustomServer = null;
+	Action<NodeIndex, BitReader> _onMessageCustomServer = null;
 	
 
 	public void SetOnClientConnect      ( Action<NodeIndex> callback            ) { _onClientConnect       = callback; }
 	public void SetOnClientDisconnect   ( Action<NodeIndex> callback            ) { _onClientDisconnect    = callback; }
-	public void SetOnMessageCustomServer( Action<BitReader, NodeIndex> callback ) { _onMessageCustomServer = callback; }
+	public void SetOnMessageCustomServer( Action<NodeIndex, BitReader> callback ) { _onMessageCustomServer = callback; }
 
 	public bool IsRunning() { return _isRunning; }
 
@@ -134,7 +134,6 @@ public class ServerNode : CommonNode
 		/* 
 		eventOvershootCounter = 0f;
 		
-
 		try
 		{
 			if (server && !string.IsNullOrEmpty(config.ServerBase64PfxCertificate))
@@ -216,15 +215,59 @@ public class ServerNode : CommonNode
 
 	public EntityPrefabIndex FindEntityPrefabIndex( Entity prefab )
 	{
-		for( uint i = 0; i < _commonSettings.entity.Length; ++i )
+		for( uint i = 0; i < _commonSettings.entityPrefab.Length; ++i )
 		{
-			if( _commonSettings.entity[i] == prefab )
+			if( _commonSettings.entityPrefab[i] == prefab )
 			{
 				return new EntityPrefabIndex(i);
 			}
 		}
 
 		return new EntityPrefabIndex();
+	}
+
+	public Entity SpawnEntityServer( NodeIndex owner, EntityPrefabIndex prefabIndex, Vector3 position, Quaternion rotation, out string error )
+	{
+		if( owner != NodeIndex.SERVER_NODE_INDEX )
+		{
+			ClientConnection client = _connection.Get( owner );
+			if( client == null )
+			{
+				error = $"Cannot spawn entity with ownerClientId {owner.GetClientIndex()}, client not yet connected!";
+				return null;
+			}
+		}
+
+		// Generate unique network id
+		uint unique_id = _entityCounter;
+		++_entityCounter;
+		EntityIndex entityIndex = new EntityIndex( unique_id );
+
+		// spawn
+		Entity.Data data = new Entity.Data() { id = entityIndex, owner = owner, prefabIndex = prefabIndex };
+		Entity.Spawn spawn = new Entity.Spawn( data, position, rotation );
+		Entity entity = Entity.SpawnEntity( _commonSettings.entityPrefab, spawn, _localIndex );
+
+		_entity.Add( entityIndex, entity );
+
+		// notify all clients that an entity was created
+		for( int i = 0; i < _connection.GetCount(); ++i )
+		{
+			string clientSendError;
+			ClientConnection client = _connection.GetAt(i);
+			using( BitWriter writer = GetPooledWriter() )
+			{
+				spawn.Write( writer );
+				if( !SendInternal( client.GetId(), InternalMessage.EntityCreate, InternalChannel.ClientReliable, writer, false, out clientSendError ) )
+				{
+					error = $"Failed to send spawn to client {i}, error is:\n{clientSendError}\n";
+					return null;
+				}
+			}
+		}
+
+		error = null;
+		return entity;
 	}
 
 	// sends a custom message to the server via the default channel
@@ -349,14 +392,14 @@ public class ServerNode : CommonNode
 		switch( messageType )
 		{
 			case InternalMessage.ConnectionRequest:
-				OnMessageConnectionRequest( reader, client );
+				OnMessageConnectionRequest( client, reader );
 				break;
 			case InternalMessage.ConnectionResponse:
 				// TODO: cozeroff crypto implementation
 				Log.Error( "Crypto not implemented yet!" );
 				break;
 			case InternalMessage.CustomServer:
-				OnMessageCustomServer( reader, client );
+				OnMessageCustomServer( client, reader );
 				break;
 			default:
 				Log.Error( $"Read unrecognized messageType{AlpacaConstant.GetName(messageType)}" );
@@ -368,7 +411,7 @@ public class ServerNode : CommonNode
 
 	#region Message Handlers for specific InternalMessage types
 
-	void OnMessageConnectionRequest( BitReader reader, NodeIndex clientNode )
+	void OnMessageConnectionRequest( NodeIndex clientNode, BitReader reader )
 	{
 		// update ClientConnection state
 		int clientIndex = clientNode.GetClientIndex();
@@ -421,11 +464,11 @@ public class ServerNode : CommonNode
 		//if( _onClientConnect != null ) { _onClientConnect.Invoke( clientNode ); }
 	}
 
-	void OnMessageCustomServer( BitReader reader, NodeIndex clientNode )
+	void OnMessageCustomServer( NodeIndex clientNode, BitReader reader )
 	{
 		if( _onMessageCustomServer != null )
 		{
-			_onMessageCustomServer.Invoke( reader, clientNode );
+			_onMessageCustomServer.Invoke( clientNode, reader );
 		}
 		else
 		{

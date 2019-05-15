@@ -19,7 +19,7 @@ namespace Alpaca
 			// unique across the network
 			public EntityIndex id;
 			public NodeIndex owner;
-			public EntityPrefabIndex prefabId;
+			public EntityPrefabIndex prefabIndex;
 		}
 
 		// Contains all data for spawning entities and sending them over the network
@@ -38,9 +38,9 @@ namespace Alpaca
 
 			public void Read( BitReader reader )
 			{
-				reader.Read <EntityIndex      >( ref data.id       );
-				reader.Read <NodeIndex        >( ref data.owner    );
-				reader.Read <EntityPrefabIndex>( ref data.prefabId );
+				reader.Read <EntityIndex      >( ref data.id          );
+				reader.Read <NodeIndex        >( ref data.owner       );
+				reader.Read <EntityPrefabIndex>( ref data.prefabIndex );
 				position = reader.Packed<Vector3>();
 				rotation = reader.Packed<Quaternion>();
 			}
@@ -48,9 +48,9 @@ namespace Alpaca
 			public void Write( BitWriter writer )
 			{
 				writer.Write( ref data.id );
-				writer.Write<EntityIndex      >( ref data.id       );
-				writer.Write<NodeIndex        >( ref data.owner    );
-				writer.Write<EntityPrefabIndex>( ref data.prefabId );
+				writer.Write<EntityIndex      >( ref data.id          );
+				writer.Write<NodeIndex        >( ref data.owner       );
+				writer.Write<EntityPrefabIndex>( ref data.prefabIndex );
 				writer.Packed<Vector3>( position );
 				writer.Packed<Quaternion>( rotation );
 			}
@@ -65,19 +65,21 @@ namespace Alpaca
 
 		// PUBLIC
 
-		public int GetConductCount() { return _conduct.Length; }
-		public Conduct GetConductAt( int conductIndex ) { return _conduct[conductIndex]; }
-
 		public EntityIndex GetIndex() { return _data.id; }
+		public NodeIndex GetOwner() { return _data.owner; }
+		public EntityPrefabIndex GetPrefabIndex() { return _data.prefabIndex; }
 
 		public Spawn MakeSpawn() { return new Spawn( _data, transform.position, transform.rotation ); }
+
+		public int GetConductCount() { return _conduct.Length; }
+		public Conduct GetConductAt( int conductIndex ) { return _conduct[conductIndex]; }
 
 
 		// STATIC 
 
-		public static Entity SpawnEntity( List<Entity> entityPrefab, Spawn spawn, NodeIndex localNodeIndex )
+		public static Entity SpawnEntity( Entity[] entityPrefab, Spawn spawn, NodeIndex localNodeIndex )
 		{
-			Entity prefab = entityPrefab[spawn.data.prefabId.GetIndex()];
+			Entity prefab = entityPrefab[spawn.data.prefabIndex.GetIndex()];
 			Entity entity = GameObject.Instantiate<Entity>(prefab, spawn.position, spawn.rotation);
 			Debug.Assert(entity != null);
 
@@ -92,6 +94,9 @@ namespace Alpaca
 		void InitializeEntity( Spawn spawn, NodeIndex localNodeIndex )
 		{
 			_data = spawn.data;
+			Debug.Assert( _data.id.IsValid() );
+			Debug.Assert( _data.owner.IsServer() || _data.owner.IsValidClientIndex() );
+			Debug.Assert( _data.prefabIndex.IsValid() );
 
 			foreach( Conduct b in _conduct )
 			{

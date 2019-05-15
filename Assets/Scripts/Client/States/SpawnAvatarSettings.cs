@@ -16,8 +16,6 @@ public class SpawnAvatarSettings : ClientStateSettings
 
 public class SpawnAvatar : ClientState
 {
-	static readonly float MINIMUM_DISPLAY_TIME = 2f;
-
 	ClientWorld _world;
 	SpawnAvatarSettings _settings;
 	ClientStateId _transitionState;
@@ -40,31 +38,34 @@ public class SpawnAvatar : ClientState
 	public void OnEnter()
 	{
 		_settings.Show();
-		_settings.display.text = "Sent spawn request to server...\n";
+		_network.SetOnEntitySpawn( OnEntitySpawn );
 
-		_exitTime = 0f;
-
-		_network.SetOnAvatarSpawn( OnAvatarSpawn );
+		_exitTime = float.MaxValue;
 
 		using( BitWriter writer = _network.GetPooledWriter() )
 		{
 			writer.Normal<byte>( (byte)CustomMessageType.SpawnAvatarRequest );
 
-			// TODO: cozeroff
-			//_network.SendCustomMessage( NodeIndex.SERVER_NODE_INDEX, stream);
+			string error;
+			if( _network.SendCustomServer( writer, true, out error ) )
+			{
+				_settings.display.text = "Sent spawn request to server, waiting for reply...\n\n";
+			}
+			else
+			{
+				_settings.display.text = $"Failed to send spawn request, error:\n{error}\n\n";
+			}
 		}
 	}
 
 	public void OnExit()
 	{
-		_network.SetOnAvatarSpawn( null );
-
 		_settings.Hide();
 	}
 
 	public void OnUpdate()
 	{
-		if( _world.GetAvatar() != null && Time.time > _exitTime )
+		if( Time.time > _exitTime )
 		{
 			_transitionState = ClientStateId.Playing;
 		}
@@ -80,19 +81,27 @@ public class SpawnAvatar : ClientState
 
 	// PRIVATE
 
-	void OnAvatarSpawn( Entity spawnedPrefab )
+	void OnEntitySpawn( Entity entity )
 	{
-		Avatar a = spawnedPrefab.GetComponent<Avatar>();
-		if( a == null )
+		if(  entity.GetOwner()       != _network.GetLocalNodeIndex()
+		  || entity.GetPrefabIndex() != Prefab.PLAYER
+		  )
 		{
-			_settings.display.text += "FATAL ERROR: Spawned prefab does not have an Avatar component!\n";
+			// ignore any spawns that are not owned by us or that are not players
 			return;
 		}
 
-		AvatarController c = new AvatarController( a );
-		_world.SetAvatar( c );
-		_settings.display.text += "Spawned avatar successfully.\n";
-		_exitTime = Time.time + MINIMUM_DISPLAY_TIME;
+		GameObject go = entity.gameObject;
+		AvatarController avatar = go.GetComponent<AvatarController>();
+		if( avatar == null )
+		{
+			_settings.display.text += $"Spawned player entity doesn't have an AvatarController\n\n";
+			return;
+		}
+
+		_settings.display.text += "Successfully spawned player entity with AvatarController\n\n";
+		_world.SetAvatar( avatar );
+		_exitTime = Time.time + _world.GetMinimumDisplayTime();
 	}
 }
 

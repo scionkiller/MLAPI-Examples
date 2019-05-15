@@ -28,4 +28,6 @@ public class ServerWorld
 
 	public ServerNode GetServerNode() { return _networkNode; }
 	public string GetRoomName() { return _settings.roomScene; }
+	// how long to remain in a state after it is completed so that the user can see debug info
+	public float GetMinimumDisplayTime() { return _worldSettings.minimumDisplayTime; }
 }

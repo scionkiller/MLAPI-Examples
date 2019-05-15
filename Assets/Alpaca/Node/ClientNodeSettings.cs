@@ -57,6 +57,7 @@ public class ClientNode : CommonNode
 	Status _status;
 
 	PeerSet _peer;
+	EntitySet _entity;
 
 	byte[] _serverKey;
 	
@@ -76,6 +77,8 @@ public class ClientNode : CommonNode
 		_clientSettings = clientSettings;
 		_localIndex = new NodeIndex(); // ensure this is invalid
 		_status = Status.NotStarted;
+
+		_entity = new EntitySet( 64 );
 	}
 
 	public override bool Start( out string error )
@@ -113,7 +116,7 @@ public class ClientNode : CommonNode
 		}
 
 		_status = Status.WaitingForConnectEvent;
-		error = string.Empty;
+		error = null;
 		return true;
 	}
 
@@ -171,6 +174,7 @@ public class ClientNode : CommonNode
 	{
 		return Send( InternalMessage.CustomServer, ChannelIndex.CreateCustom( customChannel ), writer, sendImmediately, out error );
 	}
+
 
 	// PRIVATE
 
@@ -290,6 +294,10 @@ public class ClientNode : CommonNode
 				break;
 
 			// TODO: cozeroff handle sibling connect/disconnect
+
+			case InternalMessage.EntityCreate:
+				OnEntityCreate( reader );
+				break;
 			
 			case InternalMessage.CustomClient:
 				OnMessageCustomClient( reader );
@@ -323,10 +331,17 @@ public class ClientNode : CommonNode
 		for( int i = 0; i < entityCount; ++i )
 		{
 			s.Read( reader );
-			// TODO: cozeroff spawn the entity here 
+			SpawnEntityClient( s );
 		}
 
 		_status = Status.Connected;
+	}
+
+	void OnEntityCreate( BitReader reader )
+	{
+		Entity.Spawn spawn = new Entity.Spawn();
+		spawn.Read( reader );
+		SpawnEntityClient( spawn );
 	}
 
 	void OnMessageCustomClient( BitReader reader )
@@ -342,6 +357,13 @@ public class ClientNode : CommonNode
 	}
 
 	#endregion // InternalMessage Handlers
+
+
+	void SpawnEntityClient( Entity.Spawn spawn )
+	{
+		Entity entity = Entity.SpawnEntity( _commonSettings.entityPrefab, spawn, _localIndex );
+		_entity.Add( entity.GetIndex(), entity );
+	}
 }
 
 #pragma warning restore 618

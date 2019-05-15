@@ -18,8 +18,6 @@ public class ConnectToServerSettings : ClientStateSettings
 
 public class ConnectToServer : ClientState
 {
-	static readonly float MINIMUM_DISPLAY_TIME = 2f;
-
 	ClientWorld _world;
 	ConnectToServerSettings _settings;
 	ClientStateId _transitionState;
@@ -55,9 +53,9 @@ public class ConnectToServer : ClientState
 		_settings.Show();
 		_settings.display.text = "";
 		_sentRoomNameRequest = false;
-		_roomNameSet = false;
+		_exitTime = float.MaxValue;
 
-		_network.SetOnCustomMessage( OnCustomMessage );
+		_network.SetOnMessageCustomClient( OnCustomMessage );
 
 		StartClient();
 	}
@@ -66,7 +64,7 @@ public class ConnectToServer : ClientState
 	{
 		_settings.Hide();
 
-		_network.SetOnCustomMessage( null );
+		_network.SetOnMessageCustomClient( null );
 	}
 	
 	public void OnUpdate()
@@ -78,9 +76,7 @@ public class ConnectToServer : ClientState
 			SendRoomNameRequest();
 		}
 
-		if(  _roomNameSet 
-		  && Time.time > _exitTime
-		  )
+		if( Time.time > _exitTime )
 		{
 			_transitionState = ClientStateId.LoadClientRoom;
 		}
@@ -129,7 +125,7 @@ public class ConnectToServer : ClientState
 		}
 	}
 
-	void OnCustomMessage( NodeIndex clientIndex, BitReader reader )
+	void OnCustomMessage( BitReader reader )
 	{
 		CustomMessageType message = (CustomMessageType)reader.Byte();
 
@@ -145,8 +141,7 @@ public class ConnectToServer : ClientState
 		_world.SetClientRoom( _sb.ToString() );
 		_settings.display.text += "Got room scene from server: '" + _world.GetClientRoom() + "'\n";
 
-		_roomNameSet = true;
-		_exitTime = Time.time + MINIMUM_DISPLAY_TIME;
+		_exitTime = Time.time + _world.GetMinimumDisplayTime();
 	}
 }
 

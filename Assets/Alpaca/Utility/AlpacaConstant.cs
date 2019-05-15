@@ -162,6 +162,26 @@ public struct ChannelIndex : IBitSerializable
 
 	public void Read ( BitReader reader ) { _indexPlusOne = reader.Packed<UInt32>(); }
 	public void Write( BitWriter writer ) { writer.Packed<UInt32>( _indexPlusOne ); }
+
+	public static bool operator==( ChannelIndex A, ChannelIndex B )
+	{
+		return A._indexPlusOne == B._indexPlusOne;
+	}
+
+	public static bool operator!=( ChannelIndex A, ChannelIndex B )
+	{
+		return !(A == B);
+	}
+
+	public override bool Equals( System.Object obj ) 
+	{
+		return obj is ChannelIndex && this == (ChannelIndex)obj;
+	}
+
+	public override int GetHashCode() 
+	{
+		return (int)_indexPlusOne;
+	}
 }
 
 public struct NodeIndex : IBitSerializable
@@ -184,6 +204,26 @@ public struct NodeIndex : IBitSerializable
 
 	public void Read ( BitReader reader ) { _indexPlusOne = reader.Packed<UInt32>(); }
 	public void Write( BitWriter writer ) { writer.Packed<UInt32>( _indexPlusOne ); }
+
+	public static bool operator==( NodeIndex A, NodeIndex B )
+	{
+		return A._indexPlusOne == B._indexPlusOne;
+	}
+
+	public static bool operator!=( NodeIndex A, NodeIndex B )
+	{
+		return !(A == B);
+	}
+
+	public override bool Equals( System.Object obj ) 
+	{
+		return obj is NodeIndex && this == (NodeIndex)obj;
+	}
+
+	public override int GetHashCode() 
+	{
+		return (int)_indexPlusOne;
+	}
 }
 
 public struct EntityPrefabIndex : IBitSerializable
@@ -202,6 +242,26 @@ public struct EntityPrefabIndex : IBitSerializable
 
 	public void Read ( BitReader reader ) { _indexPlusOne = reader.Packed<UInt32>(); }
 	public void Write( BitWriter writer ) { writer.Packed<UInt32>( _indexPlusOne ); }
+
+	public static bool operator==( EntityPrefabIndex A, EntityPrefabIndex B )
+	{
+		return A._indexPlusOne == B._indexPlusOne;
+	}
+
+	public static bool operator!=( EntityPrefabIndex A, EntityPrefabIndex B )
+	{
+		return !(A == B);
+	}
+
+	public override bool Equals( System.Object obj ) 
+	{
+		return obj is EntityPrefabIndex && this == (EntityPrefabIndex)obj;
+	}
+
+	public override int GetHashCode() 
+	{
+		return (int)_indexPlusOne;
+	}
 } 
 
 // EntityIndexes should be kept unique across the network.
@@ -223,6 +283,26 @@ public struct EntityIndex : IBitSerializable
 
 	public void Read ( BitReader reader ) { _indexPlusOne = reader.Packed<UInt32>(); }
 	public void Write( BitWriter writer ) { writer.Packed<UInt32>( _indexPlusOne ); }
+
+	public static bool operator==( EntityIndex A, EntityIndex B )
+	{
+		return A._indexPlusOne == B._indexPlusOne;
+	}
+
+	public static bool operator!=( EntityIndex A, EntityIndex B )
+	{
+		return !(A == B);
+	}
+
+	public override bool Equals( System.Object obj ) 
+	{
+		return obj is EntityIndex && this == (EntityIndex)obj;
+	}
+
+	public override int GetHashCode() 
+	{
+		return (int)_indexPlusOne;
+	}
 }
 
 } // namespace Alpaca

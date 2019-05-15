@@ -351,42 +351,6 @@ namespace Alpaca.Internal
 		{
 			AlpacaNetwork.GetSingleton().InvokeOnIncomingCustomMessage(clientId, stream);
 		}
-
-
-		// PRIVATE
-
-		static void SpawnEntityClient( ClientNode network, PooledBitReader reader )
-		{
-			Entity.Spawn data = new Entity.Spawn();
-			data.ReadFrom( reader );
-
-			Entity entity = Entity.SpawnEntity( network.GetEntityPrefab(), data );
-			// TODO: cozeroff implement this
-			//network.AddEntity(entity.GetId(), entity);
-			// TODO: cozeroff still necessary or can SyncVars just both use initial values?
-			entity.ReadNetworkedVarData( reader );
-
-			if( entity.IsAvatar() )
-			{
-				uint ownerClientId = entity.GetOwnerClientId();
-
-				// TODO: cozeroff
-				Client c = new Client( ownerClientId, entity, null );
-				network._connectedClients.Add( ownerClientId, c );
-
-				if( network.OnAvatarSpawn != null
-				  && ownerClientId == network.LocalClientId
-				  )
-				{
-					Debug.Log( "OnAvatarSpawn called for local client:" + ownerClientId );
-					network.OnAvatarSpawn.Invoke( entity );
-				}
-			}
-			else
-			{
-				network.OnEntitySpawn( entity );
-			}
-		}
 	}
 	*/
 }

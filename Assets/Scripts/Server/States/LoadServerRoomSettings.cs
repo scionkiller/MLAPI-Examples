@@ -14,8 +14,6 @@ public class LoadServerRoomSettings : ServerStateSettings
 
 public class LoadServerRoom : ServerState
 {
-	static readonly float MINIMUM_DISPLAY_TIME = 2f;
-
 	ServerWorld _world;
 	LoadServerRoomSettings _settings;
 	ServerStateId _transitionState;
@@ -60,7 +58,7 @@ public class LoadServerRoom : ServerState
 		else if( _exitTime == 0f )
 		{
 			_settings.display.text = "Room load completed.";
-			_exitTime = Time.time + MINIMUM_DISPLAY_TIME;
+			_exitTime = Time.time + _world.GetMinimumDisplayTime();
 		}
 
 		if( Time.time > _exitTime )

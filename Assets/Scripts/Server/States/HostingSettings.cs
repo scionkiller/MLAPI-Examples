@@ -51,14 +51,14 @@ public class Hosting : ServerState
 
 		_settings.display.text = "Ready";
 
-		_network.SetOnCustomMessage( OnCustomMessage );
+		_network.SetOnMessageCustomServer( OnCustomMessage );
 	}
 
 	public void OnExit()
 	{
 		_settings.Hide();
 
-		_network.SetOnCustomMessage( null );
+		_network.SetOnMessageCustomServer( null );
 	}
 	
 	public void OnUpdate()
@@ -87,7 +87,7 @@ public class Hosting : ServerState
 				SendRoomNameResponse( clientIndex );
 				break;
 			case CustomMessageType.SpawnAvatarRequest:
-				SpawnEntity( clientIndex );
+				SpawnAvatar( clientIndex );
 				break;
 			default:
 				Log.Error( "FATAL ERROR: unexpected network message type: " + message );
@@ -119,7 +119,7 @@ public class Hosting : ServerState
 		}
 	}
 
-	void SpawnEntity( NodeIndex clientIndex )
+	void SpawnAvatar( NodeIndex clientIndex )
 	{
 		// TODO: generating a random position on a 10 m circle as a proxy for using an actual spawn point
 		float randomTau = Random.Range( 0, 2f * Mathf.PI );
@@ -129,9 +129,14 @@ public class Hosting : ServerState
 		EntityPrefabIndex prefabIndex = _network.FindEntityPrefabIndex( _settings.avatarPrefab );
 		if( !prefabIndex.IsValid() )
 		{
-			Debug.LogError( "FATAL ERROR: could not find avatar prefab" );
+			Log.Error( "FATAL ERROR: could not find avatar prefab" );
 		}
-		// TODO: cozeroff uncomment
-		//_network.SpawnEntityServer( clientIndex, prefabIndex, true, new Vector3( x, 0f, z), Quaternion.identity );
+		
+		string error;
+		_network.SpawnEntityServer( clientIndex, prefabIndex, new Vector3( x, 0f, z), Quaternion.identity, out error );
+		if( error != null )
+		{
+
+		}
 	}
 }

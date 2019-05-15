@@ -59,7 +59,7 @@ public class Channel
 public class CommonNodeSettings : MonoBehaviour
 {
 	public CustomChannelSettings[] customChannel = null;
-	public Entity[] entity = null;
+	public Entity[] entityPrefab = null;
 
 	// The size of the receive message buffer. This is the max message size including any library overhead
 	public ushort messageBufferSize = 1024;
@@ -121,9 +121,7 @@ public abstract class CommonNode
 	// this is initialized in InitializeNetwork
 	protected uint _maxEventCount;
 
-	System.Action<Entity> _onAvatarSpawn = null;
 	System.Action<Entity> _onEntitySpawn = null;
-	System.Action<NodeIndex, BitReader> _onCustomMessage = null;
 
 
 	public float GetNetworkTime() { return _networkTime; }
@@ -133,11 +131,10 @@ public abstract class CommonNode
 	public BitReader GetPooledReader() { return _readerPool.Get(); }
 	public BitWriter GetPooledWriter() { return _writerPool.Get(); }
 
-	public void SetOnAvatarSpawn     ( System.Action<Entity> callback               ) { _onAvatarSpawn      = callback; }
 	public void SetOnEntitySpawn     ( System.Action<Entity> callback               ) { _onEntitySpawn      = callback; }
-	public void SetOnCustomMessage   ( System.Action<NodeIndex, BitReader> callback ) { _onCustomMessage    = callback; }
 
 	public abstract bool Start( out string error );
+
 
 	// PROTECTED
 
@@ -420,7 +417,7 @@ public abstract class CommonNode
 		NetworkError error = (NetworkError)NetworkErrorByte;
 		if( error == NetworkError.Ok )
 		{
-			return string.Empty;
+			return "NO ERROR";
 		}
 		else
 		{

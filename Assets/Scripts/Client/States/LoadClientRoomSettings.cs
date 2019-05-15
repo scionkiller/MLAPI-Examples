@@ -15,8 +15,6 @@ public class LoadClientRoomSettings : ClientStateSettings
 
 public class LoadClientRoom : ClientState
 {
-	static readonly float MINIMUM_DISPLAY_TIME = 2f;
-
 	ClientWorld _world;
 	LoadClientRoomSettings _settings;
 	ClientStateId _transitionState;
@@ -69,7 +67,7 @@ public class LoadClientRoom : ClientState
 		else if( _exitTime == 0f )
 		{
 			_settings.display.text = "Room load completed.";
-			_exitTime = Time.time + MINIMUM_DISPLAY_TIME;
+			_exitTime = Time.time + _world.GetMinimumDisplayTime();
 		}
 
 		if( Time.time > _exitTime )
