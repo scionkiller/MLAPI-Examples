@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text;
+using Random = System.Random;
 
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -15,6 +16,8 @@ public class HostingSettings : ServerStateSettings
 	public TMP_Text display;
 	// TODO: ensure this is a prefab object only (assets folder not scene)
 	public Entity avatarPrefab;
+	[Tooltip( "Seed for random number generator, 0 means create random seed" )]
+	public int randomSeed;
 }
 
 public class Hosting : ServerState
@@ -22,6 +25,8 @@ public class Hosting : ServerState
 	ServerWorld _world;
 	HostingSettings _settings;
 	ServerStateId _transitionState;
+
+	Random _random;
 
 	ServerNode _network;
 
@@ -43,6 +48,15 @@ public class Hosting : ServerState
 		int maxChars = _network.GetMaxMessageLength() / sizeof(char);
 		_charBuffer = new char[maxChars];
 		_sb = new StringBuilder( maxChars );
+
+		if( _settings.randomSeed != 0 )
+		{
+			_random = new Random( _settings.randomSeed );
+		}
+		else
+		{
+			_random = new Random();
+		}
 	}
 
 	public void OnEnter()
@@ -122,7 +136,7 @@ public class Hosting : ServerState
 	void SpawnAvatar( NodeIndex clientIndex )
 	{
 		// TODO: generating a random position on a 10 m circle as a proxy for using an actual spawn point
-		float randomTau = Random.Range( 0, 2f * Mathf.PI );
+		float randomTau = (float)( _random.NextDouble() * 2f * Mathf.PI );
 		float x = 10f * Mathf.Cos( randomTau );
 		float z = 10f * Mathf.Cos( randomTau );
 
@@ -136,7 +150,7 @@ public class Hosting : ServerState
 		_network.SpawnEntityServer( clientIndex, prefabIndex, new Vector3( x, 0f, z), Quaternion.identity, out error );
 		if( error != null )
 		{
-
+			Log.Error( $"SpawnEntityServer failed with error: \n{error}" );
 		}
 	}
 }

@@ -38,19 +38,18 @@ namespace Alpaca
 
 			public void Read( BitReader reader )
 			{
-				reader.Read <EntityIndex      >( ref data.id          );
-				reader.Read <NodeIndex        >( ref data.owner       );
-				reader.Read <EntityPrefabIndex>( ref data.prefabIndex );
+				reader.Read( ref data.id          );
+				reader.Read( ref data.owner       );
+				reader.Read( ref data.prefabIndex );
 				position = reader.Packed<Vector3>();
 				rotation = reader.Packed<Quaternion>();
 			}
 
 			public void Write( BitWriter writer )
 			{
-				writer.Write( ref data.id );
-				writer.Write<EntityIndex      >( ref data.id          );
-				writer.Write<NodeIndex        >( ref data.owner       );
-				writer.Write<EntityPrefabIndex>( ref data.prefabIndex );
+				writer.Write( ref data.id          );
+				writer.Write( ref data.owner       );
+				writer.Write( ref data.prefabIndex );
 				writer.Packed<Vector3>( position );
 				writer.Packed<Quaternion>( rotation );
 			}

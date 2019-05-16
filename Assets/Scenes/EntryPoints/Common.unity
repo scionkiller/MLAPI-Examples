@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.3731193, g: 0.38073996, b: 0.3587269, a: 1}
+  m_IndirectSpecularColor: {r: 0.37311953, g: 0.38074014, b: 0.3587274, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -151,14 +151,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   customChannel: []
-  entity: []
+  entityPrefab:
+  - {fileID: 1310429584290218026, guid: 3a6a0da35d32db04bb4d3dcc8a474320, type: 3}
+  - {fileID: 5240883645773833178, guid: 03a297f61fe3ef344989473054d7a493, type: 3}
   messageBufferSize: 1024
   maxEventCount: 500
   lagCompensationHistory: 5
   stringHashSize: 0
   enableTimeResync: 0
   logLevel: 0
-  connectionPort: 7777
+  serverPort: 7777
   enableEncryption: 0
   signKeyExchange: 0
   serverBase64PfxCertificate: 
@@ -175,6 +177,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   commonNodeSettings: {fileID: 1913377022}
+  minimumDisplayTime: 1
 --- !u!4 &1913377024
 Transform:
   m_ObjectHideFlags: 0

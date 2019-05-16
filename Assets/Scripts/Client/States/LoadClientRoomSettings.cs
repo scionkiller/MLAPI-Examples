@@ -30,6 +30,7 @@ public class LoadClientRoom : ClientState
 	public void Initialize( ClientWorld world, ClientStateSettings settings )
 	{
 		_world = world;
+		_network = _world.GetClientNode();
 		_settings = (LoadClientRoomSettings)settings;
 		_settings.Hide();
 		_transitionState = ClientStateId.NO_TRANSITION;
@@ -60,6 +61,8 @@ public class LoadClientRoom : ClientState
 	
 	public void OnUpdate()
 	{
+		_network.UpdateClient();
+
 		if( !_load.isDone )
 		{
 			return;

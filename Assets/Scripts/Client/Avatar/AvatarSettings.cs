@@ -3,12 +3,13 @@ using UnityEngine;
 
 
 // Place on the root of a prefab used to represent the player
-public class Avatar : MonoBehaviour
+public class AvatarSettings : MonoBehaviour
 {
 	public Transform head;
 	public Transform groundRayOrigin;
 	// TODO: these two dumb names are because of deprecated fields that still exist on Component
 	public Camera avatarCamera;
+	public AudioListener audioListener;
 	public Rigidbody avatarRigidBody;
 
 	public float yawSpeed = 60f;
@@ -40,22 +41,33 @@ public class Avatar : MonoBehaviour
 
 	[Tooltip("Maximum distance the player can interact with Tools")]
 	public float interactDistance = 10f;
+
+
+	// make sure our audio listener is off when we are first spawned
+	void Awake()
+	{
+		avatarCamera.enabled = false;
+		audioListener.enabled = false;
+	}
 }
 
-public class AvatarController
+public class Avatar
 {
-	Avatar _avatar;
+	AvatarSettings _avatar;
 	
 	float _currentPitch;
 	ToolSettings _lookAtTool;
 
 
-	public AvatarController( Avatar avatar )
+	public Avatar( AvatarSettings avatar, ClientWorld world )
 	{
 		_avatar = avatar;
 
+		_avatar.avatarCamera.enabled = true;
 		_avatar.avatarCamera.tag = "MainCamera";
-		_avatar.avatarCamera.gameObject.GetComponent<AudioListener>().enabled = true;
+
+		world.DisableRoomCamera();
+		_avatar.audioListener.enabled = true;
 
 		OnTeleport();
 	}

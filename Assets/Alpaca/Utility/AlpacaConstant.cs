@@ -205,6 +205,12 @@ public struct NodeIndex : IBitSerializable
 	public void Read ( BitReader reader ) { _indexPlusOne = reader.Packed<UInt32>(); }
 	public void Write( BitWriter writer ) { writer.Packed<UInt32>( _indexPlusOne ); }
 
+	public string GetDebugString()
+	{
+		if( IsServer() ) { return "Server"; }
+		return $"Client {GetClientIndex()}";
+	}
+
 	public static bool operator==( NodeIndex A, NodeIndex B )
 	{
 		return A._indexPlusOne == B._indexPlusOne;

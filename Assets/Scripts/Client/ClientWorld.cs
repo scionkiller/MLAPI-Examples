@@ -6,6 +6,8 @@ using UnityEngine;
 [System.Serializable]
 public class ClientWorldSettings
 {
+	public Camera roomCamera = null;
+	public AudioListener roomListener = null;
 	public ClientNodeSettings clientNodeSettings;
 }
 
@@ -17,7 +19,7 @@ public class ClientWorld
 	ClientWorldSettings _settings;
 
 	string _clientRoom;
-	AvatarController _avatar;
+	Avatar _avatar;
 
 	ClientNode _networkNode;
 	
@@ -38,9 +40,16 @@ public class ClientWorld
 	public string GetClientRoom() { return _clientRoom; }
 	public void SetClientRoom( string room ) { _clientRoom = room; }
 
-	public AvatarController GetAvatar() { return _avatar; }
-	public void SetAvatar( AvatarController avatar ) { _avatar = avatar; }
+	public Avatar GetAvatar() { return _avatar; }
+	public void SetAvatar( Avatar avatar ) { _avatar = avatar; }
 
 	// how long to remain in a state after it is completed so that the user can see debug info
 	public float GetMinimumDisplayTime() { return _worldSettings.minimumDisplayTime; }
+
+	// we disable the room audio listener after the avatar is spawned
+	public void DisableRoomCamera()
+	{
+		_settings.roomCamera.enabled = false;
+		_settings.roomListener.enabled = false;
+	}
 }

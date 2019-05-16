@@ -258,13 +258,15 @@ public class ServerNode : CommonNode
 			using( BitWriter writer = GetPooledWriter() )
 			{
 				spawn.Write( writer );
-				if( !SendInternal( client.GetId(), InternalMessage.EntityCreate, InternalChannel.ClientReliable, writer, false, out clientSendError ) )
+				if( !SendInternal( client.GetId(), InternalMessage.EntityCreate, InternalChannel.Reliable, writer, false, out clientSendError ) )
 				{
 					error = $"Failed to send spawn to client {i}, error is:\n{clientSendError}\n";
 					return null;
 				}
 			}
 		}
+
+		if( _onEntitySpawn != null ) { _onEntitySpawn.Invoke( entity ); }
 
 		error = null;
 		return entity;

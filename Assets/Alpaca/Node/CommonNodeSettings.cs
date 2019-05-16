@@ -121,7 +121,7 @@ public abstract class CommonNode
 	// this is initialized in InitializeNetwork
 	protected uint _maxEventCount;
 
-	System.Action<Entity> _onEntitySpawn = null;
+	protected System.Action<Entity> _onEntitySpawn = null;
 
 
 	public float GetNetworkTime() { return _networkTime; }

@@ -363,6 +363,8 @@ public class ClientNode : CommonNode
 	{
 		Entity entity = Entity.SpawnEntity( _commonSettings.entityPrefab, spawn, _localIndex );
 		_entity.Add( entity.GetIndex(), entity );
+		
+		if( _onEntitySpawn != null ) { _onEntitySpawn.Invoke( entity ); }
 	}
 }
 

@@ -1110,6 +1110,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _clientWorldSettings:
+    roomCamera: {fileID: 1087244624}
+    roomListener: {fileID: 1087244623}
     clientNodeSettings: {fileID: 1597295878}
   _connectToServerSettings: {fileID: 185399704}
   _loadRoomSceneSettings: {fileID: 1451955313}

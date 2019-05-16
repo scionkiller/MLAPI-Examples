@@ -40,7 +40,7 @@ GameObject:
   m_Component:
   - component: {fileID: 404146}
   - component: {fileID: 2044984}
-  - component: {fileID: 8179184}
+  - component: {fileID: 3250022251501593102}
   m_Layer: 0
   m_Name: Player Camera
   m_TagString: Untagged
@@ -74,9 +74,10 @@ Camera:
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.30980393, g: 0.49411765, b: 0.6313726, a: 0.019607844}
   m_projectionMatrixMode: 1
+  m_GateFitMode: 2
+  m_FOVAxisMode: 0
   m_SensorSize: {x: 36, y: 24}
   m_LensShift: {x: 0, y: 0}
-  m_GateFitMode: 2
   m_FocalLength: 50
   m_NormalizedViewPortRect:
     serializedVersion: 2
@@ -104,7 +105,7 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!81 &8179184
+--- !u!81 &3250022251501593102
 AudioListener:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -294,7 +295,6 @@ GameObject:
   - component: {fileID: 5435092}
   - component: {fileID: 2866937232069220761}
   - component: {fileID: 1310429584290218026}
-  - component: {fileID: 309924851438568395}
   m_Layer: 0
   m_Name: Avatar
   m_TagString: Untagged
@@ -364,6 +364,7 @@ MonoBehaviour:
   head: {fileID: 474426}
   groundRayOrigin: {fileID: 460178}
   avatarCamera: {fileID: 2044984}
+  audioListener: {fileID: 3250022251501593102}
   avatarRigidBody: {fileID: 5435092}
   yawSpeed: 60
   pitchSpeed: 60
@@ -388,53 +389,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 734a56c7c4651624d9764cc45a5bb0ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  NetworkedPrefabName: Avatar
-  DontDestroyWithOwner: 0
---- !u!114 &309924851438568395
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 174430}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0efde130b13d76e499e1fa8e4568721e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _networkedObject: {fileID: 1310429584290218026}
-  FixedSendsPerSecond: 20
-  AssumeSyncedSends: 1
-  InterpolatePosition: 0
-  SnapDistance: 10
-  InterpolateServer: 0
-  MinMeters: 0.15
-  MinDegrees: 1.5
-  ExtrapolatePosition: 0
-  MaxSendsToExtrapolate: 5
-  EnableRange: 0
-  EnableNonProvokedResendChecks: 0
-  DistanceSendrate:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 20
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 500
-      value: 20
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
+  _conduct: []

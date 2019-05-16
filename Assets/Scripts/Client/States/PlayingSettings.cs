@@ -16,6 +16,7 @@ public class PlayingSettings : ClientStateSettings
 public class Playing : ClientState
 {
 	ClientWorld _world;
+	ClientNode _network;
 	PlayingSettings _settings;
 	ClientStateId _transitionState;
 
@@ -27,6 +28,7 @@ public class Playing : ClientState
 	public void Initialize( ClientWorld world, ClientStateSettings settings )
 	{
 		_world = world;
+		_network = _world.GetClientNode();
 		_settings = (PlayingSettings)settings;
 		_settings.Hide();
 		_transitionState = ClientStateId.NO_TRANSITION;
@@ -48,6 +50,8 @@ public class Playing : ClientState
 	
 	public void OnUpdate()
 	{
+		_network.UpdateClient();
+
 		_playerInput.UpdateInput();
 		_world.GetAvatar().UpdateAvatar(_playerInput);
 	}

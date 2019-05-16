@@ -65,6 +65,8 @@ public class SpawnAvatar : ClientState
 
 	public void OnUpdate()
 	{
+		_network.UpdateClient();
+
 		if( Time.time > _exitTime )
 		{
 			_transitionState = ClientStateId.Playing;
@@ -88,17 +90,19 @@ public class SpawnAvatar : ClientState
 		  )
 		{
 			// ignore any spawns that are not owned by us or that are not players
+			Log.Info( $"Server spawned prefab: {entity.GetPrefabIndex().GetIndex()} with owner: {entity.GetOwner().GetDebugString()} but that is not our avatar." );
 			return;
 		}
 
 		GameObject go = entity.gameObject;
-		AvatarController avatar = go.GetComponent<AvatarController>();
-		if( avatar == null )
+		AvatarSettings avatarSettings = go.GetComponent<AvatarSettings>();
+		if( avatarSettings == null )
 		{
-			_settings.display.text += $"Spawned player entity doesn't have an AvatarController\n\n";
+			_settings.display.text += $"Spawned player entity doesn't have an AvatarSettings behaviour\n\n";
 			return;
 		}
 
+		Avatar avatar = new Avatar( avatarSettings, _world );
 		_settings.display.text += "Successfully spawned player entity with AvatarController\n\n";
 		_world.SetAvatar( avatar );
 		_exitTime = Time.time + _world.GetMinimumDisplayTime();
